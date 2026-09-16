@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS System - Create Order</title>
+    <!-- Bootstrap 5 & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .card-header { background-color: #fff; font-weight: bold; font-size: 1.1rem; }
+        .table-middle td { vertical-align: middle; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container-fluid">
+    <!-- Khu vực chọn sản phẩm -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header text-dark d-flex justify-content-between align-items-center">
+            <span>Create Order</span>
+            <button class="btn btn-danger btn-sm">Back</button>
+        </div>
+        <div class="card-body">
+            <div id="alertBox"></div> <!-- Khu vực hiển thị thông báo -->
+            
+            <div class="row align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label text-secondary small mb-1">Product</label>
+                    <select id="productSelect" class="form-select">
+                        <option value="">-- Chọn sản phẩm --</option>
+                        <!-- Danh sách sản phẩm sẽ được JS render vào đây -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-secondary small mb-1">Quantity</label>
+                    <input type="number" id="qtyInput" class="form-control" value="1" min="1">
+                </div>
+                <div class="col-md-4">
+                    <button id="btnAddItem" class="btn btn-primary px-4">Add Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khu vực giỏ hàng & Thanh toán -->
+    <div class="card shadow-sm">
+        <div class="card-header text-dark">Products</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-middle text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Product Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total Price</th>
+                            <th>Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <!-- Giỏ hàng trống mặc định -->
+                        <tr><td colspan="6" class="text-muted">Chưa có sản phẩm nào trong giỏ hàng.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Thông tin thanh toán -->
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary small mb-1">Select Payment Mode</label>
+                    <select class="form-select">
+                        <option value="">-- Select Payment Mode --</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="transfer">Chuyển khoản</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-secondary small mb-1">Customer Phone Number</label>
+                    <input type="text" class="form-control" placeholder="Nhập số điện thoại...">
+                </div>
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <button class="btn btn-warning w-100 fw-bold fs-5 text-dark" onclick="submitOrder()">
+                        Tổng: <span id="grandTotal">0</span> đ <br> (Proceed to place order)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kịch bản xử lý Frontend (JS) -->
+<script>
+    // 1. MOCK DATA (Dữ liệu giả lập thay thế DB)
+    const mockProducts = [
+        { id: 1, name: "Lenovo IdeaPad Gaming", price: 15000000, img: "💻" },
+        { id: 2, name: "T-Shirt Black", price: 250000, img: "👕" },
+        { id: 3, name: "Bàn phím cơ Logitech", price: 1200000, img: "⌨️" }
+    ];
+
+    // 2. STATE (Quản lý trạng thái dữ liệu giỏ hàng trên RAM của trình duyệt)
+    let cart = [];
+
+    // Lấy các DOM Element cần thao tác
+    const productSelect = document.getElementById('productSelect');
+    const cartTableBody = document.getElementById('cartTableBody');
+    const grandTotalEl = document.getElementById('grandTotal');
+    const alertBox = document.getElementById('alertBox');
+
+    // 3. KHỞI TẠO DỮ LIỆU
+    function init() {
+        mockProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            // Format giá tiền cho dễ nhìn
+            const priceStr = product.price.toLocaleString('vi-VN');
+            option.textContent = `${product.name} - ${priceStr} đ`;
+            productSelect.appendChild(option);
+        });
+    }
+
+    // 4. LOGIC THÊM VÀO GIỎ HÀNG
+    document.getElementById('btnAddItem').addEventListener('click', () => {
+        const selectedId = parseInt(productSelect.value);
+        const qty = parseInt(document.getElementById('qtyInput').value);
+
+        if (!selectedId) return showAlert("Vui lòng chọn một sản phẩm!", "danger");
+        if (qty < 1) return showAlert("Số lượng phải lớn hơn 0!", "danger");
+
+        // Tìm sản phẩm trong DB giả
+        const product = mockProducts.find(p => p.id === selectedId);
+        
+        // Kiểm tra xem sản phẩm đã có trong giỏ chưa
+        const existingItem = cart.find(item => item.id === selectedId);
+        if (existingItem) {
+            existingItem.qty += qty; // Nếu có rồi thì cộng dồn số lượng
+        } else {
+            cart.push({ ...product, qty: qty }); // Nếu chưa có thì đẩy mới vào mảng
+        }
+
+        showAlert(`Đã thêm ${product.name} vào giỏ hàng!`, "success");
+        renderCart();
+    });
+
+    // 5. CẬP NHẬT GIAO DIỆN GIỎ HÀNG (RENDER UI)
+    function renderCart() {
+        if (cart.length === 0) {
+            cartTableBody.innerHTML = '<tr><td colspan="6" class="text-muted">Chưa có sản phẩm nào trong giỏ hàng.</td></tr>';
+            grandTotalEl.textContent = '0';
+            return;
+        }
+
+        cartTableBody.innerHTML = '';
+        let grandTotal = 0;
+
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.qty;
+            grandTotal += itemTotal;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.id}</td>
+                <td class="text-start">${item.img} ${item.name}</td>
+                <td>${item.price.toLocaleString('vi-VN')}</td>
+                <td>
+                    <div class="d-flex justify-content-center align-items-center gap-2">
+                        <button class="btn btn-sm btn-light border" onclick="updateQty(${index}, -1)">-</button>
+                        <span class="fw-bold" style="width: 30px">${item.qty}</span>
+                        <button class="btn btn-sm btn-light border" onclick="updateQty(${index}, 1)">+</button>
+                    </div>
+                </td>
+                <td class="fw-bold">${itemTotal.toLocaleString('vi-VN')}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeItem(${index})">Remove</button>
+                </td>
+            `;
+            cartTableBody.appendChild(tr);
+        });
+
+        grandTotalEl.textContent = grandTotal.toLocaleString('vi-VN');
+    }
+
+    // 6. CÁC HÀM XỬ LÝ BỔ TRỢ
+    function updateQty(index, change) {
+        cart[index].qty += change;
+        if (cart[index].qty <= 0) {
+            cart.splice(index, 1); // Xóa luôn nếu giảm về 0
+        }
+        renderCart();
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function showAlert(msg, type) {
+        alertBox.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show p-2 mb-3" role="alert">
+                ${msg}
+                <button type="button" class="btn-close p-2" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        setTimeout(() => alertBox.innerHTML = '', 3000); // Tự tắt sau 3s
+    }
+
+    function submitOrder() {
+        if (cart.length === 0) return alert("Giỏ hàng đang trống!");
+        alert("Đã tạo đơn hàng thành công! Data sẽ được gửi xuống Backend.");
+        cart = []; // Làm sạch giỏ hàng
+        renderCart();
+    }
+
+    // Khởi chạy khi load trang
+    init();
+</script>
+</body>
+</html>
