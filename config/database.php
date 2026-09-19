@@ -1,6 +1,17 @@
 <?php
-$host ='localhost';
-$db ='fashion_pos_db';
-$user = 'root';
-$charset ='utf8mb4';
+class Database {
+    private static $instance = null;
+    private $connection;
+    private function__construct() {
+        try{
+            $this->connection = new PDO(
+                'mysql:host=localhost;dbname=my_database',
+                'username',
+                'password'
+            );
+        } catch(){
+
+        }
+    }
+}
 ?>
