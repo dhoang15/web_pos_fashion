@@ -12,7 +12,7 @@
         /* Cấu hình khung nền toàn màn hình */
         .hero-section {
             height: 100vh;
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(17, 17, 17, 0.9)), url('../images/anh2.jpg');
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(17, 17, 17, 0.9)), url('../images/index.png');
             background-size: cover;
             background-position: center;
             display: flex;

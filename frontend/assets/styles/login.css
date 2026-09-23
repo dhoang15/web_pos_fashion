@@ -19,7 +19,7 @@ body {
 
 /* --- Hình nền cột trái --- */
 .banner-section {
-    background-image: url('../images/background.jpg'); 
+    background-image: url('../images/background.png'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
