@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B'TRIPLE - Dashboard</title>
+    
+    <!-- Local Fonts -->
+    <link rel="stylesheet" href="../assets/fonts/common-fonts.css">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles/dashboard.css">
+</head>
+
+<body class="vh-100 overflow-hidden d-flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar d-flex flex-column gap-3">
+        <!-- Logo -->
+        <div class="d-flex align-items-center gap-3 px-2 mb-4">
+            <i class="fas fa-basketball-ball fs-3 text-warning" style="color: var(--primary-orange) !important;"></i>
+            <h1 class="logo-text fs-4 mb-0">B'Triple</h1>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="d-flex flex-column gap-2 flex-grow-1 overflow-auto pe-2 pb-4">
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <!-- Active Item (POS) -->
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-cash-register"></i>
+                <span>POS / Sales</span>
+            </a>
+            
+            <!-- Inactive Items -->
+            
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-file-invoice"></i>
+                <span>Invoices</span>
+            </a>
+            
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+            
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-tshirt"></i>
+                <span>Products / Items</span>
+            </a>
+            
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Purchases</span>
+            </a>
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Suppliers</span>
+            </a>
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Inventory</span>
+            </a>
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Reports</span>
+            </a>
+            
+            <!-- Items at bottom -->
+            <a href="#" class="nav-custom-link mt-auto">
+                <i class="fas fa-cog"></i>
+                <span>Expenses</span>
+            </a>
+            
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-question-circle"></i>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Users/Staff</span>
+            </a>
+            <a href="#" class="nav-custom-link">
+                <i class="fas fa-chart-pie"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </aside>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts cho Dark/Light Mode -->
+    <script src="../assets/js/dashboard.js">
+    </script>
+</body>
+</html>

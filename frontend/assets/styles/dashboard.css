@@ -1,0 +1,176 @@
+        :root {
+            --bg-light: #F3F4F6;
+            --text-light: #1f2937;
+            --text-muted-light: #6b7280;
+            --card-light: #ffffff;
+            --border-light: #e5e7eb;
+            
+            --bg-dark: #121212;
+            --text-dark: #f3f4f6;
+            --text-muted-dark: #9ca3af;
+            --card-dark: #1e1e1e;
+            --border-dark: #374151;
+            
+            --primary-orange: #f97316;
+            --primary-orange-light: #ffedd5;
+            --primary-orange-dark: rgba(124, 45, 18, 0.4);
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 0px; }
+        
+        ::selection {
+            background-color: var(--primary-orange);
+            color: white;
+        }
+
+        /* ================= DARK MODE ================= */
+        body.dark-theme {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 260px;
+            padding: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .logo-text {
+            color: #111827;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+        body.dark-theme .logo-text { color: white; }
+
+        .nav-custom-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1rem;
+            color: var(--text-muted-light);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-custom-link i { width: 20px; text-align: center; font-size: 1.125rem; }
+        
+        .nav-custom-link:hover {
+            background-color: #e5e7eb;
+            color: var(--text-light);
+        }
+
+        /* Nút Active trong Sidebar */
+        .nav-custom-link.active {
+            background-color: var(--primary-orange-light);
+            color: var(--primary-orange);
+            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* Dark Mode cho Sidebar */
+        body.dark-theme .nav-custom-link { color: var(--text-muted-dark); }
+        body.dark-theme .nav-custom-link:hover { background-color: var(--card-dark); color: var(--text-dark); }
+        body.dark-theme .nav-custom-link.active { background-color: var(--primary-orange-dark); color: #fb923c; }
+
+        /* ================= HEADER & TOOLBAR ================= */
+        .greeting-title { font-weight: 700; font-size: 1.5rem; }
+        body.dark-theme .greeting-title { color: white; }
+        
+        .greeting-sub { color: var(--text-muted-light); font-size: 0.875rem; font-weight: 500; margin-top: 0.25rem; }
+        body.dark-theme .greeting-sub { color: var(--text-muted-dark); }
+
+        .toolbar {
+            background-color: var(--card-light);
+            padding: 0.5rem 1.5rem;
+            border-radius: 999px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        body.dark-theme .toolbar { background-color: var(--card-dark); border-color: #1f2937; }
+
+        .toolbar-btn {
+            background: none; border: none; padding: 0;
+            color: #9ca3af; font-size: 1.125rem;
+            cursor: pointer; transition: color 0.3s;
+            position: relative;
+        }
+        .toolbar-btn:hover { color: var(--primary-orange); }
+        
+        .notification-dot {
+            position: absolute; top: -4px; right: -4px;
+            width: 10px; height: 10px;
+            background-color: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+        body.dark-theme .notification-dot { border-color: var(--card-dark); }
+
+        .avatar-img {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 2px solid var(--primary-orange-light);
+            cursor: pointer; transition: opacity 0.3s;
+        }
+        .avatar-img:hover { opacity: 0.8; }
+        body.dark-theme .avatar-img { border-color: #431407; }
+        
+        .avatar-divider {
+            border-left: 1px solid var(--border-light);
+            padding-left: 0.75rem;
+        }
+        body.dark-theme .avatar-divider { border-color: var(--border-dark); }
+
+        /* ================= WORKSPACE ================= */
+        .workspace {
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 2px dashed #d1d5db;
+            border-radius: 1.5rem;
+            backdrop-filter: blur(4px);
+        }
+        body.dark-theme .workspace {
+            background-color: rgba(30, 30, 30, 0.5);
+            border-color: var(--border-dark);
+        }
+        
+        .workspace-icon-box {
+            width: 96px; height: 96px;
+            background-color: #f3f4f6;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+        body.dark-theme .workspace-icon-box { background-color: #1f2937; color: #4b5563; }
+
+        .workspace-title { font-size: 1.25rem; font-weight: 700; color: #4b5563; }
+        body.dark-theme .workspace-title { color: #d1d5db; }
+        
+        .workspace-desc { color: #9ca3af; font-size: 0.875rem; font-weight: 500; max-width: 300px; text-align: center; }
+
+        /* Hiệu ứng vẫy tay */
+        .wave-container:hover .animate-wave {
+            display: inline-block;
+            animation: wave-animation 1s ease-in-out;
+        }
+        @keyframes wave-animation {
+            0% { transform: rotate(0deg); }
+            20% { transform: rotate(20deg); }
+            40% { transform: rotate(-10deg); }
+            60% { transform: rotate(10deg); }
+            80% { transform: rotate(-10deg); }
+            100% { transform: rotate(0deg); }
+        }
