@@ -1,33 +1,38 @@
-        document.addEventListener('DOMContentLoaded', () => {
-            const themeToggleBtn = document.getElementById('themeToggle');
-            const themeIcon = document.getElementById('themeIcon');
-            const body = document.body;
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.nav-custom-link');
+    const mainFrame = document.getElementById('mainFrame');
+    const defaultDashboardContent = document.getElementById('defaultDashboardContent');
+    const breadcrumbPage = document.getElementById('breadcrumbPage');
 
-            // Hàm áp dụng theme
-            const setTheme = (isDark) => {
-                if (isDark) {
-                    body.classList.add('dark-theme');
-                    themeIcon.classList.remove('fa-moon');
-                    themeIcon.classList.add('fa-sun');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    body.classList.remove('dark-theme');
-                    themeIcon.classList.remove('fa-sun');
-                    themeIcon.classList.add('fa-moon');
-                    localStorage.setItem('theme', 'light');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Active menu
+            navLinks.forEach(item => item.classList.remove('active'));
+            this.classList.add('active');
+
+            const page = this.getAttribute('data-page');
+            if (breadcrumbPage) breadcrumbPage.textContent = page;
+
+            if (page === 'POS / Sales') {
+                // Ẩn nội dung dashboard mặc định
+                if (defaultDashboardContent) defaultDashboardContent.style.display = 'none';
+                
+                // Hiện iframe POS trong ô Workspace to bên phải
+                if (mainFrame) {
+                    mainFrame.style.display = 'block';
+                    mainFrame.src = '../components/pos.html'; // Đi từ pages/ sang components/pos.html
                 }
-            };
-
-            // MẶC ĐỊNH LÀ SÁNG. Chỉ bật dark mode nếu user đã từng nhấn nút và lưu ở localStorage
-            if (localStorage.getItem('theme') === 'dark') {
-                setTheme(true);
-            } else {
-                setTheme(false);
+            } else if (page === 'Dashboard') {
+                if (mainFrame) {
+                    mainFrame.style.display = 'none';
+                    mainFrame.src = '';
+                }
+                if (defaultDashboardContent) {
+                    defaultDashboardContent.style.display = 'block';
+                }
             }
-
-            // Sự kiện khi click nút chuyển đổi
-            themeToggleBtn.addEventListener('click', () => {
-                const isDarkModeNow = body.classList.contains('dark-theme');
-                setTheme(!isDarkModeNow);
-            });
         });
+    });
+});
