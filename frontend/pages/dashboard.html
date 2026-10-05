@@ -28,15 +28,13 @@
 
         <!-- Navigation Menu -->
         <nav class="d-flex flex-column gap-2 flex-grow-1 overflow-auto pe-2 pb-4">
-            <a href="#" class="nav-custom-link active" data-page="Dashboard">
+            <a href="#" class="nav-custom-link" data-page="Dashboard">
                 <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
             </a>
-            <!-- Trong file frontend/pages/dashboard.html -->
-            <div id="mainWorkspace" class="flex-grow-1 p-3">
-        <!-- Đường dẫn ../ sẽ đi từ thư mục pages/ ra ngoài frontend/ rồi đi vào components/ -->
-                 <iframe id="mainFrame" src="../components/pos.html" style="width: 100%; height: calc(100vh - 120px); border: none; border-radius: 12px; background: #fff;"></iframe>
-            </div>
+            <a href="#" class="nav-custom-link" data-page="POS / Sales">
+                <i class="fas fa-cash-register"></i>
+                <span>POS / Sales</span>
             </a>
             <a href="#" class="nav-custom-link" data-page="Invoices">
                 <i class="fas fa-file-invoice"></i>
@@ -303,14 +301,14 @@
                         <a href="#"><i class="fas fa-home"></i></a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-                    <li class="breadcrumb-item active" aria-current="page">Tổng quan</li>
+                    <li class="breadcrumb-item active" aria-current="page" id="breadcrumbPage"></li>
                 </ol>
             </nav>
 
         </header>
 
         <!-- ===== WORKSPACE (Khu vực nội dung chính) ===== -->
-        <div class="flex-grow-1 overflow-auto p-4 pt-3">
+        <div id="defaultDashboardContent" class="flex-grow-1 overflow-auto p-4 pt-3 d-none">
             <div class="workspace w-100 h-100 d-flex flex-column align-items-center justify-content-center">
                 <div class="workspace-icon-box">
                     <i class="fas fa-compass fa-3x"></i>
@@ -321,10 +319,8 @@
                 </p>
             </div>
         </div>
-        <!-- Trong file dashboard.html (Khu vực Workspace chính) -->
-        <div id="mainWorkspace" class="flex-grow-1 p-3">
-            <!-- Thẻ iframe dùng để nhúng pos.html trực tiếp vào đây -->
-            <iframe id="posFrame" src="pos.html" style="width: 100%; height: calc(100vh - 120px); border: none; border-radius: 12px; background: #fff;"></iframe>
+        <div id="mainWorkspace" class="main-workspace d-none">
+            <iframe id="mainFrame" class="pos-frame" src="../components/pos.html" title="Màn hình bán hàng POS"></iframe>
         </div>
 
     </main>
