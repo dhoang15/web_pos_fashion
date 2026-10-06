@@ -40,9 +40,48 @@
         /* ================= SIDEBAR ================= */
         .sidebar {
             width: 260px;
+            height: 100vh;
+            min-height: 0;
             padding: 1.5rem;
             flex-shrink: 0;
         }
+
+        .sidebar > nav {
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .sidebar > nav::-webkit-scrollbar { width: 6px; }
+        .sidebar > nav::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        body.dark-theme .sidebar-footer { border-color: var(--border-dark); }
+
+        .sidebar-logout {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.25rem;
+            border-radius: 1rem;
+            color: #dc2626;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .sidebar-logout i { width: 20px; text-align: center; font-size: 1.125rem; }
+        .sidebar-logout:hover { background-color: #fee2e2; color: #b91c1c; }
+        body.dark-theme .sidebar-logout { color: #f87171; }
+        body.dark-theme .sidebar-logout:hover { background-color: rgba(127, 29, 29, 0.3); color: #fca5a5; }
         
         .logo-text {
             color: #111827;

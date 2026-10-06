@@ -1,20 +1,225 @@
-<div class="sidebar-heading p-3 fs-4 fw-bold text-primary border-bottom">
-    <i class="fas fa-store me-2"></i>B'TRIPLE
-</div>
-<div class="list-group list-group-flush">
-    <a href="#" class="list-group-item list-group-item-action nav-custom-link active" data-page="Dashboard">
-        <i class="fas fa-th-large me-2"></i><span>Dashboard</span>
-    </a>
-    <a href="#" class="list-group-item list-group-item-action nav-custom-link" data-page="POS / Sales">
-        <i class="fas fa-cash-register me-2"></i><span>POS / Sales</span>
-    </a>
-    <a href="#" class="list-group-item list-group-item-action nav-custom-link" data-page="Invoices">
-        <i class="fas fa-file-invoice me-2"></i><span>Invoices</span>
-    </a>
-    <a href="#" class="list-group-item list-group-item-action nav-custom-link" data-page="Customers">
-        <i class="fas fa-users me-2"></i><span>Customers</span>
-    </a>
-    <a href="#" class="list-group-item list-group-item-action nav-custom-link" data-page="Products / Items">
-        <i class="fas fa-tshirt me-2"></i><span>Products / Items</span>
-    </a>
-</div>
+       <header class="navigation-bar">
+
+            <!-- Hàng 1: Lời chào + Hành động -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+
+                <!-- Khu vực chào mừng -->
+                <div class="wave-container">
+                    <h2 class="greeting-title mb-0">
+                        Xin chào, <span id="userName">Admin</span>
+                        <span class="animate-wave">👋</span>
+                    </h2>
+                    <p class="greeting-sub mb-0" id="currentDateTime"></p>
+                </div>
+
+                <!-- Khu vực hành động -->
+                <div class="d-flex align-items-center gap-3">
+
+                    <!-- Thanh tìm kiếm -->
+                    <div class="search-box position-relative d-none d-md-block">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input"
+                               id="globalSearch"
+                               placeholder="Tìm kiếm..."
+                               autocomplete="off">
+                        <kbd class="search-shortcut">Ctrl+K</kbd>
+
+                        <!-- Dropdown kết quả tìm kiếm -->
+                        <div class="search-results" id="searchResults">
+                            <div class="search-results-header">Kết quả gợi ý</div>
+                            <a href="#" class="search-result-item">
+                                <i class="fas fa-tshirt"></i>
+                                <div>
+                                    <div class="search-result-title">Áo Polo Nam</div>
+                                    <div class="search-result-meta">Sản phẩm • SP-001</div>
+                                </div>
+                            </a>
+                            <a href="#" class="search-result-item">
+                                <i class="fas fa-file-invoice"></i>
+                                <div>
+                                    <div class="search-result-title">Hóa đơn #HD-2026-001</div>
+                                    <div class="search-result-meta">Hóa đơn • 05/10/2026</div>
+                                </div>
+                            </a>
+                            <a href="#" class="search-result-item">
+                                <i class="fas fa-user"></i>
+                                <div>
+                                    <div class="search-result-title">Nguyễn Văn A</div>
+                                    <div class="search-result-meta">Khách hàng • KH-001</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Thanh công cụ -->
+                    <div class="toolbar">
+
+                        <!-- Nút Thông báo -->
+                        <div class="dropdown">
+                            <button class="toolbar-btn" id="notificationBtn"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    title="Thông báo">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-dot" id="notificationDot"></span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                                <div class="notification-header">
+                                    <h6 class="mb-0 fw-bold">Thông báo</h6>
+                                    <button class="btn btn-sm btn-link text-decoration-none p-0" id="markAllRead">
+                                        Đọc tất cả
+                                    </button>
+                                </div>
+                                <div class="notification-list">
+                                    <a href="#" class="notification-item unread">
+                                        <div class="notification-icon bg-warning-subtle text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <p class="notification-text mb-1">
+                                                Sản phẩm <strong>"Áo Khoác Denim"</strong> sắp hết hàng (còn 3)
+                                            </p>
+                                            <span class="notification-time">5 phút trước</span>
+                                        </div>
+                                    </a>
+                                    <a href="#" class="notification-item unread">
+                                        <div class="notification-icon bg-success-subtle text-success">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <p class="notification-text mb-1">
+                                                Đơn hàng <strong>#HD-2026-042</strong> đã hoàn thành
+                                            </p>
+                                            <span class="notification-time">15 phút trước</span>
+                                        </div>
+                                    </a>
+                                    <a href="#" class="notification-item">
+                                        <div class="notification-icon bg-info-subtle text-info">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <p class="notification-text mb-1">
+                                                Lô hàng nhập <strong>#NK-088</strong> đã đến kho
+                                            </p>
+                                            <span class="notification-time">1 giờ trước</span>
+                                        </div>
+                                    </a>
+                                    <a href="#" class="notification-item">
+                                        <div class="notification-icon bg-danger-subtle text-danger">
+                                            <i class="fas fa-times-circle"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <p class="notification-text mb-1">
+                                                Khách hàng yêu cầu <strong>đổi/trả</strong> đơn #HD-2026-039
+                                            </p>
+                                            <span class="notification-time">2 giờ trước</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="notification-footer">
+                                    <a href="#">Xem tất cả thông báo</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút Dark/Light Mode -->
+                        <button class="toolbar-btn" id="themeToggle" title="Chuyển đổi giao diện">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                        </button>
+
+                        <!-- Nút Toàn màn hình -->
+                        <button class="toolbar-btn" id="fullscreenBtn" title="Toàn màn hình">
+                            <i class="fas fa-expand" id="fullscreenIcon"></i>
+                        </button>
+
+                        <!-- Nút Ngôn ngữ -->
+                        <div class="dropdown">
+                            <button class="toolbar-btn" id="languageBtn"
+                                    data-bs-toggle="dropdown" title="Ngôn ngữ">
+                                <i class="fas fa-globe"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end language-dropdown">
+                                <li>
+                                    <a class="dropdown-item active" href="#" data-lang="vi">
+                                        🇻🇳 Tiếng Việt
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" data-lang="en">
+                                        🇺🇸 English
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Phân cách + Avatar & User Info -->
+                        <div class="avatar-divider dropdown">
+                            <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="https://ui-avatars.com/api/?name=Admin&background=f97316&color=fff&size=36&font-size=0.4&bold=true"
+                                     class="avatar-img" alt="Avatar">
+                                <div class="avatar-info d-none d-xl-block">
+                                    <span class="avatar-name">Admin</span>
+                                    <span class="avatar-role">Quản trị viên</span>
+                                </div>
+                                <i class="fas fa-chevron-down avatar-chevron d-none d-xl-block"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end user-dropdown">
+                                <li class="user-dropdown-header">
+                                    <img src="https://ui-avatars.com/api/?name=Admin&background=f97316&color=fff&size=64&font-size=0.4&bold=true"
+                                         alt="Avatar">
+                                    <div>
+                                        <strong>Admin</strong>
+                                        <span>admin@btriple.vn</span>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-user-circle me-2"></i> Thông tin cá nhân
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="change_password.html">
+                                        <i class="fas fa-key me-2"></i> Đổi mật khẩu
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-clipboard-list me-2"></i> Nhật ký hoạt động
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div><!-- /.toolbar -->
+                </div><!-- /.hành động -->
+            </div><!-- /.hàng 1 -->
+
+            <!-- Hàng 2: Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-0">
+                <ol class="breadcrumb custom-breadcrumb mb-0" id="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="#"><i class="fas fa-home"></i></a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                    <li class="breadcrumb-item active" aria-current="page" id="breadcrumbPage"></li>
+                </ol>
+            </nav>
+
+        </header>
+
+        <!-- ===== WORKSPACE (Khu vực nội dung chính) ===== -->
+        <div id="defaultDashboardContent" class="flex-grow-1 overflow-auto p-4 pt-3 d-none">
+            <div class="workspace w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                <div class="workspace-icon-box">
+                    <i class="fas fa-compass fa-3x"></i>
+                </div>
+                <h3 class="workspace-title mt-3">Chọn một mục từ menu</h3>
+                <p class="workspace-desc">
+                    Sử dụng sidebar bên trái để điều hướng đến các chức năng của hệ thống
+                </p>
+            </div>
+        </div>
+        <div id="mainWorkspace" class="main-workspace d-none">
+            <iframe id="mainFrame" class="pos-frame" src="../components/pos.html" title="Màn hình bán hàng POS"></iframe>
+        </div>
