@@ -1,4 +1,3 @@
-/* --- Thiết lập Font chữ --- */
 body {
     font-family: 'Montserrat', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -12,14 +11,12 @@ body {
     font-family: 'Montserrat', sans-serif;
 }
 
-/* --- Tiện ích Text --- */
 .tracking-wide { letter-spacing: 0.05em; }
 .tracking-widest { letter-spacing: 0.1em; }
 .cursor-pointer { cursor: pointer; }
 
-/* --- Hình nền cột trái --- */
 .banner-section {
-    background-image: url('../images/background.png'); 
+    background-image: url('../../assets/images/background.png'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -31,12 +28,10 @@ body {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* --- Giới hạn độ rộng của form đăng nhập --- */
 .form-container {
     max-width: 420px;
 }
 
-/* --- Tùy chỉnh Input (Chỉ có đường gạch dưới) --- */
 .input-group-fashion .form-control:focus {
     border-color: #111 !important;
     box-shadow: 0 1px 0 0 #111 !important;

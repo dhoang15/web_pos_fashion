@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B'TRIPLE - Dashboard</title>
+    <link rel="stylesheet" href="../../assets/css/fonts.css">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/variables.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="./dashboard.css">
+</head>
+
+<!-- Body xếp theo chiều dọc (flex-column) -->
+<body class="vh-100 overflow-hidden d-flex flex-column">
+
+    <!-- 1. Thanh đen trên cùng: Chiếm trọn 100% chiều ngang -->
+    <div id="navigation-container"></div>
+
+    <!-- 2. Khu vực thân trang: Chia làm 2 cột trái/phải -->
+    <div class="app-body flex-grow-1 d-flex overflow-hidden">
+        <!-- Cột trái: Sidebar Menu -->
+        <aside id="sidebar-container" class="h-100"></aside>
+
+        <!-- Cột phải: Nội dung chính hiển thị biểu đồ & thẻ thống kê -->
+        <main class="main-area flex-grow-1 h-100 overflow-auto p-4 bg-light">
+            <!-- Nội dung Dashboard sẽ đặt ở đây -->
+        </main>
+    </div>
+
+    <!-- Script chung để fetch navigation.html & sidebar.html (nếu bạn dùng layout.js) -->
+    <!-- <script src="../../assets/js/layout.js"></script> -->
+    <script src="./dashboard.js"></script>
+</body>
+</html>
