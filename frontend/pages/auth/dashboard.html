@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B'TRIPLE - Modern Skeleton Dashboard</title>
+    <title>B'TRIPLE - Basketball Dashboard</title>
     
     <!-- Google Font: Nunito -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,12 +45,11 @@
     <!-- Toast Notification -->
     <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 bg-emerald-500 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 font-semibold text-sm pointer-events-none">
         <i class="fas fa-check-circle text-lg"></i>
-        <span id="toast-msg">Đã lưu cài đặt thành công!</span>
+        <span id="toast-msg">Lưu cài đặt thành công!</span>
     </div>
 
     <!-- Sidebar -->
     <aside class="w-64 p-6 flex flex-col gap-4 flex-shrink-0">
-        
         <!-- Logo -->
         <div class="mb-6 flex items-center gap-3 px-2">
             <i class="fas fa-basketball-ball text-3xl text-orange-500"></i>
@@ -61,81 +60,58 @@
         <nav class="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 pb-6">
             <button data-target="view-pos" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400 font-bold shadow-sm text-left w-full transition-all">
                 <i class="fas fa-cash-register w-5 text-center text-lg"></i>
-                <span class="tracking-wide">POS / Sales</span>
+                <span data-i18n="menu_pos" class="tracking-wide">POS / Sales</span>
             </button>
-            
             <button data-target="view-dashboard" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-th-large w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Dashboard</span>
+                <span data-i18n="menu_dashboard" class="tracking-wide">Dashboard</span>
             </button>
-            
             <button data-target="view-invoices" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-file-invoice w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Invoices</span>
+                <span data-i18n="menu_invoices" class="tracking-wide">Invoices</span>
             </button>
-            
             <button data-target="view-customers" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-users w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Customers & HR</span>
+                <span data-i18n="menu_customers" class="tracking-wide">Customers & HR</span>
             </button>
-            
             <button data-target="view-products" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-tshirt w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Products / Items</span>
+                <span data-i18n="menu_products" class="tracking-wide">Products / Items</span>
             </button>
-            
             <button data-target="view-purchases" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-shopping-bag w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Purchases</span>
+                <span data-i18n="menu_purchases" class="tracking-wide">Purchases</span>
             </button>
-            
             <button data-target="view-reports" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-chart-pie w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Reports</span>
+                <span data-i18n="menu_reports" class="tracking-wide">Reports</span>
             </button>
-            
             <button data-target="view-settings" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all mt-auto text-left w-full">
                 <i class="fas fa-cog w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Settings</span>
+                <span data-i18n="menu_settings" class="tracking-wide">Settings</span>
             </button>
-            
             <button data-target="view-help" class="nav-item flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-darkcard font-semibold transition-all text-left w-full">
                 <i class="fas fa-question-circle w-5 text-center text-lg"></i>
-                <span class="tracking-wide">Help</span>
+                <span data-i18n="menu_help" class="tracking-wide">Help</span>
             </button>
         </nav>
     </aside>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col p-6 pl-0 h-screen overflow-hidden">
-        
         <!-- Top Toolbar & Header -->
         <header class="flex justify-between items-center mb-6 flex-shrink-0">
             <div class="px-2">
                 <h2 id="header-title" class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    Welcome, Admin <span class="text-xl inline-block animate-wave">👋</span>
+                    <span data-i18n="header_welcome">Welcome, Admin</span> <span class="text-xl inline-block animate-wave">👋</span>
                 </h2>
-                <p id="header-subtitle" class="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Here's what happening in your store.</p>
+                <p id="header-subtitle" data-i18n="header_subtitle" class="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Here's what happening in your store.</p>
             </div>
 
             <div class="flex items-center gap-5 bg-white dark:bg-darkcard px-6 py-2.5 rounded-full shadow-sm border border-gray-100 dark:border-gray-800">
-                <button class="text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
-                    <i class="fas fa-search text-lg"></i>
-                </button>
-                
-                <button id="themeToggle" class="text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors w-6 flex justify-center">
-                    <i id="themeIcon" class="fas fa-moon text-lg"></i>
-                </button>
-                
-                <button class="text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors relative">
-                    <i class="fas fa-bell text-lg"></i>
-                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-darkcard rounded-full"></span>
-                </button>
-                
-                <button class="text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
-                    <i class="fas fa-calendar-alt text-lg"></i>
-                </button>
-                
+                <button class="text-gray-400 hover:text-orange-500 transition-colors"><i class="fas fa-search text-lg"></i></button>
+                <button id="themeToggle" class="text-gray-400 hover:text-orange-500 transition-colors w-6 flex justify-center"><i id="themeIcon" class="fas fa-moon text-lg"></i></button>
+                <button class="text-gray-400 hover:text-orange-500 transition-colors relative"><i class="fas fa-bell text-lg"></i><span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-darkcard rounded-full"></span></button>
                 <div class="pl-2 border-l border-gray-200 dark:border-gray-700">
                     <img src="https://i.pravatar.cc/150?img=12" alt="Admin Avatar" class="w-9 h-9 rounded-full border-2 border-orange-100 dark:border-orange-900 cursor-pointer hover:opacity-80">
                 </div>
@@ -145,7 +121,7 @@
         <!-- Dynamic Views Area -->
         <div class="flex-1 overflow-y-auto pr-1">
             
-            <!-- Default Workspace View (POS) -->
+            <!-- Default POS View -->
             <div id="view-pos" class="view-content h-full bg-white/60 dark:bg-darkcard/50 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl flex flex-col items-center justify-center shadow-sm backdrop-blur-sm">
                 <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-300 dark:text-gray-600">
                     <i class="fas fa-layer-group text-4xl"></i>
@@ -161,25 +137,25 @@
                 
                 <!-- System Settings Header & Sub-Tabs -->
                 <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80">
-                    <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mb-1">System Settings</h3>
-                    <p class="text-xs text-gray-400 mb-6">Configure your POS system preferences and business information</p>
+                    <h3 data-i18n="setting_title" class="text-xl font-extrabold text-gray-900 dark:text-white mb-1">System Settings</h3>
+                    <p data-i18n="setting_subtitle" class="text-xs text-gray-400 mb-6">Configure your POS system preferences and business information</p>
 
                     <!-- Sub Navigation Tabs -->
                     <div class="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-100 dark:border-gray-800/80">
-                        <button data-tab="tab-business" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-orange-500 text-white shadow-sm">
-                            Business Info
+                        <button data-tab="tab-business" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <span data-i18n="tab_business">Business Info</span>
                         </button>
                         <button data-tab="tab-invoice" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                            Invoice Settings
+                            <span data-i18n="tab_invoice">Invoice Settings</span>
                         </button>
                         <button data-tab="tab-payment" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                            Payment Methods
+                            <span data-i18n="tab_payment">Payment Methods</span>
                         </button>
-                        <button data-tab="tab-system" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                            System
+                        <button data-tab="tab-system" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-orange-500 text-white shadow-sm">
+                            <span data-i18n="tab_system">System</span>
                         </button>
                         <button data-tab="tab-security" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
-                            Security
+                            <span data-i18n="tab_security">Security</span>
                         </button>
                     </div>
                 </div>
@@ -187,38 +163,38 @@
                 <!-- SUB TAB CONTENTS -->
                 
                 <!-- 1. BUSINESS INFO TAB -->
-                <div id="tab-business" class="setting-tab-content bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
-                    <form onsubmit="event.preventDefault(); showToast('Saved Business Information!');" class="space-y-5">
+                <div id="tab-business" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
+                    <form onsubmit="event.preventDefault(); showToast('saved_biz');" class="space-y-5">
                         <h4 class="text-base font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-store text-orange-500"></i> Business Information
+                            <i class="fas fa-store text-orange-500"></i> <span data-i18n="biz_heading">Business Information</span>
                         </h4>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Business Name</label>
+                                <label data-i18n="biz_name" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Business Name</label>
                                 <input type="text" value="B'TRIPLE Basketball Center" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                                <label data-i18n="biz_email" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Email</label>
                                 <input type="email" value="admin@btriple.com" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Phone</label>
+                                <label data-i18n="biz_phone" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Phone</label>
                                 <input type="text" value="+84 901 234 567" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax ID</label>
+                                <label data-i18n="biz_tax" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax ID</label>
                                 <input type="text" value="TAX123456789" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Address</label>
+                            <label data-i18n="biz_address" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Address</label>
                             <input type="text" value="123 Main Street, District 1, Ho Chi Minh City" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                         </div>
 
                         <div class="pt-3">
-                            <button type="submit" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                            <button type="submit" data-i18n="btn_save_biz" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
                                 Save Changes
                             </button>
                         </div>
@@ -227,37 +203,37 @@
 
                 <!-- 2. INVOICE SETTINGS TAB -->
                 <div id="tab-invoice" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
-                    <form onsubmit="event.preventDefault(); showToast('Saved Invoice Settings!');" class="space-y-5">
+                    <form onsubmit="event.preventDefault(); showToast('saved_inv');" class="space-y-5">
                         <h4 class="text-base font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-file-invoice text-orange-500"></i> Invoice Configuration
+                            <i class="fas fa-file-invoice text-orange-500"></i> <span data-i18n="inv_heading">Invoice Configuration</span>
                         </h4>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Prefix</label>
+                                <label data-i18n="inv_prefix" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Prefix</label>
                                 <input type="text" value="INV-" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Starting Number</label>
+                                <label data-i18n="inv_start_no" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Starting Number</label>
                                 <input type="text" value="001" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax Rate (%)</label>
+                                <label data-i18n="inv_tax_rate" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax Rate (%)</label>
                                 <input type="number" value="10" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Terms (Days)</label>
+                                <label data-i18n="inv_terms" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Terms (Days)</label>
                                 <input type="number" value="30" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Footer Note</label>
+                            <label data-i18n="inv_footer" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Footer Note</label>
                             <textarea rows="3" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">Thank you for your business!</textarea>
                         </div>
 
                         <div class="pt-3">
-                            <button type="submit" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                            <button type="submit" data-i18n="btn_save_inv" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
                                 Save Invoice Settings
                             </button>
                         </div>
@@ -266,17 +242,16 @@
 
                 <!-- 3. PAYMENT METHODS TAB -->
                 <div id="tab-payment" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
-                    <form onsubmit="event.preventDefault(); showToast('Saved Payment Methods!');" class="space-y-4">
+                    <form onsubmit="event.preventDefault(); showToast('saved_pay');" class="space-y-4">
                         <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <i class="fas fa-wallet text-orange-500"></i> Payment Methods
+                            <i class="fas fa-wallet text-orange-500"></i> <span data-i18n="pay_heading">Payment Methods</span>
                         </h4>
 
-                        <!-- Item list -->
                         <div class="space-y-3">
                             <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
                                 <div>
-                                    <p class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cash</p>
-                                    <p class="text-xs text-gray-400">Accept cash payments</p>
+                                    <p data-i18n="pay_cash" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cash</p>
+                                    <p data-i18n="pay_cash_desc" class="text-xs text-gray-400">Accept cash payments</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -286,8 +261,8 @@
 
                             <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
                                 <div>
-                                    <p class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Credit / Debit Cards</p>
-                                    <p class="text-xs text-gray-400">Accept card payments via terminal</p>
+                                    <p data-i18n="pay_card" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Credit / Debit Cards</p>
+                                    <p data-i18n="pay_card_desc" class="text-xs text-gray-400">Accept card payments via terminal</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -297,8 +272,8 @@
 
                             <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
                                 <div>
-                                    <p class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Digital Wallets</p>
-                                    <p class="text-xs text-gray-400">Accept mobile payments (Momo, ZaloPay, Apple Pay)</p>
+                                    <p data-i18n="pay_wallet" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Digital Wallets</p>
+                                    <p data-i18n="pay_wallet_desc" class="text-xs text-gray-400">Accept mobile payments (MoMo, ZaloPay, Apple Pay)</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -308,8 +283,8 @@
 
                             <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
                                 <div>
-                                    <p class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Bank Transfer</p>
-                                    <p class="text-xs text-gray-400">Accept direct bank transfers</p>
+                                    <p data-i18n="pay_bank" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Bank Transfer</p>
+                                    <p data-i18n="pay_bank_desc" class="text-xs text-gray-400">Accept direct bank transfers</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -319,8 +294,8 @@
 
                             <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
                                 <div>
-                                    <p class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cryptocurrency</p>
-                                    <p class="text-xs text-gray-400">Accept Bitcoin and other cryptocurrencies</p>
+                                    <p data-i18n="pay_crypto" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cryptocurrency</p>
+                                    <p data-i18n="pay_crypto_desc" class="text-xs text-gray-400">Accept Bitcoin and other cryptocurrencies</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" class="sr-only peer">
@@ -330,50 +305,52 @@
                         </div>
 
                         <div class="pt-3">
-                            <button type="submit" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                            <button type="submit" data-i18n="btn_save_pay" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
                                 Save Payment Settings
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- 4. SYSTEM TAB -->
-                <div id="tab-system" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80 space-y-6">
-                    <form onsubmit="event.preventDefault(); showToast('Saved System Preferences!');" class="space-y-6">
+                <!-- 4. SYSTEM TAB (Chứa Dropdown đổi Ngôn ngữ) -->
+                <div id="tab-system" class="setting-tab-content bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80 space-y-6">
+                    <form onsubmit="event.preventDefault(); showToast('saved_sys');" class="space-y-6">
                         <!-- System Preferences -->
                         <div>
                             <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-sliders-h text-orange-500"></i> System Preferences
+                                <i class="fas fa-sliders-h text-orange-500"></i> <span data-i18n="sys_heading">System Preferences</span>
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Currency</label>
+                                    <label data-i18n="sys_currency" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Currency</label>
                                     <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
-                                        <option value="USD">USD - US Dollar</option>
                                         <option value="VND" selected>VND - Vietnamese Dong</option>
+                                        <option value="USD">USD - US Dollar</option>
                                         <option value="EUR">EUR - Euro</option>
                                     </select>
                                 </div>
+                                
+                                <!-- DROPDOWN ĐỔI NGÔN NGỮ CHÍNH -->
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Language</label>
-                                    <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
-                                        <option value="en" selected>English</option>
+                                    <label data-i18n="sys_lang" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Language</label>
+                                    <select id="languageSelect" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                        <option value="en">English</option>
                                         <option value="vi">Tiếng Việt</option>
                                     </select>
                                 </div>
+
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Timezone</label>
+                                    <label data-i18n="sys_tz" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Timezone</label>
                                     <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                                         <option value="Asia/Ho_Chi_Minh" selected>Indochina Time (Bangkok, Hanoi, Jakarta)</option>
                                         <option value="EST">Eastern Time (US & Canada)</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Date Format</label>
+                                    <label data-i18n="sys_date_fmt" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Date Format</label>
                                     <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                                         <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
                                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                                     </select>
                                 </div>
                             </div>
@@ -382,12 +359,12 @@
                         <!-- Notifications -->
                         <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
                             <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                                <i class="fas fa-bell text-orange-500"></i> Notifications
+                                <i class="fas fa-bell text-orange-500"></i> <span data-i18n="notif_heading">Notifications</span>
                             </h4>
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Email Notifications</p>
-                                    <p class="text-xs text-gray-400">Receive email alerts for important events</p>
+                                    <p data-i18n="notif_email" class="text-sm font-bold text-gray-800 dark:text-gray-200">Email Notifications</p>
+                                    <p data-i18n="notif_email_desc" class="text-xs text-gray-400">Receive email alerts for important events</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -396,8 +373,8 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Low Stock Alerts</p>
-                                    <p class="text-xs text-gray-400">Get notified when items are running low</p>
+                                    <p data-i18n="notif_stock" class="text-sm font-bold text-gray-800 dark:text-gray-200">Low Stock Alerts</p>
+                                    <p data-i18n="notif_stock_desc" class="text-xs text-gray-400">Get notified when items are running low</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -409,12 +386,12 @@
                         <!-- Data Management -->
                         <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
                             <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                                <i class="fas fa-database text-orange-500"></i> Data Management
+                                <i class="fas fa-database text-orange-500"></i> <span data-i18n="data_heading">Data Management</span>
                             </h4>
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Automatic Backup</p>
-                                    <p class="text-xs text-gray-400">Automatically backup data daily</p>
+                                    <p data-i18n="data_backup" class="text-sm font-bold text-gray-800 dark:text-gray-200">Automatic Backup</p>
+                                    <p data-i18n="data_backup_desc" class="text-xs text-gray-400">Automatically backup data daily</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" checked class="sr-only peer">
@@ -424,7 +401,7 @@
                         </div>
 
                         <div class="pt-3">
-                            <button type="submit" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                            <button type="submit" data-i18n="btn_save_sys" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
                                 Save System Settings
                             </button>
                         </div>
@@ -433,31 +410,30 @@
 
                 <!-- 5. SECURITY TAB -->
                 <div id="tab-security" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80 space-y-6">
-                    <form onsubmit="event.preventDefault(); showToast('Saved Security Settings!');" class="space-y-6">
-                        <!-- Password Policy -->
+                    <form onsubmit="event.preventDefault(); showToast('saved_sec');" class="space-y-6">
                         <div>
                             <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                                <i class="fas fa-user-shield text-orange-500"></i> Security & Access
+                                <i class="fas fa-user-shield text-orange-500"></i> <span data-i18n="sec_heading">Security & Access</span>
                             </h4>
-                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Password Policy</p>
+                            <p data-i18n="sec_policy" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Password Policy</p>
                             
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require password change every 90 days</span>
+                                    <span data-i18n="sec_p1" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require password change every 90 days</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
                                     </label>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Minimum 8 characters</span>
+                                    <span data-i18n="sec_p2" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Minimum 8 characters</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
                                     </label>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require special characters</span>
+                                    <span data-i18n="sec_p3" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require special characters</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked class="sr-only peer">
                                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
@@ -466,28 +442,26 @@
                             </div>
                         </div>
 
-                        <!-- Session Management -->
                         <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Session Management</p>
+                            <p data-i18n="sec_session" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Session Management</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-500 mb-1">Session Timeout (minutes)</label>
+                                    <label data-i18n="sec_timeout" class="block text-xs font-semibold text-gray-500 mb-1">Session Timeout (minutes)</label>
                                     <input type="number" value="30" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-500 mb-1">Max Login Attempts</label>
+                                    <label data-i18n="sec_max_attempts" class="block text-xs font-semibold text-gray-500 mb-1">Max Login Attempts</label>
                                     <input type="number" value="5" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Two-Factor Authentication -->
                         <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Two-Factor Authentication</p>
+                            <p data-i18n="sec_2fa" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Two-Factor Authentication</p>
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">Enable 2FA for all users</p>
-                                    <p class="text-xs text-gray-400">Require two-factor authentication for enhanced security</p>
+                                    <p data-i18n="sec_2fa_label" class="text-sm font-bold text-gray-800 dark:text-gray-200">Enable 2FA for all users</p>
+                                    <p data-i18n="sec_2fa_desc" class="text-xs text-gray-400">Require two-factor authentication for enhanced security</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" class="sr-only peer">
@@ -497,7 +471,7 @@
                         </div>
 
                         <div class="pt-3">
-                            <button type="submit" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                            <button type="submit" data-i18n="btn_save_sec" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
                                 Save Security Settings
                             </button>
                         </div>
@@ -511,12 +485,206 @@
 
     <!-- JS Logic -->
     <script>
+        // BỘ TỪ ĐIỂN DỊCH NGÔN NGỮ (DICTIONARY)
+        const translations = {
+            en: {
+                menu_pos: "POS / Sales",
+                menu_dashboard: "Dashboard",
+                menu_invoices: "Invoices",
+                menu_customers: "Customers & HR",
+                menu_products: "Products / Items",
+                menu_purchases: "Purchases",
+                menu_reports: "Reports",
+                menu_settings: "Settings",
+                menu_help: "Help",
+
+                header_welcome: "Welcome, Admin",
+                header_subtitle: "Here's what happening in your store.",
+
+                setting_title: "System Settings",
+                setting_subtitle: "Configure your POS system preferences and business information",
+
+                tab_business: "Business Info",
+                tab_invoice: "Invoice Settings",
+                tab_payment: "Payment Methods",
+                tab_system: "System",
+                tab_security: "Security",
+
+                biz_heading: "Business Information",
+                biz_name: "Business Name",
+                biz_email: "Email",
+                biz_phone: "Phone",
+                biz_tax: "Tax ID",
+                biz_address: "Address",
+                btn_save_biz: "Save Changes",
+
+                inv_heading: "Invoice Configuration",
+                inv_prefix: "Invoice Prefix",
+                inv_start_no: "Starting Number",
+                inv_tax_rate: "Tax Rate (%)",
+                inv_terms: "Payment Terms (Days)",
+                inv_footer: "Invoice Footer Note",
+                btn_save_inv: "Save Invoice Settings",
+
+                pay_heading: "Payment Methods",
+                pay_cash: "Cash",
+                pay_cash_desc: "Accept cash payments",
+                pay_card: "Credit / Debit Cards",
+                pay_card_desc: "Accept card payments via terminal",
+                pay_wallet: "Digital Wallets",
+                pay_wallet_desc: "Accept mobile payments (MoMo, ZaloPay, Apple Pay)",
+                pay_bank: "Bank Transfer",
+                pay_bank_desc: "Accept direct bank transfers",
+                pay_crypto: "Cryptocurrency",
+                pay_crypto_desc: "Accept Bitcoin and other cryptocurrencies",
+                btn_save_pay: "Save Payment Settings",
+
+                sys_heading: "System Preferences",
+                sys_currency: "Currency",
+                sys_lang: "Language",
+                sys_tz: "Timezone",
+                sys_date_fmt: "Date Format",
+                notif_heading: "Notifications",
+                notif_email: "Email Notifications",
+                notif_email_desc: "Receive email alerts for important events",
+                notif_stock: "Low Stock Alerts",
+                notif_stock_desc: "Get notified when items are running low",
+                data_heading: "Data Management",
+                data_backup: "Automatic Backup",
+                data_backup_desc: "Automatically backup data daily",
+                btn_save_sys: "Save System Settings",
+
+                sec_heading: "Security & Access",
+                sec_policy: "Password Policy",
+                sec_p1: "Require password change every 90 days",
+                sec_p2: "Minimum 8 characters",
+                sec_p3: "Require special characters",
+                sec_session: "Session Management",
+                sec_timeout: "Session Timeout (minutes)",
+                sec_max_attempts: "Max Login Attempts",
+                sec_2fa: "Two-Factor Authentication",
+                sec_2fa_label: "Enable 2FA for all users",
+                sec_2fa_desc: "Require two-factor authentication for enhanced security",
+                btn_save_sec: "Save Security Settings",
+
+                toast_saved: "Settings saved successfully!"
+            },
+            vi: {
+                menu_pos: "Bán hàng / POS",
+                menu_dashboard: "Bảng điều khiển",
+                menu_invoices: "Hóa đơn",
+                menu_customers: "Khách hàng & HR",
+                menu_products: "Sản phẩm & Mặt hàng",
+                menu_purchases: "Nhập hàng",
+                menu_reports: "Báo cáo",
+                menu_settings: "Cài đặt",
+                menu_help: "Trợ giúp",
+
+                header_welcome: "Xin chào, Admin",
+                header_subtitle: "Tình hình hoạt động cửa hàng của bạn hôm nay.",
+
+                setting_title: "Cài đặt hệ thống",
+                setting_subtitle: "Cấu hình tùy chọn hệ thống POS và thông tin cửa hàng bóng rổ",
+
+                tab_business: "Thông tin cửa hàng",
+                tab_invoice: "Cấu hình hóa đơn",
+                tab_payment: "Phương thức thanh toán",
+                tab_system: "Hệ thống",
+                tab_security: "Bảo mật & Quyền",
+
+                biz_heading: "Thông tin doanh nghiệp",
+                biz_name: "Tên cửa hàng / Công ty",
+                biz_email: "Email liên hệ",
+                biz_phone: "Số điện thoại",
+                biz_tax: "Mã số thuế",
+                biz_address: "Địa chỉ cửa hàng",
+                btn_save_biz: "Lưu thay đổi",
+
+                inv_heading: "Cấu hình hóa đơn in",
+                inv_prefix: "Tiền tố hóa đơn (Prefix)",
+                inv_start_no: "Số hóa đơn bắt đầu",
+                inv_tax_rate: "Thuế suất VAT (%)",
+                inv_terms: "Hạn thanh toán (Ngày)",
+                inv_footer: "Ghi chú chân trang hóa đơn",
+                btn_save_inv: "Lưu cấu hình hóa đơn",
+
+                pay_heading: "Phương thức thanh toán",
+                pay_cash: "Tiền mặt (Cash)",
+                pay_cash_desc: "Chấp nhận thanh toán bằng tiền mặt",
+                pay_card: "Thẻ ngân hàng / POS terminal",
+                pay_card_desc: "Chấp nhận thanh toán quẹt thẻ ATM / Visa / Master",
+                pay_wallet: "Ví điện tử",
+                pay_wallet_desc: "Thanh toán di động (MoMo, ZaloPay, Apple Pay)",
+                pay_bank: "Chuyển khoản Ngân hàng",
+                pay_bank_desc: "Nhận tiền trực tiếp qua mã QR / STK ngân hàng",
+                pay_crypto: "Tiền mã hóa (Crypto)",
+                pay_crypto_desc: "Chấp nhận Bitcoin và các đồng tiền kỹ thuật số",
+                btn_save_pay: "Lưu phương thức thanh toán",
+
+                sys_heading: "Tùy chọn hệ thống",
+                sys_currency: "Đơn vị tiền tệ",
+                sys_lang: "Ngôn ngữ hiển thị",
+                sys_tz: "Múi giờ",
+                sys_date_fmt: "Định dạng ngày tháng",
+                notif_heading: "Cấu hình thông báo",
+                notif_email: "Thông báo qua Email",
+                notif_email_desc: "Nhận email cảnh báo khi có biến động quan trọng",
+                notif_stock: "Cảnh báo tồn kho thấp",
+                notif_stock_desc: "Gửi thông báo khi sản phẩm trong kho sắp hết",
+                data_heading: "Quản lý dữ liệu",
+                data_backup: "Tự động sao lưu",
+                data_backup_desc: "Hệ thống tự động sao lưu dữ liệu mỗi ngày",
+                btn_save_sys: "Lưu cài đặt hệ thống",
+
+                sec_heading: "Bảo mật & Quyền truy cập",
+                sec_policy: "Chính sách mật khẩu",
+                sec_p1: "Yêu cầu đổi mật khẩu định kỳ mỗi 90 ngày",
+                sec_p2: "Mật khẩu tối thiểu 8 ký tự",
+                sec_p3: "Bắt buộc chứa ký tự đặc biệt",
+                sec_session: "Quản lý phiên làm việc",
+                sec_timeout: "Thời gian hết phiên (Phút)",
+                sec_max_attempts: "Số lần đăng nhập sai tối đa",
+                sec_2fa: "Xác thực hai yếu tố (2FA)",
+                sec_2fa_label: "Bật 2FA cho toàn bộ tài khoản",
+                sec_2fa_desc: "Yêu cầu mã xác minh 2 bước khi đăng nhập",
+                btn_save_sec: "Lưu cài đặt bảo mật",
+
+                toast_saved: "Đã lưu cài đặt thành công!"
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
+            const languageSelect = document.getElementById('languageSelect');
+            let currentLang = localStorage.getItem('lang') || 'en';
+
+            // Hàm chuyển đổi ngôn ngữ giao diện
+            const setLanguage = (lang) => {
+                currentLang = lang;
+                localStorage.setItem('lang', lang);
+                languageSelect.value = lang;
+
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (translations[lang] && translations[lang][key]) {
+                        el.innerText = translations[lang][key];
+                    }
+                });
+            };
+
+            // Lắng nghe sự kiện thay đổi trên Dropdown Language
+            languageSelect.addEventListener('change', (e) => {
+                setLanguage(e.target.value);
+                showToast('toast_saved');
+            });
+
+            // Khởi chạy ngôn ngữ mặc định
+            setLanguage(currentLang);
+
+            // Dark / Light mode toggle
             const themeToggleBtn = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('themeIcon');
             const htmlElement = document.documentElement;
 
-            // 1. Dark Mode Toggle
             const setTheme = (isDark) => {
                 if (isDark) {
                     htmlElement.classList.add('dark');
@@ -539,15 +707,12 @@
             }
 
             themeToggleBtn.addEventListener('click', () => {
-                const isDarkModeNow = htmlElement.classList.contains('dark');
-                setTheme(!isDarkModeNow);
+                setTheme(!htmlElement.classList.contains('dark'));
             });
 
-            // 2. Sidebar Main View Switcher
+            // Chuyển Sidebar Views
             const navItems = document.querySelectorAll('.nav-item');
             const viewContents = document.querySelectorAll('.view-content');
-            const headerTitle = document.getElementById('header-title');
-            const headerSubtitle = document.getElementById('header-subtitle');
 
             navItems.forEach(item => {
                 item.addEventListener('click', (e) => {
@@ -561,9 +726,7 @@
 
                     const targetId = item.getAttribute('data-target');
 
-                    viewContents.forEach(view => {
-                        view.classList.add('hidden');
-                    });
+                    viewContents.forEach(view => view.classList.add('hidden'));
 
                     const targetView = document.getElementById(targetId);
                     if (targetView) {
@@ -571,38 +734,23 @@
                     } else {
                         document.getElementById('view-pos').classList.remove('hidden');
                     }
-
-                    const navText = item.querySelector('span').innerText;
-                    if (targetId === 'view-settings') {
-                        headerTitle.innerHTML = `Settings <span class="text-xl inline-block">⚙️</span>`;
-                        headerSubtitle.innerText = 'Configure your POS system preferences and business information.';
-                    } else {
-                        headerTitle.innerHTML = `Welcome, Admin <span class="text-xl inline-block animate-wave">👋</span>`;
-                        headerSubtitle.innerText = `Currently viewing: ${navText}.`;
-                    }
                 });
             });
 
-            // 3. Settings Sub-Tabs Switcher (Figma Style)
+            // Chuyển Settings Sub-Tabs
             const settingTabs = document.querySelectorAll('.setting-tab-btn');
             const settingContents = document.querySelectorAll('.setting-tab-content');
 
             settingTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // Reset all tab button styles
                     settingTabs.forEach(t => {
                         t.className = "setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800";
                     });
 
-                    // Active clicked tab button
                     tab.className = "setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-orange-500 text-white shadow-sm";
 
-                    // Hide all tab contents
-                    settingContents.forEach(content => {
-                        content.classList.add('hidden');
-                    });
+                    settingContents.forEach(content => content.classList.add('hidden'));
 
-                    // Show target content
                     const targetTabId = tab.getAttribute('data-tab');
                     const targetTabContent = document.getElementById(targetTabId);
                     if (targetTabContent) {
@@ -611,11 +759,12 @@
                 });
             });
 
-            // 4. Toast Notification Function
-            window.showToast = (msg) => {
+            // Toast notification
+            window.showToast = (msgKey) => {
                 const toast = document.getElementById('toast');
                 const toastMsg = document.getElementById('toast-msg');
-                toastMsg.innerText = msg;
+                toastMsg.innerText = translations[currentLang][msgKey] || translations[currentLang]['toast_saved'];
+                
                 toast.classList.remove('-translate-y-20', 'opacity-0');
                 toast.classList.add('translate-y-0', 'opacity-100');
 
