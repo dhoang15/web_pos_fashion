@@ -1,0 +1,131 @@
+:root {
+    --bg-light: #f3f4f6;
+    --text-light: #1f2937;
+    --text-muted-light: #6b7280;
+    --border-light: #e5e7eb;
+    --primary-orange: #f97316;
+    --primary-orange-light: #ffedd5;
+}
+
+body {
+    min-width: 320px;
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-light);
+}
+
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    min-height: 0;
+    padding: 1.5rem;
+    flex-shrink: 0;
+}
+
+.logo-text {
+    color: #111827;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-style: italic;
+    letter-spacing: 1px;
+}
+
+.sidebar > nav {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.sidebar > nav::-webkit-scrollbar { width: 6px; }
+.sidebar > nav::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 999px;
+}
+
+.nav-custom-link,
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-custom-link {
+    color: var(--text-muted-light);
+}
+
+.nav-custom-link i,
+.sidebar-logout i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.125rem;
+}
+
+.nav-custom-link:hover {
+    background-color: #e5e7eb;
+    color: var(--text-light);
+}
+
+.nav-custom-link.active {
+    background-color: var(--primary-orange-light);
+    color: var(--primary-orange);
+}
+
+.sidebar-footer {
+    flex-shrink: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.sidebar-logout {
+    color: #dc2626;
+}
+
+.sidebar-logout:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.main-area {
+    min-width: 0;
+    background-color: var(--bg-light);
+}
+
+.navigation-bar {
+    flex-shrink: 0;
+    padding: 1.5rem;
+}
+
+.greeting-title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.custom-breadcrumb {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.custom-breadcrumb a {
+    color: #9ca3af;
+    text-decoration: none;
+}
+
+.custom-breadcrumb a:hover {
+    color: var(--primary-orange);
+}
+
+.custom-breadcrumb .breadcrumb-item.active {
+    color: var(--text-muted-light);
+    font-weight: 600;
+}
+
+.custom-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    color: #d1d5db;
+    content: '›';
+}
