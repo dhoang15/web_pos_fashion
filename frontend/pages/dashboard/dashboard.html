@@ -1,40 +1,53 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B'TRIPLE - Dashboard</title>
-    <link rel="stylesheet" href="../../assets/css/fonts.css">
+    <title>B'TRIPLE - Basketball Dashboard</title>
+    
+    <!-- Google Font: Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/variables.css">
-    <link rel="stylesheet" href="../../assets/css/base.css">
-    <link rel="stylesheet" href="./dashboard.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../assets/js/tailwind-config.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="../customers/customers.css">
+    <link rel="stylesheet" href="../settings/settings.css">
 </head>
 
-<!-- Body xếp theo chiều dọc (flex-column) -->
-<body class="vh-100 overflow-hidden d-flex flex-column">
+<body class="bg-[#F3F4F6] dark:bg-darkbg text-gray-800 dark:text-gray-200 font-sans h-screen flex overflow-hidden selection:bg-orange-500 selection:text-white">
 
-    <!-- 1. Thanh đen trên cùng: Chiếm trọn 100% chiều ngang -->
-    <div id="navigation-container"></div>
-
-    <!-- 2. Khu vực thân trang: Chia làm 2 cột trái/phải -->
-    <div class="app-body flex-grow-1 d-flex overflow-hidden">
-        <!-- Cột trái: Sidebar Menu -->
-        <aside id="sidebar-container" class="h-100"></aside>
-
-        <!-- Cột phải: Nội dung chính hiển thị biểu đồ & thẻ thống kê -->
-        <main class="main-area flex-grow-1 h-100 overflow-auto p-4 bg-light">
-            <!-- Nội dung Dashboard sẽ đặt ở đây -->
-        </main>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 bg-emerald-500 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-3 font-semibold text-sm pointer-events-none">
+        <i class="fas fa-check-circle text-lg"></i>
+        <span id="toast-msg">Lưu cài đặt thành công!</span>
     </div>
 
-    <!-- Script chung để fetch navigation.html & sidebar.html (nếu bạn dùng layout.js) -->
-    <!-- <script src="../../assets/js/layout.js"></script> -->
-    <script src="./dashboard.js"></script>
+    <!-- Sidebar -->
+    <div data-include="../../layouts/sidebar.html"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col p-6 pl-0 h-screen overflow-hidden">
+        <!-- Top Toolbar & Header -->
+        <div data-include="../../layouts/navigation.html"></div>
+
+        <!-- Dynamic Views Area -->
+        <div class="flex-1 overflow-y-auto pr-1">
+            <div data-include="../pos/pos.html"></div>
+            <div data-include="../customers/customers.html"></div>
+            <div data-include="../settings/settings.html"></div>
+        </div>
+    </main>
+
+    <!-- JS (include.js nạp translations.js, customers.js, settings.js, dashboard.js) -->
+    <script src="../../assets/js/include.js"></script>
 </body>
 </html>
