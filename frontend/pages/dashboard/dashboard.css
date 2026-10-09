@@ -2,3 +2,23 @@
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 ::-webkit-scrollbar { width: 0px; }
+
+/* ===== Nền sidebar tách khỏi vùng nội dung ===== */
+
+/* Sáng: trắng -> cam nhạt */
+.app-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #ffedd5 100%);
+    border-right: 1px solid #fed7aa;
+}
+
+/* Tối: đen pha xanh dạ quang */
+.dark .app-sidebar {
+    background: linear-gradient(180deg, #04181c 0%, #02080c 100%);
+    border-right: 1px solid rgba(0, 255, 214, .25);
+    box-shadow: 4px 0 24px -8px rgba(0, 255, 214, .18);
+}
+
+/* Vùng nội dung: giữ nền body (sáng #F3F4F6, tối #121212) */
+.app-main {
+    background: transparent;
+}

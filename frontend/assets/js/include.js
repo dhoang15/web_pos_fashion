@@ -6,7 +6,7 @@
         const path = el.dataset.include;
         try {
             const res = await fetch(path);
-            // FIX 1: file không tồn tại (404) thì KHÔNG chèn chữ "Cannot GET..." vào trang nữa
+            // File không tồn tại (404) thì KHÔNG chèn chữ "Cannot GET..." vào trang
             if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
             el.outerHTML = await res.text();
         } catch (err) {
@@ -16,24 +16,23 @@
     }
 
     // 2. Nạp script theo đúng thứ tự
-    // FIX 2: thêm onerror. Trước đây file 404 thì onload không bao giờ chạy
-    //        -> promise treo mãi -> dashboard.js không được nạp -> dark mode + sidebar chết hết.
+    // Có onerror: file 404 thì vẫn đi tiếp, không làm treo các script phía sau.
     const load = (src) => new Promise((resolve) => {
         const s = document.createElement('script');
         s.src = src;
         s.onload = resolve;
         s.onerror = () => {
             console.error(`[include] Không nạp được script: ${src}`);
-            resolve(); // vẫn đi tiếp để các script còn lại chạy
+            resolve();
         };
         document.body.appendChild(s);
     });
     await load('../../assets/js/translations.js');
     await load('../customers/customers.js');
-    await load('../settings/setting.js');
-    await load('../dashboard/dashboard.js');
+    await load('../settings/settings.js');   // đã sửa: settings/settings.js (khớp tên thư mục + file)
+    await load('./dashboard.js');
 
     // 3. DOMContentLoaded thật đã xảy ra trước khi fetch xong,
-    //    nên kích lại một lần để setting.js và dashboard.js chạy.
+    //    nên kích lại một lần để settings.js và dashboard.js chạy.
     document.dispatchEvent(new Event('DOMContentLoaded'));
 })();
