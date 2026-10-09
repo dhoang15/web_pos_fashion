@@ -1,0 +1,347 @@
+<!-- SETTINGS VIEW FULL (Chuẩn Figma) -->
+            <div id="view-settings" class="view-content hidden space-y-6">
+                
+                <!-- System Settings Header & Sub-Tabs -->
+                <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80">
+                    <h3 data-i18n="setting_title" class="text-xl font-extrabold text-gray-900 dark:text-white mb-1">System Settings</h3>
+                    <p data-i18n="setting_subtitle" class="text-xs text-gray-400 mb-6">Configure your POS system preferences and business information</p>
+
+                    <!-- Sub Navigation Tabs -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-100 dark:border-gray-800/80">
+                        <button data-tab="tab-business" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <span data-i18n="tab_business">Business Info</span>
+                        </button>
+                        <button data-tab="tab-invoice" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <span data-i18n="tab_invoice">Invoice Settings</span>
+                        </button>
+                        <button data-tab="tab-payment" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <span data-i18n="tab_payment">Payment Methods</span>
+                        </button>
+                        <button data-tab="tab-system" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-orange-500 text-white shadow-sm">
+                            <span data-i18n="tab_system">System</span>
+                        </button>
+                        <button data-tab="tab-security" class="setting-tab-btn px-5 py-2.5 rounded-full text-xs font-bold transition-all text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <span data-i18n="tab_security">Security</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUB TAB CONTENTS -->
+                
+                <!-- 1. BUSINESS INFO TAB -->
+                <div id="tab-business" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
+                    <form onsubmit="event.preventDefault(); showToast('saved_biz');" class="space-y-5">
+                        <h4 class="text-base font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-store text-orange-500"></i> <span data-i18n="biz_heading">Business Information</span>
+                        </h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label data-i18n="biz_name" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Business Name</label>
+                                <input type="text" value="B'TRIPLE Basketball Center" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="biz_email" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                                <input type="email" value="admin@btriple.com" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="biz_phone" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Phone</label>
+                                <input type="text" value="+84 901 234 567" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="biz_tax" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax ID</label>
+                                <input type="text" value="TAX123456789" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <div>
+                                <label data-i18n="biz_address" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Address</label>
+                                <input type="text" value="123 Main Street, District 1, Ho Chi Minh City" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+
+                        <div class="pt-3">
+                            <button type="submit" data-i18n="btn_save_biz" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 2. INVOICE SETTINGS TAB -->
+                <div id="tab-invoice" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
+                    <form onsubmit="event.preventDefault(); showToast('saved_inv');" class="space-y-5">
+                        <h4 class="text-base font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fas fa-file-invoice text-orange-500"></i> <span data-i18n="inv_heading">Invoice Configuration</span>
+                        </h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label data-i18n="inv_prefix" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Prefix</label>
+                                <input type="text" value="INV-" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="inv_start_no" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Starting Number</label>
+                                <input type="text" value="001" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="inv_tax_rate" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Tax Rate (%)</label>
+                                <input type="number" value="10" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label data-i18n="inv_terms" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Payment Terms (Days)</label>
+                                <input type="number" value="30" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label data-i18n="inv_footer" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Invoice Footer Note</label>
+                            <textarea rows="3" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">Thank you for your business!</textarea>
+                        </div>
+
+                        <div class="pt-3">
+                            <button type="submit" data-i18n="btn_save_inv" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                                Save Invoice Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 3. PAYMENT METHODS TAB -->
+                <div id="tab-payment" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80">
+                    <form onsubmit="event.preventDefault(); showToast('saved_pay');" class="space-y-4">
+                        <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-wallet text-orange-500"></i> <span data-i18n="pay_heading">Payment Methods</span>
+                        </h4>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p data-i18n="pay_cash" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cash</p>
+                                    <p data-i18n="pay_cash_desc" class="text-xs text-gray-400">Accept cash payments</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p data-i18n="pay_card" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Credit / Debit Cards</p>
+                                    <p data-i18n="pay_card_desc" class="text-xs text-gray-400">Accept card payments via terminal</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p data-i18n="pay_wallet" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Digital Wallets</p>
+                                    <p data-i18n="pay_wallet_desc" class="text-xs text-gray-400">Accept mobile payments (MoMo, ZaloPay, Apple Pay)</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p data-i18n="pay_bank" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Bank Transfer</p>
+                                    <p data-i18n="pay_bank_desc" class="text-xs text-gray-400">Accept direct bank transfers</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p data-i18n="pay_crypto" class="font-extrabold text-sm text-gray-800 dark:text-gray-200">Cryptocurrency</p>
+                                    <p data-i18n="pay_crypto_desc" class="text-xs text-gray-400">Accept Bitcoin and other cryptocurrencies</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-3">
+                            <button type="submit" data-i18n="btn_save_pay" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                                Save Payment Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 4. SYSTEM TAB (Chứa Dropdown đổi Ngôn ngữ) -->
+                <div id="tab-system" class="setting-tab-content bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80 space-y-6">
+                    <form onsubmit="event.preventDefault(); showToast('saved_sys');" class="space-y-6">
+                        <!-- System Preferences -->
+                        <div>
+                            <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-sliders-h text-orange-500"></i> <span data-i18n="sys_heading">System Preferences</span>
+                        </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label data-i18n="sys_currency" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Currency</label>
+                                    <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                        <option value="VND" selected>VND - Vietnamese Dong</option>
+                                        <option value="USD">USD - US Dollar</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- DROPDOWN ĐỔI NGÔN NGỮ CHÍNH -->
+                                <div>
+                                    <label data-i18n="sys_lang" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Language</label>
+                                    <select id="languageSelect" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                        <option value="en">English</option>
+                                        <option value="vi">Tiếng Việt</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label data-i18n="sys_tz" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Timezone</label>
+                                    <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                        <option value="Asia/Ho_Chi_Minh" selected>Indochina Time (Bangkok, Hanoi, Jakarta)</option>
+                                        <option value="EST">Eastern Time (US & Canada)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label data-i18n="sys_date_fmt" class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Date Format</label>
+                                    <select class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                        <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+                                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                            <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-bell text-orange-500"></i> <span data-i18n="notif_heading">Notifications</span>
+                        </h4>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p data-i18n="notif_email" class="text-sm font-bold text-gray-800 dark:text-gray-200">Email Notifications</p>
+                                    <p data-i18n="notif_email_desc" class="text-xs text-gray-400">Receive email alerts for important events</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p data-i18n="notif_stock" class="text-sm font-bold text-gray-800 dark:text-gray-200">Low Stock Alerts</p>
+                                    <p data-i18n="notif_stock_desc" class="text-xs text-gray-400">Get notified when items are running low</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Data Management -->
+                        <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                            <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-database text-orange-500"></i> <span data-i18n="data_heading">Data Management</span>
+                        </h4>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p data-i18n="data_backup" class="text-sm font-bold text-gray-800 dark:text-gray-200">Automatic Backup</p>
+                                    <p data-i18n="data_backup_desc" class="text-xs text-gray-400">Automatically backup data daily</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-3">
+                            <button type="submit" data-i18n="btn_save_sys" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                                Save System Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 5. SECURITY TAB -->
+                <div id="tab-security" class="setting-tab-content hidden bg-white dark:bg-darkcard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800/80 space-y-6">
+                    <form onsubmit="event.preventDefault(); showToast('saved_sec');" class="space-y-6">
+                        <div>
+                            <h4 class="text-base font-extrabold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                            <i class="fas fa-user-shield text-orange-500"></i> <span data-i18n="sec_heading">Security & Access</span>
+                        </h4>
+                            <p data-i18n="sec_policy" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Password Policy</p>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span data-i18n="sec_p1" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require password change every 90 days</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span data-i18n="sec_p2" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Minimum 8 characters</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span data-i18n="sec_p3" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Require special characters</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
+                            <p data-i18n="sec_session" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Session Management</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label data-i18n="sec_timeout" class="block text-xs font-semibold text-gray-500 mb-1">Session Timeout (minutes)</label>
+                                    <input type="number" value="30" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label data-i18n="sec_max_attempts" class="block text-xs font-semibold text-gray-500 mb-1">Max Login Attempts</label>
+                                    <input type="number" value="5" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
+                            <p data-i18n="sec_2fa" class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">Two-Factor Authentication</p>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p data-i18n="sec_2fa_label" class="text-sm font-bold text-gray-800 dark:text-gray-200">Enable 2FA for all users</p>
+                                    <p data-i18n="sec_2fa_desc" class="text-xs text-gray-400">Require two-factor authentication for enhanced security</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-3">
+                            <button type="submit" data-i18n="btn_save_sec" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                                Save Security Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>

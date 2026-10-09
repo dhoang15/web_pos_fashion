@@ -1,0 +1,29 @@
+<!-- CUSTOMERS VIEW (độc lập, không dùng chung code với view khác) -->
+<div id="view-customers" class="view-content hidden space-y-6">
+    <div class="bg-white dark:bg-darkcard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800/80">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+                <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mb-1">Customers & HR</h3>
+                <p class="text-xs text-gray-400">Manage customers and staff of your store</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <input id="custSearch" type="text" placeholder="Search by name, phone..." class="w-64 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                <button id="btnAddCustomer" class="px-6 py-3 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30">
+                    <i class="fas fa-plus mr-2"></i>Add Customer
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="cust-table w-full text-sm">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Phone</th><th>Type</th><th>Total Spent</th>
+                    </tr>
+                </thead>
+                <tbody id="custBody"></tbody>
+            </table>
+            <p id="custEmpty" class="hidden text-center text-gray-400 text-sm py-8">No customers found.</p>
+        </div>
+    </div>
+</div>
