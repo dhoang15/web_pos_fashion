@@ -29,6 +29,7 @@
     });
     await load('../../assets/js/translations.js');
     await load('../customers/customers.js');
+    await load('../invoices/invoices.js');
     await load('../settings/settings.js');   // đã sửa: settings/settings.js (khớp tên thư mục + file)
     await load('../pos/pos.js');
     await load('./dashboard.js');
