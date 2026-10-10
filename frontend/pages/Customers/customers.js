@@ -71,12 +71,12 @@
             </div>
         </td>
         <td class="text-gray-700 dark:text-gray-300">${c.purchases}</td>
-        <td class="text-orange-600 dark:text-orange-400 font-bold">${pointsOf(c.spent).toLocaleString('vi-VN')}</td>
+        <td class="text-amber-500 dark:text-yellow-400 font-bold">${pointsOf(c.spent).toLocaleString('vi-VN')}</td>
         <td class="text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${fmt(c.spent)}</td>
         <td><span class="cust-badge cust-tier-${tierOf(c.spent)}">${esc(t('cus_tier_' + tierOf(c.spent)))}</span></td>
         <td class="whitespace-nowrap">
-            <button type="button" data-act="view" data-id="${c.id}" class="cust-icon-btn" aria-label="${esc(t('cus_view'))}"><i class="far fa-eye"></i></button>
-            <button type="button" data-act="edit" data-id="${c.id}" class="cust-icon-btn" aria-label="${esc(t('cus_edit'))}"><i class="far fa-pen-to-square"></i></button>
+            <button type="button" data-act="view" data-id="${c.id}" class="cust-icon-btn cust-icon-view" aria-label="${esc(t('cus_view'))}"><i class="far fa-eye"></i></button>
+            <button type="button" data-act="edit" data-id="${c.id}" class="cust-icon-btn cust-icon-edit" aria-label="${esc(t('cus_edit'))}"><i class="far fa-pen-to-square"></i></button>
         </td>
     </tr>`;
 
@@ -104,6 +104,8 @@
     const applyStaticText = () => {
         el.search.placeholder = t('cus_search');
         root.querySelectorAll('[data-i18n-aria]').forEach(n => n.setAttribute('aria-label', t(n.dataset.i18nAria)));
+        // Placeholder trong các ô của form (Full Name, Email Address, ...)
+        root.querySelectorAll('[data-i18n-ph]').forEach(n => { n.placeholder = t(n.dataset.i18nPh); });
         // Tiêu đề / nút của form phụ thuộc chế độ thêm hoặc sửa
         const editing = state.editingId !== null;
         el.formTitle.textContent = t(editing ? 'cus_form_edit_title' : 'cus_form_add_title');
@@ -178,7 +180,7 @@
         if (email && !EMAIL_RE.test(email)) { setError(el.email, el.errEmail, t('cus_err_email')); ok = false; }
 
         if (!ok) {
-            const firstBad = [el.name, el.phone, el.email].find(i => i.getAttribute('aria-invalid') === 'true');
+            const firstBad = [el.name, el.email, el.phone].find(i => i.getAttribute('aria-invalid') === 'true');
             if (firstBad) firstBad.focus();
         }
         return ok;
