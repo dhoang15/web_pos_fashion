@@ -28,10 +28,12 @@
         document.body.appendChild(s);
     });
     await load('../../assets/js/translations.js');
+    await load('../../assets/js/store.js');  
     await load('../customers/customers.js');
     await load('../invoices/invoices.js');
     await load('../settings/settings.js');   // đã sửa: settings/settings.js (khớp tên thư mục + file)
     await load('../pos/pos.js');
+    await load('../products/products.js');   
     await load('./dashboard.js');
 
     // 3. DOMContentLoaded thật đã xảy ra trước khi fetch xong,

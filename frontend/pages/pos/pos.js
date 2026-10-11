@@ -5,35 +5,31 @@
         console.warn('[pos] Không thấy #view-pos (pos.html chưa nạp?)');
         return;
     }
+    if (!window.Store) {
+        console.warn('[pos] Không thấy Store (assets/js/store.js chưa được nạp trước pos.js?)');
+        return;
+    }
 
     // ---------- Cấu hình ----------
-    const IMG = '../../assets/images/products/';
     const TAX_RATE = 0.1;                       // VAT 10% (sau này đọc từ Settings > Invoice)
     const PROMOS = { NEWUSER: 10, BTRIPLE5: 5 }; // mã -> % giảm
     const SIZES = [38, 39, 40, 41, 42, 43, 44, 45];
     const DEFAULT_SIZE = 42;
-    const LOW_STOCK = 10;
+    const LOW_STOCK = Store.LOW_STOCK;
 
-    const categories = [
-        { id: 'all' },
-        { id: 'high', label: 'Jordan 1 High' },
-        { id: 'mid',  label: 'Jordan 1 Mid' },
-        { id: 'aj4',  label: 'Jordan 4' },
-    ];
+    // Sản phẩm lấy từ kho dùng chung (assets/js/store.js), được quản lý ở trang Products.
+    const all = () => Store.getProducts();
+    const byId = (id) => Store.getProduct(id);
+    const categories = () => Store.categories();
 
-    const products = [
-        { id: 'aj1-brotherhood', name: 'Air Jordan 1 Retro High OG "Brotherhood"', cat: 'high', price: 4590000, stock: 24, img: 'jordan-1-high-brotherhood.jpg', desc: 'pos_desc_1' },
-        { id: 'aj1-linen',       name: 'Air Jordan 1 Mid "Linen"',                 cat: 'mid',  price: 3290000, stock: 18, img: 'jordan-1-mid-linen.jpg',        desc: 'pos_desc_2' },
-        { id: 'aj1-black-toe',   name: 'Air Jordan 1 High "Black Toe"',            cat: 'high', price: 4890000, stock: 12, img: 'jordan-1-high-black-toe.jpg',   desc: 'pos_desc_3' },
-        { id: 'aj4-black-cat',   name: 'Air Jordan 4 Retro "Black Cat"',           cat: 'aj4',  price: 5990000, stock: 9,  img: 'jordan-4-black-cat.jpg',        desc: 'pos_desc_4' },
-        { id: 'aj1-smoke-grey',  name: 'Air Jordan 1 Mid "Light Smoke Grey"',      cat: 'mid',  price: 3190000, stock: 31, img: 'jordan-1-mid-grey.jpg',         desc: 'pos_desc_5' },
-        { id: 'aj1-navy',        name: 'Air Jordan 1 Mid "Navy"',                  cat: 'mid',  price: 3390000, stock: 6,  img: 'jordan-1-mid-navy.jpg',         desc: 'pos_desc_6' },
-    ];
-    const byId = Object.fromEntries(products.map(p => [p.id, p]));
+    // Ảnh sản phẩm; chưa có ảnh thì hiện khung icon
+    const imgHTML = (p, cls, alt = '') => p.img
+        ? `<img src="${esc(p.img)}" alt="${esc(alt)}" loading="lazy" class="${cls}">`
+        : `<div class="${cls} flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"><i class="fas fa-shoe-prints text-2xl"></i></div>`;
 
     // ---------- Trạng thái ----------
     const state = {
-        cat: 'all',
+        cat: '',         // '' = tất cả danh mục
         q: '',
         cart: [],        // [{ id, size, qty }]
         promo: null,     // { code, pct }
@@ -65,7 +61,7 @@
     const cartQty = () => state.cart.reduce((s, l) => s + l.qty, 0);
 
     const calc = () => {
-        const sub = state.cart.reduce((s, l) => s + byId[l.id].price * l.qty, 0);
+        const sub = state.cart.reduce((s, l) => s + byId(l.id).price * l.qty, 0);
         const discount = state.promo ? Math.round(sub * state.promo.pct / 100) : 0;
         const base = sub - discount;
         const tax = Math.round(base * TAX_RATE);
@@ -74,11 +70,13 @@
 
     // ---------- Render: tabs + sản phẩm ----------
     const renderTabs = () => {
-        el.tabs.innerHTML = categories.map(c => {
-            const count = c.id === 'all' ? products.length : products.filter(p => p.cat === c.id).length;
-            const active = state.cat === c.id;
-            const label = c.id === 'all' ? t('pos_cat_all') : c.label;
-            return `<button type="button" data-act="cat" data-id="${c.id}"
+        // Danh mục bị xóa/đổi tên ở Products -> quay về "Tất cả"
+        if (state.cat && !categories().includes(state.cat)) state.cat = '';
+        el.tabs.innerHTML = ['', ...categories()].map(c => {
+            const count = c === '' ? all().length : all().filter(p => p.category === c).length;
+            const active = state.cat === c;
+            const label = c === '' ? t('pos_cat_all') : c;
+            return `<button type="button" data-act="cat" data-id="${esc(c)}"
                 class="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-bold whitespace-nowrap border transition-colors ${active
                     ? 'bg-orange-500 border-orange-500 text-white shadow-sm'
                     : 'bg-white dark:bg-gray-800/40 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-orange-300'}">
@@ -95,12 +93,12 @@
         const badge = out ? t('pos_out_of_stock') : t('pos_stock_left', { n: left });
         return `<article class="pos-card bg-white dark:bg-gray-800/40 rounded-3xl p-4 border border-gray-100 dark:border-gray-700/60 shadow-sm flex flex-col">
             <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[4/3]">
-                <img src="${IMG}${p.img}" alt="${esc(p.name)}" loading="lazy" class="w-full h-full object-cover ${out ? 'grayscale opacity-60' : ''}">
+                ${imgHTML(p, 'w-full h-full object-cover ' + (out ? 'grayscale opacity-60' : ''), p.name)}
                 <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-bold text-white ${out ? 'bg-red-500' : low ? 'bg-orange-500' : 'bg-gray-900/85'}">${esc(badge)}</span>
             </div>
             <div class="px-1 pt-4 flex-1 flex flex-col">
                 <h4 class="font-extrabold text-sm text-gray-900 dark:text-white leading-snug pos-clamp-2">${esc(p.name)}</h4>
-                <p class="text-xs leading-relaxed text-gray-400 mt-1.5 pos-clamp-2">${esc(t(p.desc))}</p>
+                <p class="text-xs leading-relaxed text-gray-400 mt-1.5 pos-clamp-2">${esc(p.desc || '')}</p>
                 <p class="mt-auto pt-4 font-extrabold text-base text-gray-900 dark:text-white">${fmt(p.price)}</p>
             </div>
             <button type="button" data-act="add" data-id="${p.id}" ${out ? 'disabled' : ''}
@@ -112,18 +110,18 @@
 
     const renderProducts = () => {
         const q = state.q.trim().toLowerCase();
-        const list = products.filter(p =>
-            (state.cat === 'all' || p.cat === state.cat) && p.name.toLowerCase().includes(q));
+        const list = all().filter(p =>
+            (state.cat === '' || p.category === state.cat) && p.name.toLowerCase().includes(q));
         el.grid.innerHTML = list.map(cardHTML).join('');
         el.empty.classList.toggle('hidden', list.length > 0);
     };
 
     // ---------- Render: giỏ hàng ----------
     const lineHTML = (l, i) => {
-        const p = byId[l.id];
+        const p = byId(l.id);
         const canInc = remaining(p) > 0;
         return `<li class="flex gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
-            <img src="${IMG}${p.img}" alt="" class="w-[72px] h-[72px] rounded-xl object-cover flex-shrink-0">
+            ${imgHTML(p, 'w-[72px] h-[72px] rounded-xl object-cover flex-shrink-0')}
             <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2">
                     <p class="font-bold text-sm text-gray-900 dark:text-white leading-snug pos-clamp-2">${esc(p.name)}</p>
@@ -220,7 +218,7 @@
 
     // ---------- Thao tác giỏ hàng ----------
     const addToCart = (id) => {
-        const p = byId[id];
+        const p = byId(id);
         if (!p || remaining(p) <= 0) return;
         const line = state.cart.find(l => l.id === id && l.size === DEFAULT_SIZE);
         if (line) line.qty += 1;
@@ -231,7 +229,7 @@
     const changeQty = (i, delta) => {
         const line = state.cart[i];
         if (!line) return;
-        if (delta > 0 && remaining(byId[line.id]) <= 0) return;
+        if (delta > 0 && remaining(byId(line.id)) <= 0) return;
         line.qty += delta;
         if (line.qty <= 0) state.cart.splice(i, 1);
         cartChanged();
@@ -277,11 +275,12 @@
 
     const checkout = () => {
         if (state.cart.length === 0) return;
-        // Trừ tồn kho (dữ liệu mẫu; sau này gọi API tạo hóa đơn)
-        state.cart.forEach(l => { byId[l.id].stock -= l.qty; });
+        const lines = state.cart.map(l => ({ id: l.id, qty: l.qty }));
         state.cart = [];
         state.promo = null;
         el.promo.value = '';
+        // Trừ tồn kho thật trong kho dùng chung -> trang Products tự cập nhật theo
+        Store.adjustStock(lines);
         renderAll();
         if (typeof window.showToast === 'function') window.showToast('pos_toast_paid');
     };
@@ -326,6 +325,26 @@
             renderAll();
         });
     }
+
+    // Giỏ hàng khớp lại với kho: sản phẩm bị xóa thì bỏ khỏi giỏ, tồn kho giảm thì hạ số lượng
+    const reconcileCart = () => {
+        const used = {};
+        state.cart = state.cart.filter(l => {
+            const p = byId(l.id);
+            if (!p) return false;
+            const left = p.stock - (used[l.id] || 0);
+            if (left <= 0) return false;
+            l.qty = Math.min(l.qty, left);
+            used[l.id] = (used[l.id] || 0) + l.qty;
+            return true;
+        });
+    };
+
+    // Trang Products (hoặc tab khác) đổi dữ liệu -> đồng bộ lại POS
+    document.addEventListener('store:products', () => {
+        reconcileCart();
+        renderAll();
+    });
 
     renderAll();
 })();
