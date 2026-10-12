@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5efeb">
+    <title>Quản lý hóa đơn | B'TRIPLE POS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../../assets/css/variables.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <style>
+        body[data-page="invoices"] {
+            background: #faf8f5;
+        }
+
+        .invoice-main {
+            min-width: 0;
+        }
+
+        .invoice-heading {
+            margin-bottom: 1.35rem;
+        }
+
+        .invoice-heading h1 {
+            margin-bottom: 0.35rem;
+            color: #292622;
+            font-size: clamp(1.55rem, 2.5vw, 2rem);
+            font-weight: 800;
+        }
+
+        .invoice-heading p {
+            margin: 0;
+            color: #77716b;
+        }
+
+        .invoice-card {
+            height: 100%;
+            border: 1px solid #e9e5e0;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 8px 28px rgb(48 37 29 / 6%);
+        }
+
+        .invoice-kpi {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.9rem;
+            padding: 1.15rem;
+        }
+
+        .invoice-kpi-icon {
+            display: grid;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            place-items: center;
+            border-radius: 12px;
+            background: #f3ece6;
+            color: #6b4f3f;
+            font-size: 1.15rem;
+        }
+
+        .invoice-kpi-label {
+            color: #77716b;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .invoice-kpi-value {
+            display: block;
+            margin-top: 0.3rem;
+            color: #292622;
+            font-size: clamp(1.15rem, 2vw, 1.55rem);
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .invoice-panel {
+            padding: clamp(1rem, 2vw, 1.4rem);
+        }
+
+        .invoice-toolbar-title {
+            color: #292622;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .invoice-search .input-group-text {
+            border-color: #e9e5e0;
+            border-radius: 0.65rem 0 0 0.65rem;
+            background: #fff;
+            color: #77716b;
+        }
+
+        .invoice-search .form-control {
+            min-height: 44px;
+            border-color: #e9e5e0;
+            border-left: 0;
+            border-radius: 0 0.65rem 0.65rem 0;
+        }
+
+        .invoice-control {
+            min-height: 44px;
+            border-color: #e9e5e0;
+            border-radius: 0.65rem;
+        }
+
+        .invoice-periods {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .invoice-period-button {
+            min-height: 36px;
+            border: 1px solid #e5d9d0;
+            border-radius: 999px;
+            background: #fff;
+            color: #4a3b32;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .invoice-period-button:hover,
+        .invoice-period-button.is-active {
+            border-color: #5c4033;
+            background: #5c4033;
+            color: #fff;
+        }
+
+        .btn-invoice-primary {
+            min-height: 42px;
+            border: 1px solid #5c4033;
+            border-radius: 0.65rem;
+            background: #5c4033;
+            color: #fff;
+            font-weight: 750;
+        }
+
+        .btn-invoice-primary:hover,
+        .btn-invoice-primary:focus {
+            border-color: #4a3b32;
+            background: #4a3b32;
+            color: #fff;
+        }
+
+        .btn-invoice-outline {
+            min-height: 42px;
+            border: 1px solid #d8c9be;
+            border-radius: 0.65rem;
+            background: #fff;
+            color: #4a3b32;
+            font-weight: 700;
+        }
+
+        .btn-invoice-outline:hover,
+        .btn-invoice-outline:focus {
+            border-color: #5c4033;
+            background: #f5efeb;
+            color: #4a3b32;
+        }
+
+        .invoice-table {
+            margin-bottom: 0;
+        }
+
+        .invoice-table thead th {
+            border-bottom-color: #e9e5e0;
+            color: #77716b;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.045em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .invoice-table tbody td {
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+            border-color: #f0ece8;
+            vertical-align: middle;
+        }
+
+        .invoice-number-button {
+            border: 0;
+            background: transparent;
+            color: #5c4033;
+            padding: 0;
+            font-weight: 800;
+            text-align: left;
+        }
+
+        .invoice-number-button:hover {
+            color: #4a3b32;
+            text-decoration: underline;
+        }
+
+        .invoice-customer-name {
+            display: block;
+            color: #292622;
+            font-weight: 700;
+        }
+
+        .invoice-customer-phone,
+        .invoice-muted {
+            color: #77716b;
+            font-size: 0.78rem;
+        }
+
+        .invoice-total {
+            color: #5c4033;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .invoice-action-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.4rem;
+        }
+
+        .invoice-action-button {
+            display: inline-grid;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            border: 1px solid #e5d9d0;
+            border-radius: 9px;
+            background: #fff;
+            color: #4a3b32;
+        }
+
+        .invoice-action-button:hover {
+            border-color: #5c4033;
+            background: #f5efeb;
+        }
+
+        .invoice-payment-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.73rem;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .invoice-payment-cash {
+            background: #e8f5ec;
+            color: #287a50;
+        }
+
+        .invoice-payment-card {
+            background: #e9f1fb;
+            color: #2d659a;
+        }
+
+        .invoice-payment-qr {
+            background: #fff1e3;
+            color: #a66d1f;
+        }
+
+        .invoice-payment-other {
+            background: #f3ece6;
+            color: #6b4f3f;
+        }
+
+        .invoice-empty,
+        .invoice-loading {
+            padding: 2.5rem 1rem !important;
+            color: #77716b;
+            text-align: center;
+        }
+
+        .invoice-detail-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .invoice-detail-tile {
+            min-width: 0;
+            border: 1px solid #eee8e2;
+            border-radius: 10px;
+            background: #fdfbf9;
+            padding: 0.75rem;
+        }
+
+        .invoice-detail-label {
+            display: block;
+            margin-bottom: 0.2rem;
+            color: #77716b;
+            font-size: 0.73rem;
+            font-weight: 700;
+        }
+
+        .invoice-detail-value {
+            color: #292622;
+            font-size: 0.88rem;
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+
+        .invoice-detail-total {
+            color: #5c4033;
+            font-size: 1.05rem;
+            font-weight: 850;
+        }
+
+        .invoice-detail-table th {
+            color: #77716b;
+            font-size: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .invoice-detail-table td {
+            vertical-align: middle;
+        }
+
+        .invoice-receipt {
+            color: #292622;
+        }
+
+        .invoice-page-status {
+            min-height: 1.4rem;
+            color: #77716b;
+            font-size: 0.84rem;
+        }
+
+        .invoice-page-status.is-error {
+            color: #b64242;
+        }
+
+        @media (max-width: 767.98px) {
+            .invoice-heading-actions {
+                width: 100%;
+            }
+
+            .invoice-heading-actions .btn {
+                flex: 1 1 100%;
+            }
+        }
+
+        @media print {
+            @page {
+                size: 80mm auto;
+                margin: 3mm;
+            }
+
+            body * {
+                visibility: hidden !important;
+            }
+
+            #invoice-print-area,
+            #invoice-print-area * {
+                visibility: visible !important;
+            }
+
+            #invoice-print-area {
+                position: absolute;
+                inset: 0 auto auto 0;
+                width: 74mm;
+                max-width: 74mm;
+                border: 0 !important;
+                border-radius: 0 !important;
+                background: #fff !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                font-family: "Courier New", monospace;
+                font-size: 10px;
+            }
+
+            #invoice-print-area .invoice-print-heading {
+                display: block !important;
+            }
+
+            #invoice-print-area table {
+                width: 100%;
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell" data-app-root="../.." data-page="invoices" data-title="Quản lý hóa đơn">
+    <div id="header-container"></div>
+    <div class="app-layout">
+        <div id="sidebar-container"></div>
+        <main class="app-main flex-grow-1 invoice-main">
+            <section class="invoice-heading d-flex flex-wrap align-items-end justify-content-between gap-3">
+                <div>
+                    <h1>Quản lý hóa đơn</h1>
+                    <p>Tra cứu, xem chi tiết và in lại các giao dịch bán lẻ tại quầy.</p>
+                </div>
+                <div class="invoice-heading-actions d-flex flex-wrap gap-2">
+                    <a class="btn btn-invoice-primary px-3" href="../pos/index.html">
+                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Tạo đơn mới (POS)
+                    </a>
+                    <button class="btn btn-invoice-outline px-3" id="export-invoices" type="button" disabled>
+                        <i class="bi bi-file-earmark-spreadsheet me-2" aria-hidden="true"></i>Xuất danh sách Excel/CSV
+                    </button>
+                </div>
+            </section>
+
+            <p class="invoice-page-status" id="invoice-status" aria-live="polite"></p>
+
+            <section class="row g-3 mb-4" aria-label="Thống kê hóa đơn hôm nay">
+                <div class="col-md-4">
+                    <article class="invoice-card invoice-kpi">
+                        <span class="invoice-kpi-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="invoice-kpi-label">Tổng hóa đơn hôm nay</span>
+                            <strong class="invoice-kpi-value" id="today-order-count">—</strong>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-md-4">
+                    <article class="invoice-card invoice-kpi">
+                        <span class="invoice-kpi-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="invoice-kpi-label">Doanh thu hóa đơn hôm nay</span>
+                            <strong class="invoice-kpi-value" id="today-revenue">—</strong>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-md-4">
+                    <article class="invoice-card invoice-kpi">
+                        <span class="invoice-kpi-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span>
+                        <div>
+                            <span class="invoice-kpi-label">Giá trị đơn trung bình</span>
+                            <strong class="invoice-kpi-value" id="today-average">—</strong>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="invoice-card invoice-panel mb-4" aria-labelledby="invoice-filter-title">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <h2 class="invoice-toolbar-title mb-0" id="invoice-filter-title">
+                        <i class="bi bi-funnel me-2" aria-hidden="true"></i>Tìm kiếm và bộ lọc
+                    </h2>
+                    <span class="invoice-muted" id="invoice-result-count"></span>
+                </div>
+                <form id="invoice-filter-form">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-xl-5">
+                            <label class="form-label small fw-semibold" for="invoice-search">Tìm hóa đơn</label>
+                            <div class="input-group invoice-search">
+                                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                <input class="form-control" id="invoice-search" type="search" placeholder="Mã hóa đơn, SĐT hoặc tên khách hàng..." autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <label class="form-label small fw-semibold" for="invoice-payment-method">Phương thức thanh toán</label>
+                            <select class="form-select invoice-control" id="invoice-payment-method">
+                                <option value="">Tất cả phương thức</option>
+                                <option value="cash">Tiền mặt</option>
+                                <option value="card">Thẻ</option>
+                                <option value="qr_code">Chuyển khoản / QR</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-4">
+                            <button class="btn btn-invoice-primary w-100" id="apply-invoice-filters" type="submit">
+                                <i class="bi bi-filter me-2" aria-hidden="true"></i>Lọc dữ liệu
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mt-3">
+                        <div class="invoice-periods" role="group" aria-label="Lọc nhanh theo ngày">
+                            <button class="invoice-period-button is-active" type="button" data-range="today" aria-pressed="true">Hôm nay</button>
+                            <button class="invoice-period-button" type="button" data-range="yesterday" aria-pressed="false">Hôm qua</button>
+                            <button class="invoice-period-button" type="button" data-range="7days" aria-pressed="false">7 ngày qua</button>
+                            <button class="invoice-period-button" type="button" data-range="this_month" aria-pressed="false">Tháng này</button>
+                            <button class="invoice-period-button" type="button" data-range="custom" aria-pressed="false">Tùy chỉnh</button>
+                        </div>
+                        <div class="row g-2 flex-grow-1" style="max-width: 470px">
+                            <div class="col-6">
+                                <label class="visually-hidden" for="invoice-date-from">Từ ngày</label>
+                                <input class="form-control invoice-control" id="invoice-date-from" type="date" aria-label="Từ ngày">
+                            </div>
+                            <div class="col-6">
+                                <label class="visually-hidden" for="invoice-date-to">Đến ngày</label>
+                                <input class="form-control invoice-control" id="invoice-date-to" type="date" aria-label="Đến ngày">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <section class="invoice-card invoice-panel" aria-labelledby="invoice-list-title">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <span class="small fw-bold text-uppercase" style="color:#8a7567;letter-spacing:.1em">Transactions</span>
+                        <h2 class="invoice-toolbar-title mb-0 mt-1" id="invoice-list-title">Danh sách hóa đơn</h2>
+                    </div>
+                    <span class="invoice-muted" id="invoice-period-label"></span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover invoice-table">
+                        <thead>
+                            <tr>
+                                <th>Mã hóa đơn</th>
+                                <th>Thời gian</th>
+                                <th>Khách hàng</th>
+                                <th>Thu ngân lập đơn</th>
+                                <th>Thanh toán</th>
+                                <th>Khách đưa / Tiền thối</th>
+                                <th class="text-end">Tổng tiền</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoices-table">
+                            <tr><td class="invoice-loading" colspan="8">Đang tải danh sách hóa đơn...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="footer-container"></div>
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <div class="modal fade" id="invoice-detail-modal" tabindex="-1" aria-labelledby="invoice-detail-title" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header">
+                    <div>
+                        <span class="small fw-bold text-uppercase" style="color:#8a7567;letter-spacing:.1em">Invoice details</span>
+                        <h2 class="modal-title fs-5 fw-bold mt-1" id="invoice-detail-title">Chi tiết hóa đơn</h2>
+                    </div>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="invoice-page-status" id="invoice-detail-status" aria-live="polite"></p>
+                    <article id="invoice-print-area" class="invoice-receipt">
+                        <div class="invoice-print-heading d-none text-center mb-3">
+                            <strong class="d-block fs-5">B'TRIPLE POS</strong>
+                            <span>HÓA ĐƠN BÁN LẺ</span>
+                        </div>
+                        <div class="invoice-detail-summary mb-4" id="invoice-detail-summary"></div>
+                        <h3 class="h6 fw-bold mb-2">Chi tiết sản phẩm</h3>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered invoice-detail-table mb-4">
+                                <thead>
+                                    <tr><th>STT</th><th>Tên trang phục</th><th>Size</th><th>Màu</th><th class="text-end">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr>
+                                </thead>
+                                <tbody id="invoice-detail-items"></tbody>
+                            </table>
+                        </div>
+                        <div class="row justify-content-end">
+                            <div class="col-12 col-md-6 col-xl-5" id="invoice-detail-totals"></div>
+                        </div>
+                        <p class="small text-center text-muted mt-4 mb-0">Cảm ơn quý khách đã mua hàng!</p>
+                    </article>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-invoice-primary me-auto" type="button" id="print-invoice">
+                        <i class="bi bi-printer me-2" aria-hidden="true"></i>In hóa đơn K80
+                    </button>
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/common.js"></script>
+    <script>
+        (function () {
+            "use strict";
+
+                const table = document.getElementById("invoices-table");
+                const status = document.getElementById("invoice-status");
+                const searchInput = document.getElementById("invoice-search");
+                const paymentSelect = document.getElementById("invoice-payment-method");
+                const dateFrom = document.getElementById("invoice-date-from");
+                const dateTo = document.getElementById("invoice-date-to");
+                const exportButton = document.getElementById("export-invoices");
+                const detailModal = new window.bootstrap.Modal(document.getElementById("invoice-detail-modal"));
+                const currentOrders = new Map();
+                let isLoaded = false;
+                let todayStats = null;
+
+                function localDate(date) {
+                    return [
+                        date.getFullYear(),
+                        String(date.getMonth() + 1).padStart(2, "0"),
+                        String(date.getDate()).padStart(2, "0")
+                    ].join("-");
+                }
+
+                function setStatus(message, isError) {
+                    status.textContent = message || "";
+                    status.classList.toggle("is-error", Boolean(isError));
+                }
+
+                function getData(payload) {
+                    if (payload && payload.data && !Array.isArray(payload.data)) return payload.data;
+                    return payload;
+                }
+
+                function getOrders(payload) {
+                    const data = getData(payload);
+                    if (Array.isArray(data)) return data;
+                    if (data && Array.isArray(data.orders)) return data.orders;
+                    if (data && Array.isArray(data.items)) return data.items;
+                    if (data && Array.isArray(data.data)) return data.data;
+                    throw new Error("Dữ liệu hóa đơn từ máy chủ không đúng định dạng.");
+                }
+
+                function getCustomer(order) {
+                    return order.customer || order.customers || {};
+                }
+
+                function getCashier(order) {
+                    return order.user || order.cashier || order.users || {};
+                }
+
+                function fullName(record) {
+                    return record.full_name || record.name ||
+                        [record.first_name, record.last_name].filter(Boolean).join(" ") || "";
+                }
+
+                function formatDate(value) {
+                    if (!value) return "—";
+                    const normalized = /^\d{4}-\d{2}-\d{2} \d/.test(String(value))
+                        ? String(value).replace(" ", "T")
+                        : value;
+                    const date = new Date(normalized);
+                    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("vi-VN");
+                }
+
+                function paymentLabel(method) {
+                    const labels = { cash: "Tiền mặt", card: "Thẻ", qr_code: "Chuyển khoản / QR" };
+                    return labels[method] || method || "—";
+                }
+
+                function paymentBadge(method) {
+                    const badge = document.createElement("span");
+                    badge.className = "invoice-payment-badge " +
+                        (method === "cash" ? "invoice-payment-cash" :
+                            method === "card" ? "invoice-payment-card" :
+                                method === "qr_code" ? "invoice-payment-qr" : "invoice-payment-other");
+                    const icon = document.createElement("i");
+                    icon.className = method === "cash" ? "bi bi-cash-coin" :
+                        method === "card" ? "bi bi-credit-card" :
+                            method === "qr_code" ? "bi bi-qr-code" : "bi bi-wallet2";
+                    icon.setAttribute("aria-hidden", "true");
+                    badge.append(icon, document.createTextNode(paymentLabel(method)));
+                    return badge;
+                }
+
+                function addCell(row, text, className) {
+                    const cell = document.createElement("td");
+                    cell.textContent = text == null || text === "" ? "—" : String(text);
+                    if (className) cell.className = className;
+                    row.append(cell);
+                    return cell;
+                }
+
+                function renderOrders(orders) {
+                    table.replaceChildren();
+                    currentOrders.clear();
+                    orders.forEach(function (order) {
+                        currentOrders.set(String(order.id), order);
+                        const row = document.createElement("tr");
+                        row.dataset.orderRowId = String(order.id);
+                        row.tabIndex = 0;
+                        row.setAttribute("aria-label", "Mở hóa đơn " + (order.order_number || order.id));
+
+                        const numberCell = document.createElement("td");
+                        const numberButton = document.createElement("button");
+                        numberButton.className = "invoice-number-button";
+                        numberButton.type = "button";
+                        numberButton.dataset.orderAction = "view";
+                        numberButton.dataset.orderId = String(order.id);
+                        numberButton.textContent = order.order_number || "ORD-" + order.id;
+                        numberCell.append(numberButton);
+                        row.append(numberCell);
+
+                        addCell(row, formatDate(order.created_at), "text-nowrap");
+
+                        const customer = getCustomer(order);
+                        const customerCell = document.createElement("td");
+                        const customerName = document.createElement("span");
+                        customerName.className = "invoice-customer-name";
+                        customerName.textContent = fullName(customer) || order.customer_name || "Khách lẻ";
+                        const customerPhone = document.createElement("span");
+                        customerPhone.className = "invoice-customer-phone";
+                        customerPhone.textContent = customer.phone || order.customer_phone || "";
+                        customerCell.append(customerName, customerPhone);
+                        row.append(customerCell);
+
+                        const cashier = getCashier(order);
+                        addCell(row, fullName(cashier) || order.cashier_name || order.user_name || "—");
+
+                        const methodCell = document.createElement("td");
+                        methodCell.append(paymentBadge(order.payment_method));
+                        row.append(methodCell);
+
+                        const paymentAmounts = document.createElement("td");
+                        paymentAmounts.className = "text-nowrap";
+                        const received = document.createElement("span");
+                        received.className = "d-block small";
+                        received.textContent = window.PosCommon.formatCurrency(order.amount_received);
+                        const change = document.createElement("span");
+                        change.className = "invoice-muted";
+                        change.textContent = "Thối: " + window.PosCommon.formatCurrency(order.change_amount);
+                        paymentAmounts.append(received, change);
+                        row.append(paymentAmounts);
+
+                        addCell(row, window.PosCommon.formatCurrency(order.total_amount), "invoice-total text-end");
+
+                        const actionCell = document.createElement("td");
+                        const actionGroup = document.createElement("div");
+                        actionGroup.className = "invoice-action-group";
+                        [
+                            ["view", "bi-eye", "Xem chi tiết đơn " + (order.order_number || order.id)],
+                            ["print", "bi-printer", "In lại hóa đơn " + (order.order_number || order.id)]
+                        ].forEach(function (action) {
+                            const button = document.createElement("button");
+                            button.className = "invoice-action-button";
+                            button.type = "button";
+                            button.dataset.orderAction = action[0];
+                            button.dataset.orderId = String(order.id);
+                            button.setAttribute("aria-label", action[2]);
+                            const icon = document.createElement("i");
+                            icon.className = "bi " + action[1];
+                            icon.setAttribute("aria-hidden", "true");
+                            button.append(icon);
+                            actionGroup.append(button);
+                        });
+                        actionCell.append(actionGroup);
+                        row.append(actionCell);
+                        table.append(row);
+                    });
+
+                    if (!orders.length) {
+                        const row = document.createElement("tr");
+                        const cell = document.createElement("td");
+                        cell.colSpan = 8;
+                        cell.className = "invoice-empty";
+                        cell.textContent = "Không tìm thấy hóa đơn phù hợp với bộ lọc.";
+                        row.append(cell);
+                        table.append(row);
+                    }
+                    document.getElementById("invoice-result-count").textContent = orders.length + " hóa đơn";
+                    exportButton.disabled = !orders.length;
+                    isLoaded = true;
+                }
+
+                function renderTodayStats(summary, orders) {
+                    const orderCount = Number(summary.order_count ?? summary.total_orders ?? summary.total_count ?? orders.length);
+                    const received = Number(summary.total_received ?? summary.total_revenue ?? summary.revenue) ||
+                        orders.reduce(function (sum, order) {
+                            return sum + (Number(order.amount_received) || 0);
+                        }, 0);
+                    document.getElementById("today-order-count").textContent = orderCount.toLocaleString("vi-VN") + " đơn";
+                    document.getElementById("today-revenue").textContent = window.PosCommon.formatCurrency(received);
+                    document.getElementById("today-average").textContent = window.PosCommon.formatCurrency(orderCount ? received / orderCount : 0) + "/đơn";
+                    todayStats = { orderCount: orderCount, received: received };
+                }
+
+                function rangeFor(name) {
+                    const today = new Date();
+                    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const end = new Date(start);
+                    if (name === "yesterday") {
+                        start.setDate(start.getDate() - 1);
+                        end.setDate(end.getDate() - 1);
+                    } else if (name === "7days") {
+                        start.setDate(start.getDate() - 6);
+                    } else if (name === "this_month") {
+                        start.setDate(1);
+                    }
+                    return { from: localDate(start), to: localDate(end) };
+                }
+
+                function activateRange(button) {
+                    document.querySelectorAll("[data-range]").forEach(function (item) {
+                        const active = item === button;
+                        item.classList.toggle("is-active", active);
+                        item.setAttribute("aria-pressed", String(active));
+                    });
+                }
+
+                async function loadInvoices() {
+                    const from = dateFrom.value;
+                    const to = dateTo.value;
+                    if (!from || !to || from > to) {
+                        setStatus("Vui lòng chọn khoảng ngày hợp lệ.", true);
+                        dateFrom.focus();
+                        return;
+                    }
+
+                    const applyButton = document.getElementById("apply-invoice-filters");
+                    applyButton.disabled = true;
+                    exportButton.disabled = true;
+                    table.innerHTML = '<tr><td class="invoice-loading" colspan="8">Đang tải danh sách hóa đơn...</td></tr>';
+                    setStatus("Đang tải hóa đơn...", false);
+                    document.getElementById("invoice-period-label").textContent = from + " — " + to;
+
+                    const query = new URLSearchParams({ from: from, to: to });
+                    const search = searchInput.value.trim();
+                    const method = paymentSelect.value;
+                    if (search) query.set("search", search);
+                    if (method) query.set("payment_method", method);
+
+                    try {
+                        const [listPayload, summaryPayload] = await Promise.all([
+                            window.PosApi.get("orders?" + query.toString()),
+                            todayStats || (from === localDate(new Date()) && to === localDate(new Date()))
+                                ? Promise.resolve(null)
+                                : window.PosApi.get("reports/sales?" + new URLSearchParams({
+                                    from: localDate(new Date()),
+                                    to: localDate(new Date())
+                                }).toString())
+                        ]);
+                        const orders = getOrders(listPayload);
+                        renderOrders(orders);
+
+                        if (summaryPayload) {
+                            const summaryData = getData(summaryPayload);
+                            renderTodayStats(summaryData.summary || {}, getOrders(summaryData));
+                        } else if (!todayStats) {
+                            const listData = getData(listPayload);
+                            renderTodayStats(listData.today_summary || listData.summary || {}, orders);
+                        }
+
+                        setStatus("Đã tải " + orders.length + " hóa đơn.", false);
+                    } catch (error) {
+                        table.innerHTML = '<tr><td class="invoice-empty" colspan="8">Không thể tải hóa đơn.</td></tr>';
+                        document.getElementById("invoice-result-count").textContent = "";
+                        exportButton.disabled = true;
+                        isLoaded = false;
+                        setStatus(error.message, true);
+                        window.PosCommon.notify("Không tải được danh sách hóa đơn: " + error.message, "danger");
+                    } finally {
+                        applyButton.disabled = false;
+                    }
+                }
+
+                function appendDetailTile(parent, label, value, emphasize) {
+                    const tile = document.createElement("div");
+                    tile.className = "invoice-detail-tile";
+                    const title = document.createElement("span");
+                    title.className = "invoice-detail-label";
+                    title.textContent = label;
+                    const content = document.createElement("span");
+                    content.className = "invoice-detail-value" + (emphasize ? " invoice-detail-total" : "");
+                    content.textContent = value == null || value === "" ? "—" : String(value);
+                    tile.append(title, content);
+                    parent.append(tile);
+                }
+
+                function appendTotal(parent, label, value, emphasize) {
+                    const line = document.createElement("div");
+                    line.className = "d-flex justify-content-between gap-3 border-bottom py-2" + (emphasize ? " invoice-detail-total" : "");
+                    const title = document.createElement("span");
+                    title.textContent = label;
+                    const amount = document.createElement("strong");
+                    amount.textContent = window.PosCommon.formatCurrency(value);
+                    line.append(title, amount);
+                    parent.append(line);
+                }
+
+                function renderDetail(order) {
+                    const customer = getCustomer(order);
+                    const cashier = getCashier(order);
+                    const summary = document.getElementById("invoice-detail-summary");
+                    const itemsBody = document.getElementById("invoice-detail-items");
+                    const totals = document.getElementById("invoice-detail-totals");
+                    summary.replaceChildren();
+                    itemsBody.replaceChildren();
+                    totals.replaceChildren();
+                    document.getElementById("invoice-detail-title").textContent =
+                        "Hóa đơn " + (order.order_number || "ORD-" + order.id);
+
+                    appendDetailTile(summary, "Trạng thái", order.status === "completed" ? "Đã hoàn thành" : order.status || "—");
+                    appendDetailTile(summary, "Ngày giờ giao dịch", formatDate(order.created_at));
+                    appendDetailTile(summary, "Thu ngân", fullName(cashier) || order.cashier_name || order.user_name || "—");
+                    appendDetailTile(summary, "Khách hàng", fullName(customer) || order.customer_name || "Khách lẻ");
+                    appendDetailTile(summary, "Số điện thoại", customer.phone || order.customer_phone || "—");
+                    appendDetailTile(summary, "Địa chỉ", customer.address || "—");
+                    appendDetailTile(summary, "Phương thức thanh toán", paymentLabel(order.payment_method));
+
+                    const items = order.items || order.order_items || [];
+                    items.forEach(function (item, index) {
+                        const product = item.product || item.products || {};
+                        const row = document.createElement("tr");
+                        addCell(row, String(index + 1));
+                        addCell(row, product.name || item.product_name || "Sản phẩm");
+                        addCell(row, product.size || item.size || "—");
+                        addCell(row, product.color || item.color || "—");
+                        addCell(row, String(item.quantity || 0), "text-end");
+                        addCell(row, window.PosCommon.formatCurrency(item.unit_price), "text-end text-nowrap");
+                        addCell(row, window.PosCommon.formatCurrency(item.total_price ?? Number(item.unit_price || 0) * Number(item.quantity || 0)), "text-end text-nowrap");
+                        itemsBody.append(row);
+                    });
+                    if (!items.length) {
+                        const row = document.createElement("tr");
+                        const cell = document.createElement("td");
+                        cell.colSpan = 7;
+                        cell.className = "invoice-empty";
+                        cell.textContent = "Hóa đơn không có dữ liệu chi tiết sản phẩm.";
+                        row.append(cell);
+                        itemsBody.append(row);
+                    }
+
+                    appendTotal(totals, "Tạm tính", order.subtotal);
+                    appendTotal(totals, "Chiết khấu", order.discount_amount);
+                    appendTotal(totals, "Thuế", order.tax_amount);
+                    appendTotal(totals, "Tổng thanh toán", order.total_amount, true);
+                    appendTotal(totals, "Tiền khách đưa", order.amount_received);
+                    appendTotal(totals, "Tiền thối", order.change_amount);
+                }
+
+                async function openOrder(orderId, actionButton, printAfterOpen) {
+                    let order = currentOrders.get(String(orderId));
+                    if (!order) return;
+                    const needsDetails = !Array.isArray(order.items) && !Array.isArray(order.order_items);
+                    if (needsDetails) {
+                        if (actionButton) actionButton.disabled = true;
+                        document.getElementById("invoice-detail-status").textContent = "Đang tải chi tiết hóa đơn...";
+                        try {
+                            const payload = await window.PosApi.get("orders/" + encodeURIComponent(orderId));
+                            const data = getData(payload);
+                            order = data.order || data;
+                            currentOrders.set(String(orderId), order);
+                        } catch (error) {
+                            document.getElementById("invoice-detail-status").textContent = "";
+                            window.PosCommon.notify("Không tải được chi tiết hóa đơn: " + error.message, "danger");
+                            return;
+                        } finally {
+                            if (actionButton) actionButton.disabled = false;
+                        }
+                    }
+                    document.getElementById("invoice-detail-status").textContent = "";
+                    renderDetail(order);
+                    detailModal.show();
+                    if (printAfterOpen) {
+                        document.getElementById("invoice-detail-modal").addEventListener("shown.bs.modal", function () {
+                            window.print();
+                        }, { once: true });
+                    }
+                }
+
+                function csvValue(value) {
+                    const text = value == null ? "" : String(value);
+                    return '"' + text.replace(/"/g, '""') + '"';
+                }
+
+                function exportCsv() {
+                    if (!isLoaded || !currentOrders.size) return;
+                    const headings = ["Mã hóa đơn", "Thời gian", "Khách hàng", "Số điện thoại", "Thu ngân", "Phương thức thanh toán", "Tiền khách đưa", "Tiền thối", "Tổng tiền", "Trạng thái"];
+                    const rows = [headings];
+                    currentOrders.forEach(function (order) {
+                        const customer = getCustomer(order);
+                        const cashier = getCashier(order);
+                        rows.push([
+                            order.order_number || order.id,
+                            formatDate(order.created_at),
+                            fullName(customer) || order.customer_name || "Khách lẻ",
+                            customer.phone || order.customer_phone || "",
+                            fullName(cashier) || order.cashier_name || order.user_name || "",
+                            paymentLabel(order.payment_method),
+                            order.amount_received,
+                            order.change_amount,
+                            order.total_amount,
+                            order.status
+                        ]);
+                    });
+                    const csv = "\uFEFF" + rows.map(function (row) {
+                        return row.map(csvValue).join(",");
+                    }).join("\r\n");
+                    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = "bt-pos-invoices-" + dateFrom.value + "-to-" + dateTo.value + ".csv";
+                    document.body.append(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(url);
+                }
+
+                document.getElementById("invoice-filter-form").addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    document.querySelectorAll("[data-range]").forEach(function (button) {
+                        button.classList.remove("is-active");
+                        button.setAttribute("aria-pressed", "false");
+                    });
+                    loadInvoices();
+                });
+
+                document.querySelectorAll("[data-range]").forEach(function (button) {
+                    button.addEventListener("click", function () {
+                        activateRange(button);
+                        if (button.dataset.range === "custom") {
+                            dateFrom.focus();
+                            return;
+                        }
+                        const range = rangeFor(button.dataset.range);
+                        dateFrom.value = range.from;
+                        dateTo.value = range.to;
+                        loadInvoices();
+                    });
+                });
+
+                table.addEventListener("click", function (event) {
+                    const actionButton = event.target.closest("[data-order-action]");
+                    if (actionButton) {
+                        openOrder(actionButton.dataset.orderId, actionButton, actionButton.dataset.orderAction === "print");
+                        return;
+                    }
+                    const row = event.target.closest("[data-order-row-id]");
+                    if (row) openOrder(row.dataset.orderRowId, null, false);
+                });
+
+                table.addEventListener("keydown", function (event) {
+                    if ((event.key === "Enter" || event.key === " ") && event.target.matches("[data-order-row-id]")) {
+                        event.preventDefault();
+                        openOrder(event.target.dataset.orderRowId, null, false);
+                    }
+                });
+
+                exportButton.addEventListener("click", exportCsv);
+                document.getElementById("print-invoice").addEventListener("click", function () {
+                    window.print();
+                });
+
+                const today = localDate(new Date());
+                dateFrom.value = today;
+                dateTo.value = today;
+                loadInvoices();
+        }());
+    </script>
+</body>
+</html>

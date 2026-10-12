@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5efeb">
+    <title>Cài đặt | B'TRIPLE POS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../../assets/css/variables.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <style>
+        .settings-card { border: 1px solid var(--color-border); border-radius: 12px; background: #fff; box-shadow: var(--shadow-card); }
+        .settings-tabs { flex-wrap: nowrap; overflow-x: auto; border-bottom-color: var(--color-border); }
+        .settings-tabs .nav-link { white-space: nowrap; color: var(--color-muted); }
+        .settings-tabs .nav-link.active { color: var(--color-brand-dark); font-weight: 700; }
+        .settings-qr-preview { display: grid; width: 220px; height: 220px; place-items: center; overflow: hidden; border: 1px solid var(--color-border); border-radius: 12px; background: #fff; }
+        .settings-qr-preview img { width: 100%; height: 100%; object-fit: contain; }
+        .settings-inline-status { min-height: 1.35rem; }
+        @media (max-width: 575.98px) { .settings-qr-preview { width: 190px; height: 190px; } }
+    </style>
+</head>
+<body class="app-shell settings-page" data-app-root="../.." data-page="settings" data-title="Cài đặt">
+    <div id="header-container"></div>
+    <div class="app-layout">
+        <div id="sidebar-container"></div>
+        <main class="app-main flex-grow-1">
+            <section class="page-heading">
+                <h1>Cài đặt cửa hàng</h1>
+                <p>Quản lý thông tin B'TRIPLE POS, hóa đơn, thanh toán và bảo mật.</p>
+            </section>
+
+            <section class="settings-card p-3 p-lg-4" aria-label="Các nhóm cài đặt cửa hàng">
+                <ul class="nav nav-tabs settings-tabs mb-4" id="settings-tabs" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" id="business-tab" data-bs-toggle="tab" data-bs-target="#business-panel" type="button" role="tab" aria-controls="business-panel" aria-selected="true"><i class="bi bi-shop me-2" aria-hidden="true"></i>Thông tin cửa hàng</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="invoice-tab" data-bs-toggle="tab" data-bs-target="#invoice-panel" type="button" role="tab" aria-controls="invoice-panel" aria-selected="false"><i class="bi bi-receipt me-2" aria-hidden="true"></i>Hóa đơn & In ấn</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment-panel" type="button" role="tab" aria-controls="payment-panel" aria-selected="false"><i class="bi bi-qr-code me-2" aria-hidden="true"></i>Thanh toán & QR</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security-panel" type="button" role="tab" aria-controls="security-panel" aria-selected="false"><i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Bảo mật</button></li>
+                </ul>
+
+                <p id="settings-status" class="status-message settings-inline-status" role="status" aria-live="polite">Đang tải cài đặt...</p>
+                <div class="tab-content">
+                    <section class="tab-pane fade show active" id="business-panel" role="tabpanel" aria-labelledby="business-tab" tabindex="0">
+                        <div class="mb-4"><h2 class="h5 fw-bold mb-1">Thông tin cửa hàng</h2><p class="small text-muted mb-0">Thông tin này được hiển thị trên hóa đơn và giao tiếp với khách hàng.</p></div>
+                        <form id="business-settings-form" class="row g-3">
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="store-name">Tên cửa hàng</label><input class="form-control" id="store-name" name="store_name" maxlength="150" autocomplete="organization" required></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="store-phone">Hotline</label><input class="form-control" id="store-phone" name="store_phone" type="tel" maxlength="30" autocomplete="tel"></div>
+                            <div class="col-12"><label class="form-label fw-semibold" for="store-address">Địa chỉ</label><input class="form-control" id="store-address" name="store_address" maxlength="255" autocomplete="street-address"></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="store-email">Email</label><input class="form-control" id="store-email" name="store_email" type="email" maxlength="150" autocomplete="email"></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="store-tax-code">Mã số thuế</label><input class="form-control" id="store-tax-code" name="store_tax_code" maxlength="30" inputmode="numeric"></div>
+                            <div class="col-12 pt-2"><button class="btn btn-brand" type="submit"><i class="bi bi-check2-circle me-2" aria-hidden="true"></i>Lưu thông tin cửa hàng</button></div>
+                        </form>
+                    </section>
+
+                    <section class="tab-pane fade" id="invoice-panel" role="tabpanel" aria-labelledby="invoice-tab" tabindex="0">
+                        <div class="mb-4"><h2 class="h5 fw-bold mb-1">Cấu hình hóa đơn & In ấn</h2><p class="small text-muted mb-0">Thiết lập nội dung mặc định được dùng khi lập và in hóa đơn.</p></div>
+                        <form id="invoice-settings-form" class="row g-3">
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="order-prefix">Tiền tố mã đơn</label><input class="form-control" id="order-prefix" name="order_prefix" maxlength="12" placeholder="ORD-" required></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="tax-rate">Thuế VAT mặc định (%)</label><input class="form-control" id="tax-rate" name="tax_rate" type="number" min="0" max="100" step="0.01" required></div>
+                            <div class="col-12"><label class="form-label fw-semibold" for="receipt-thank-you">Lời cảm ơn cuối bill</label><textarea class="form-control" id="receipt-thank-you" name="receipt_thank_you" rows="3" maxlength="500"></textarea></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="return-policy-days">Thời hạn đổi trả (ngày)</label><input class="form-control" id="return-policy-days" name="return_policy_days" type="number" min="0" max="365" step="1" required></div>
+                            <div class="col-12 pt-2"><button class="btn btn-brand" type="submit"><i class="bi bi-printer me-2" aria-hidden="true"></i>Lưu cấu hình hóa đơn</button></div>
+                        </form>
+                    </section>
+
+                    <section class="tab-pane fade" id="payment-panel" role="tabpanel" aria-labelledby="payment-tab" tabindex="0">
+                        <div class="mb-4"><h2 class="h5 fw-bold mb-1">Thanh toán & Mã QR</h2><p class="small text-muted mb-0">Quản lý mã VietQR/VNPAY và trạng thái chấp nhận thanh toán QR tại quầy.</p></div>
+                        <div class="row g-4 align-items-start">
+                            <div class="col-md-auto">
+                                <div class="settings-qr-preview mb-2"><img id="payment-qr-preview" alt="Xem trước mã QR thanh toán" hidden><span id="payment-qr-placeholder" class="small text-muted text-center px-3">Chưa có mã QR được tải lên</span></div>
+                                <p id="payment-qr-description" class="small text-muted mb-0"></p>
+                            </div>
+                            <div class="col-md">
+                                <form id="payment-qr-form">
+                                    <div class="mb-3"><label class="form-label fw-semibold" for="payment-qr-file">Tải ảnh mã QR mới</label><input class="form-control" id="payment-qr-file" name="qr_code" type="file" accept="image/png,image/jpeg" required><div class="form-text">Chỉ nhận ảnh PNG hoặc JPG. Nên dùng ảnh vuông, rõ nét.</div></div>
+                                    <div class="mb-3"><label class="form-label fw-semibold" for="payment-qr-method">Loại thanh toán</label><select class="form-select" id="payment-qr-method" name="payment_method"><option value="vietqr">VietQR</option><option value="vnpay">VNPAY</option></select></div>
+                                    <div class="form-check form-switch mb-4"><input class="form-check-input" id="payment-qr-enabled" type="checkbox" role="switch"><label class="form-check-label fw-semibold" for="payment-qr-enabled">Chấp nhận thanh toán QR tại quầy</label></div>
+                                    <button class="btn btn-brand" type="submit" id="save-payment-qr"><i class="bi bi-cloud-arrow-up me-2" aria-hidden="true"></i>Tải lên mã QR</button>
+                                </form>
+                            </div>
+                        </div>
+                        <p id="payment-status" class="status-message settings-inline-status mt-3 mb-0" role="status" aria-live="polite"></p>
+                    </section>
+
+                    <section class="tab-pane fade" id="security-panel" role="tabpanel" aria-labelledby="security-tab" tabindex="0">
+                        <div class="mb-4"><h2 class="h5 fw-bold mb-1">Bảo mật & Tài khoản</h2><p class="small text-muted mb-0">Cập nhật thông tin xác thực và thời gian hiệu lực liên kết kích hoạt nhân viên.</p></div>
+                        <form id="security-settings-form" class="row g-3 mb-5">
+                            <div class="col-md-6"><label class="form-label fw-semibold" for="invitation-expiry">Thời hạn link email (giây)</label><input class="form-control" id="invitation-expiry" name="invitation_link_expiry_seconds" type="number" min="30" max="3600" step="1" required><div class="form-text">Mặc định 60 giây.</div></div>
+                            <div class="col-12"><button class="btn btn-brand" type="submit">Lưu cấu hình bảo mật</button></div>
+                        </form>
+                        <hr class="my-4">
+                        <form id="admin-password-form" class="row g-3">
+                            <div class="col-12"><h3 class="h6 fw-bold mb-0">Đổi mật khẩu Admin</h3></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold" for="current-password">Mật khẩu hiện tại</label><input class="form-control" id="current-password" name="current_password" type="password" autocomplete="current-password" required></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold" for="new-password">Mật khẩu mới</label><input class="form-control" id="new-password" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold" for="confirm-password">Xác nhận mật khẩu mới</label><input class="form-control" id="confirm-password" name="password_confirmation" type="password" minlength="8" autocomplete="new-password" required></div>
+                            <div class="col-12"><button class="btn btn-outline-secondary" type="submit" id="change-admin-password">Đổi mật khẩu</button></div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="footer-container"></div>
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/common.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>

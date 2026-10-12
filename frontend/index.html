@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8f9fa">
+    <title>Tổng quan | B'TRIPLE POS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="assets/css/reporting.css">
+</head>
+<body class="app-shell reporting-page dashboard-page" data-app-root="." data-page="dashboard" data-title="Tổng quan">
+    <div id="header-container"></div>
+    <div class="app-layout">
+        <div id="sidebar-container"></div>
+        <main class="app-main flex-grow-1">
+            <section class="page-heading">
+                <span class="report-eyebrow">STORE OVERVIEW</span>
+                <h1>Dashboard Overview</h1>
+                <p>Xin chào, <span id="dashboard-user-name">nhân viên</span>. Đây là tình hình kinh doanh của cửa hàng.</p>
+            </section>
+
+            <details class="surface-card report-filter-card p-3 p-lg-4 mb-4">
+                <summary class="fw-semibold">Bộ lọc thời gian báo cáo</summary>
+                <div class="pt-3">
+                    <div class="report-period-buttons d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Khoảng thời gian nhanh">
+                        <button class="report-period-button" type="button" data-range="today">Hôm nay</button>
+                        <button class="report-period-button" type="button" data-range="yesterday">Hôm qua</button>
+                        <button class="report-period-button" type="button" data-range="7days">7 ngày qua</button>
+                        <button class="report-period-button" type="button" data-range="this_month">Tháng này</button>
+                        <button class="report-period-button" type="button" data-range="custom">Tùy chỉnh</button>
+                    </div>
+                    <form id="report-filter" class="row g-3 align-items-end">
+                        <div class="col-sm-5 col-lg-4"><label class="form-label fw-semibold" for="date-from">Từ ngày</label><input class="form-control" id="date-from" type="date" required></div>
+                        <div class="col-sm-5 col-lg-4"><label class="form-label fw-semibold" for="date-to">Đến ngày</label><input class="form-control" id="date-to" type="date" required></div>
+                        <div class="col-sm-2 col-lg-4"><button class="btn btn-report-primary w-100" id="load-report" type="submit"><i class="bi bi-funnel me-2" aria-hidden="true"></i>Lọc báo cáo</button></div>
+                    </form>
+                </div>
+            </details>
+            <p id="report-status" class="report-status small mb-3" aria-live="polite"></p>
+
+            <section class="row g-3 mb-4" aria-label="Chỉ số kinh doanh">
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <article class="surface-card report-kpi-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="report-kpi-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+                            <span class="badge rounded-pill text-bg-light" aria-label="Chưa có dữ liệu tăng trưởng">—%</span>
+                        </div>
+                        <div class="stat-label">Tổng doanh thu</div>
+                        <div class="stat-value" id="report-revenue">—</div>
+                        <small class="report-kpi-caption">Trong khoảng thời gian đã chọn</small>
+                    </article>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <article class="surface-card report-kpi-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="report-kpi-icon"><i class="bi bi-cart-check" aria-hidden="true"></i></span>
+                            <span class="badge rounded-pill text-bg-light" aria-label="Chưa có dữ liệu tăng trưởng">—%</span>
+                        </div>
+                        <div class="stat-label">Giao dịch / hóa đơn</div>
+                        <div class="stat-value" id="report-orders">—</div>
+                        <small class="report-kpi-caption">Số đơn trong kỳ</small>
+                    </article>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <article class="surface-card report-kpi-card">
+                        <span class="report-kpi-icon"><i class="bi bi-bag-check" aria-hidden="true"></i></span>
+                        <div class="stat-label">Sản phẩm bán chạy nhất</div>
+                        <div class="stat-value" id="report-best-seller">—</div>
+                        <small class="report-kpi-caption">Sản phẩm đã bán trong kỳ: <span id="report-items">—</span></small>
+                    </article>
+                </div>
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <article class="surface-card report-kpi-card">
+                        <span class="report-kpi-icon"><i class="bi bi-safe2" aria-hidden="true"></i></span>
+                        <div class="stat-label">Tiền mặt tại két</div>
+                        <div class="stat-value" id="report-cash">—</div>
+                        <small class="report-kpi-caption"><span id="profit-card" hidden>Tổng lợi nhuận: <strong id="report-profit">—</strong></span></small>
+                    </article>
+                </div>
+            </section>
+
+            <section class="row g-3 mb-4" aria-label="Phân tích doanh thu và phương thức thanh toán">
+                <div class="col-12 col-xl-7">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">SALES OVER TIME</span><h2 class="h5 fw-bold mb-0">Doanh thu theo thời gian</h2></div>
+                            <span class="small text-muted" id="chart-period-label"></span>
+                        </div>
+                        <div class="report-chart-wrap"><canvas id="report-chart" role="img" aria-label="Biểu đồ đường doanh thu theo thời gian"></canvas></div>
+                    </article>
+                </div>
+                <div class="col-12 col-xl-5">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">PAYMENT METHODS</span><h2 class="h5 fw-bold mb-0">Phương thức thanh toán</h2></div>
+                        </div>
+                        <div class="report-chart-wrap d-flex flex-column align-items-center justify-content-center">
+                            <canvas id="payment-method-chart" role="img" aria-label="Biểu đồ donut phương thức thanh toán"></canvas>
+                            <ul class="list-unstyled d-flex flex-wrap justify-content-center gap-3 mt-3 mb-0" aria-label="Chú giải phương thức thanh toán">
+                                <li><i class="bi bi-circle-fill me-1" aria-hidden="true"></i>Cash <span id="payment-cash-total">—</span></li>
+                                <li><i class="bi bi-circle-fill me-1" aria-hidden="true"></i>Card <span id="payment-card-total">—</span></li>
+                                <li><i class="bi bi-circle-fill me-1" aria-hidden="true"></i>Digital / QR <span id="payment-qr-total">—</span></li>
+                            </ul>
+                            <p class="small text-muted text-center mt-3 mb-0">Chưa có dữ liệu phân bổ phương thức thanh toán.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="row g-3 mb-4" aria-label="Giao dịch và cảnh báo tồn kho">
+                <div class="col-12 col-xl-6">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">RECENT SALES</span><h2 class="h5 fw-bold mb-0">Đơn hàng gần đây</h2></div>
+                            <span class="small text-muted" id="order-count-label"></span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead><tr><th>Invoice#</th><th>Customer</th><th>Thu ngân</th><th>Ngày lập</th><th>Total</th><th>Trạng thái</th><th class="text-end">Chi tiết</th></tr></thead>
+                                <tbody id="report-table"><tr><td colspan="7" class="empty-state">Đang tải báo cáo...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-12 col-xl-6">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">INVENTORY</span><h2 class="h5 fw-bold mb-0">Cảnh báo tồn kho thấp</h2></div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead><tr><th>Item</th><th class="text-end">Quantity</th><th class="text-end">Reorder Level</th></tr></thead>
+                                <tbody id="low-stock-table"><tr><td colspan="3" class="empty-state">Chưa có dữ liệu cảnh báo tồn kho.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="row g-3 mb-4" aria-label="Thao tác nhanh và nhân viên bán hàng hàng đầu">
+                <div class="col-12 col-xl-6">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">QUICK ACTIONS</span><h2 class="h5 fw-bold mb-0">Thao tác nhanh</h2></div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-report-primary text-start" href="pages/pos/index.html"><i class="bi bi-cart-plus me-2" aria-hidden="true"></i>New Sale (POS)</a>
+                            <a class="btn btn-outline-secondary text-start" href="pages/products/index.html"><i class="bi bi-box-seam me-2" aria-hidden="true"></i>Add Product</a>
+                            <a class="btn btn-outline-secondary text-start" href="pages/customers/index.html"><i class="bi bi-person-plus me-2" aria-hidden="true"></i>Add Customer</a>
+                            <a class="btn btn-outline-secondary text-start" href="pages/reports/index.html"><i class="bi bi-receipt me-2" aria-hidden="true"></i>Quick Invoice / Báo cáo</a>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-12 col-xl-6">
+                    <article class="surface-card report-panel p-3 p-lg-4 h-100">
+                        <div class="report-panel-heading">
+                            <div><span class="report-eyebrow">TODAY'S TOP SELLERS</span><h2 class="h5 fw-bold mb-0">Nhân viên bán chạy hôm nay</h2></div>
+                        </div>
+                        <ol class="list-group list-group-numbered list-group-flush" id="top-sellers-list">
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0"><span>Chưa có dữ liệu nhân viên</span><span class="text-muted">— đơn · —</span></li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0"><span>Chưa có dữ liệu nhân viên</span><span class="text-muted">— đơn · —</span></li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0"><span>Chưa có dữ liệu nhân viên</span><span class="text-muted">— đơn · —</span></li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0"><span>Chưa có dữ liệu nhân viên</span><span class="text-muted">— đơn · —</span></li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0"><span>Chưa có dữ liệu nhân viên</span><span class="text-muted">— đơn · —</span></li>
+                        </ol>
+                        <p class="small text-muted mt-2 mb-0">Chưa có dữ liệu xếp hạng nhân viên bán hàng.</p>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="footer-container"></div>
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <div class="modal fade" id="order-detail-modal" tabindex="-1" aria-labelledby="order-detail-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content border-0 rounded-4">
+            <div class="modal-header"><h2 class="modal-title fs-5 fw-bold" id="order-detail-title">Chi tiết đơn hàng</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+            <div class="modal-body" id="order-detail-content"></div>
+        </div></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/common.js"></script>
+    <script src="pages/reports/reports.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Khách hàng | B'TRIPLE POS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../../assets/css/variables.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+</head>
+<body class="app-shell" data-app-root="../.." data-page="customers" data-title="Khách hàng">
+    <div id="header-container"></div><div class="app-layout"><div id="sidebar-container"></div>
+        <main class="app-main flex-grow-1">
+            <section class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3"><div><h1>Khách hàng</h1><p>Lưu trữ và cập nhật thông tin khách hàng.</p></div><button class="btn btn-brand px-4" type="button" id="add-customer"><i class="bi bi-person-plus me-2"></i>Thêm khách hàng</button></section>
+            <section class="surface-card p-3 p-lg-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h2 class="h5 fw-bold mb-0">Danh sách khách hàng</h2><input id="search-customers" class="form-control" style="max-width:320px" type="search" placeholder="Tìm tên, số điện thoại, địa chỉ..." aria-label="Tìm khách hàng"></div>
+                <p id="customers-status" class="status-message" aria-live="polite">Đang tải danh sách...</p>
+                <div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Khách hàng</th><th>Số điện thoại</th><th>Địa chỉ</th><th>Ngày tạo</th><th class="text-end">Thao tác</th></tr></thead><tbody id="customers-table"></tbody></table></div>
+            </section>
+        </main>
+    </div><div id="footer-container"></div><div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <div class="modal fade" id="customer-modal" tabindex="-1" aria-labelledby="customer-modal-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><form id="customer-form"><div class="modal-header"><h2 class="modal-title fs-5 fw-bold" id="customer-modal-title">Thêm khách hàng</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div><div class="modal-body"><div class="mb-3"><label class="form-label" for="customer-name">Họ và tên</label><input class="form-control" id="customer-name" name="full_name" maxlength="100" required></div><div class="mb-3"><label class="form-label" for="customer-phone">Số điện thoại</label><input class="form-control" id="customer-phone" name="phone" type="tel" maxlength="20" required></div><div><label class="form-label" for="customer-address">Địa chỉ</label><input class="form-control" id="customer-address" name="address" maxlength="255"></div></div><div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Hủy</button><button class="btn btn-brand" type="submit" id="save-customer">Lưu khách hàng</button></div></form></div></div></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="../../assets/js/api.js"></script><script src="../../assets/js/common.js"></script><script src="customers.js"></script>
+</body>
+</html>

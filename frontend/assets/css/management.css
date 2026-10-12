@@ -1,0 +1,304 @@
+:root {
+    --management-ink: #1e293b;
+    --management-muted: #718096;
+    --management-border: #e7eaf0;
+    --management-accent: #4f46e5;
+    --management-accent-dark: #3730a3;
+    --management-accent-soft: #eef2ff;
+}
+
+.management-page {
+    background: #f8f9fa;
+    color: var(--management-ink);
+}
+
+.management-page [hidden] {
+    display: none !important;
+}
+
+.management-page .app-main {
+    min-width: 0;
+    padding: clamp(1rem, 2vw, 2rem);
+}
+
+.management-page .page-heading {
+    margin-bottom: 1.25rem;
+}
+
+.management-page .page-heading h1 {
+    margin-bottom: 0.35rem;
+    font-size: clamp(1.55rem, 2.4vw, 2rem);
+    font-weight: 750;
+}
+
+.management-page .page-heading p {
+    margin-bottom: 0;
+    color: var(--management-muted);
+}
+
+.management-eyebrow {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--management-accent);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+}
+
+.management-summary {
+    margin-bottom: 1.25rem;
+}
+
+.management-stat-card,
+.management-panel {
+    border: 1px solid var(--management-border);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(30 41 59 / 5%);
+}
+
+.management-stat-card {
+    position: relative;
+    display: grid;
+    min-height: 125px;
+    grid-template-columns: 42px 1fr;
+    grid-template-rows: auto 1fr;
+    align-items: center;
+    column-gap: 0.8rem;
+    padding: 1rem;
+}
+
+.management-stat-icon {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    grid-row: span 2;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--management-accent-soft);
+    color: var(--management-accent);
+    font-size: 1.05rem;
+}
+
+.management-stat-icon.is-warning {
+    background: #fff7e6;
+    color: #b7791f;
+}
+
+.management-stat-icon.is-muted {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.management-stat-label {
+    align-self: end;
+    color: var(--management-muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+.management-stat-card strong {
+    align-self: start;
+    margin-top: 0.2rem;
+    font-size: 1.45rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.management-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.management-toolbar > .d-flex {
+    flex: 1 1 560px;
+    justify-content: flex-end;
+}
+
+.management-filter {
+    width: auto;
+    min-width: 145px;
+    border-color: var(--management-border);
+}
+
+.management-search {
+    width: min(100%, 300px);
+}
+
+.management-search .input-group-text,
+.management-search .form-control {
+    border-color: var(--management-border);
+    background: #fff;
+}
+
+.management-search .input-group-text {
+    color: var(--management-muted);
+}
+
+.btn-management-primary {
+    min-height: 40px;
+    border: 1px solid var(--management-accent);
+    border-radius: 8px;
+    background: var(--management-accent);
+    color: #fff;
+    font-weight: 700;
+}
+
+.btn-management-primary:hover,
+.btn-management-primary:focus {
+    border-color: var(--management-accent-dark);
+    background: var(--management-accent-dark);
+    color: #fff;
+}
+
+.management-table {
+    min-width: 1050px;
+    --bs-table-hover-bg: #f8f9ff;
+}
+
+.management-table thead th {
+    border-bottom-color: var(--management-border);
+    color: var(--management-muted);
+    font-size: 0.69rem;
+    font-weight: 750;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.management-table > :not(caption) > * > * {
+    padding: 0.78rem 0.65rem;
+}
+
+.management-table tbody td {
+    border-bottom-color: #edf0f4;
+    font-size: 0.84rem;
+}
+
+.management-table .empty-state {
+    padding: 2rem 1rem;
+    color: var(--management-muted);
+    text-align: center;
+}
+
+.status-message {
+    min-height: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--management-muted);
+}
+
+.status-message.is-error {
+    color: #b42318;
+}
+
+.role-preview-control {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem;
+    border: 1px solid var(--management-border);
+    border-radius: 999px;
+    background: #fff;
+}
+
+.role-preview-button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #64748b;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.role-preview-button.is-active {
+    background: var(--management-accent);
+    color: #fff;
+}
+
+.management-page .modal-content {
+    box-shadow: 0 20px 60px rgb(30 41 59 / 18%);
+}
+
+.management-page .form-control,
+.management-page .form-select {
+    min-height: 42px;
+    border-color: var(--management-border);
+    border-radius: 8px;
+}
+
+.management-page .form-control:focus,
+.management-page .form-select:focus {
+    border-color: #a5b4fc;
+    box-shadow: 0 0 0 0.2rem rgb(79 70 229 / 12%);
+}
+
+.category-editor {
+    padding: 1rem;
+    border: 1px solid var(--management-border);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.user-list-avatar {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-list-avatar-fallback {
+    background: var(--management-accent-soft);
+    color: var(--management-accent);
+    font-weight: 800;
+}
+
+.staff-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 180px;
+}
+
+.staff-identity-name {
+    color: var(--management-ink);
+    font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+    .management-page .app-main {
+        padding: 1rem 0.75rem;
+    }
+
+    .management-page .page-heading {
+        align-items: flex-start !important;
+    }
+
+    .management-page .page-heading > .d-flex {
+        width: 100%;
+    }
+
+    .management-toolbar,
+    .management-toolbar > .d-flex {
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+    .management-toolbar > .d-flex > * {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .management-search {
+        width: 100%;
+    }
+
+    .management-stat-card {
+        min-height: 112px;
+        padding: 0.8rem;
+    }
+}

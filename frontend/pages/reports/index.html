@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Báo cáo | B'TRIPLE POS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../../assets/css/variables.css">
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <link rel="stylesheet" href="../../assets/css/reporting.css">
+</head>
+<body class="app-shell" data-app-root="../.." data-page="reports" data-title="Báo cáo">
+    <div id="header-container"></div><div class="app-layout"><div id="sidebar-container"></div>
+        <main class="app-main flex-grow-1">
+            <section class="page-heading d-flex flex-wrap align-items-end justify-content-between gap-3">
+                <div><h1>Báo cáo doanh thu</h1><p>Theo dõi doanh thu, đơn hàng và sản phẩm bán ra.</p></div>
+                <button class="btn btn-outline-dark" id="export-report-pdf" type="button" disabled><i class="bi bi-file-earmark-pdf me-2"></i>Xuất báo cáo PDF</button>
+            </section>
+            <section class="report-print-heading mb-3" aria-label="Tiêu đề bản in">
+                <h1 class="h3 fw-bold">B'TRIPLE — Báo cáo bán hàng</h1>
+                <p class="mb-0">Khoảng thời gian: <span id="print-date-range"></span></p>
+            </section>
+            <section class="surface-card report-filter-card p-3 p-lg-4 mb-4">
+                <div class="report-period-buttons d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Khoảng thời gian nhanh">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-range="today">Hôm nay</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-range="yesterday">Hôm qua</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-range="7days">7 ngày qua</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-range="this_month">Tháng này</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-range="custom">Tùy chỉnh</button>
+                </div>
+                <form id="report-filter" class="row g-3 align-items-end">
+                    <div class="col-sm-5 col-lg-4"><label class="form-label fw-bold" for="date-from">Từ ngày</label><input class="form-control" id="date-from" type="date" required></div>
+                    <div class="col-sm-5 col-lg-4"><label class="form-label fw-bold" for="date-to">Đến ngày</label><input class="form-control" id="date-to" type="date" required></div>
+                    <div class="col-sm-2 col-lg-4"><button class="btn btn-brand w-100" id="load-report" type="submit">Xem báo cáo</button></div>
+                </form>
+            </section>
+            <p id="report-status" class="status-message" aria-live="polite"></p>
+            <section class="row g-3 mb-4" aria-label="Tóm tắt báo cáo">
+                <div class="col-sm-6 col-xl-3"><article class="surface-card report-kpi-card"><span class="report-kpi-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span><div class="stat-label">Tổng tiền đã nhận</div><div class="stat-value" id="report-revenue">—</div></article></div>
+                <div class="col-sm-6 col-xl-3"><article class="surface-card report-kpi-card"><span class="report-kpi-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span><div class="stat-label">Số lượng đơn hàng</div><div class="stat-value" id="report-orders">—</div></article></div>
+                <div class="col-sm-6 col-xl-3"><article class="surface-card report-kpi-card"><span class="report-kpi-icon"><i class="bi bi-bag-check" aria-hidden="true"></i></span><div class="stat-label">Sản phẩm đã bán</div><div class="stat-value" id="report-items">—</div></article></div>
+                <div class="col-sm-6 col-xl-3" id="profit-card" hidden><article class="surface-card report-kpi-card"><span class="report-kpi-icon"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span><div class="stat-label">Tổng lợi nhuận</div><div class="stat-value" id="report-profit">—</div></article></div>
+            </section>
+            <section class="surface-card report-panel p-3 p-lg-4 mb-4">
+                <div class="report-panel-heading"><div><span class="report-eyebrow">ANALYTICS</span><h2 class="h5 fw-bold mb-0">Doanh thu theo ngày</h2></div><span class="small text-muted" id="chart-period-label"></span></div>
+                <div class="report-chart-wrap"><canvas id="report-chart" role="img" aria-label="Biểu đồ doanh thu theo ngày"></canvas></div>
+            </section>
+            <section class="surface-card report-panel p-3 p-lg-4">
+                <div class="report-panel-heading"><div><span class="report-eyebrow">TRANSACTIONS</span><h2 class="h5 fw-bold mb-0">Đơn hàng gần đây</h2></div><span class="small text-muted" id="order-count-label"></span></div>
+                <div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Thu ngân</th><th>Ngày lập</th><th>Tổng tiền</th><th>Trạng thái</th><th class="text-end">Chi tiết</th></tr></thead><tbody id="report-table"><tr><td colspan="7" class="empty-state">Chọn khoảng thời gian để tải báo cáo.</td></tr></tbody></table></div>
+            </section>
+        </main>
+    </div><div id="footer-container"></div><div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <div class="modal fade" id="order-detail-modal" tabindex="-1" aria-labelledby="order-detail-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content border-0 rounded-4">
+            <div class="modal-header"><h2 class="modal-title fs-5 fw-bold" id="order-detail-title">Chi tiết đơn hàng</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+            <div class="modal-body" id="order-detail-content"></div>
+        </div></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="../../assets/js/api.js"></script><script src="../../assets/js/common.js"></script><script src="reports.js"></script>
+</body>
+</html>

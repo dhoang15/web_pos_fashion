@@ -1,350 +1,863 @@
-// JS riêng của trang POS / Sales (dữ liệu mẫu, sau này thay bằng API)
-(() => {
-    const root = document.getElementById('view-pos');
-    if (!root) {
-        console.warn('[pos] Không thấy #view-pos (pos.html chưa nạp?)');
-        return;
+(function () {
+    "use strict";
+
+    const productList = document.getElementById("product-list");
+    if (!productList) return;
+
+    const productStatus = document.getElementById("product-status");
+    const productSearch = document.getElementById("product-search");
+    const categoryFilter = document.getElementById("category-filter");
+    const cartElement = document.getElementById("cart-items");
+    const phoneInput = document.getElementById("customer-phone");
+    const customerName = document.getElementById("customer-name");
+    const customerAddress = document.getElementById("customer-address");
+    const customerFields = document.getElementById("new-customer-fields");
+    const customerStatus = document.getElementById("customer-status");
+    const receivedInput = document.getElementById("amount-received");
+    const discountInput = document.getElementById("discount-amount");
+    const taxRateLabel = document.getElementById("tax-rate-label");
+    const qrModal = createModal(document.getElementById("qr-modal"));
+    const invoiceModal = createModal(document.getElementById("invoice-modal"));
+    if (!window.bootstrap || !window.bootstrap.Modal) {
+        document.querySelectorAll(".modal [data-bs-dismiss='modal']").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const modalElement = button.closest(".modal");
+                modalElement.classList.remove("show");
+                modalElement.style.display = "none";
+                modalElement.setAttribute("aria-hidden", "true");
+                document.body.classList.remove("modal-open");
+            });
+        });
+        document.querySelectorAll(".modal .btn-close").forEach(function (button) {
+            button.textContent = "×";
+        });
     }
-    if (!window.Store) {
-        console.warn('[pos] Không thấy Store (assets/js/store.js chưa được nạp trước pos.js?)');
-        return;
+    const cart = new Map();
+    const categoriesById = new Map();
+    const cartState = { customerId: null, customerType: "guest", qrConfirmed: false, qrLoaded: false };
+    let customerLookupSequence = 0;
+    let customerLookupTimer = null;
+    let products = [];
+    let storeSettings = {};
+    let paymentQr = null;
+
+    function createModal(element) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+            return new window.bootstrap.Modal(element);
+        }
+        return {
+            show: function () {
+                element.classList.add("show");
+                element.style.display = "block";
+                element.removeAttribute("aria-hidden");
+                document.body.classList.add("modal-open");
+            },
+            hide: function () {
+                element.classList.remove("show");
+                element.style.display = "none";
+                element.setAttribute("aria-hidden", "true");
+                document.body.classList.remove("modal-open");
+            }
+        };
     }
 
-    // ---------- Cấu hình ----------
-    const TAX_RATE = 0.1;                       // VAT 10% (sau này đọc từ Settings > Invoice)
-    const PROMOS = { NEWUSER: 10, BTRIPLE5: 5 }; // mã -> % giảm
-    const SIZES = [38, 39, 40, 41, 42, 43, 44, 45];
-    const DEFAULT_SIZE = 42;
-    const LOW_STOCK = Store.LOW_STOCK;
+    function valueFromResponse(response, key) {
+        if (!response) return null;
+        if (response[key] !== undefined) return response[key];
+        if (response.data && response.data[key] !== undefined) return response.data[key];
+        return response.data || response;
+    }
 
-    // Sản phẩm lấy từ kho dùng chung (assets/js/store.js), được quản lý ở trang Products.
-    const all = () => Store.getProducts();
-    const byId = (id) => Store.getProduct(id);
-    const categories = () => Store.categories();
+    function getCategoryName(product) {
+        const category = categoriesById.get(String(product.category_id));
+        return product.category_name || category && category.name || "Chưa phân loại";
+    }
 
-    // Ảnh sản phẩm; chưa có ảnh thì hiện khung icon
-    const imgHTML = (p, cls, alt = '') => p.img
-        ? `<img src="${esc(p.img)}" alt="${esc(alt)}" loading="lazy" class="${cls}">`
-        : `<div class="${cls} flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600"><i class="fas fa-shoe-prints text-2xl"></i></div>`;
+    function getCurrentCustomer() {
+        const fullName = customerName.value.trim();
+        return {
+            id: cartState.customerId,
+            phone: phoneInput.value.trim(),
+            full_name: fullName,
+            address: customerAddress.value.trim()
+        };
+    }
 
-    // ---------- Trạng thái ----------
-    const state = {
-        cat: '',         // '' = tất cả danh mục
-        q: '',
-        cart: [],        // [{ id, size, qty }]
-        promo: null,     // { code, pct }
-        pay: 'cash',
-    };
-    let lang = localStorage.getItem('lang') || 'en';
+    function setCustomerType(iconClass, label) {
+        const badge = document.getElementById("customer-type-label");
+        const icon = document.createElement("i");
+        icon.className = "bi " + iconClass;
+        icon.setAttribute("aria-hidden", "true");
+        badge.replaceChildren(icon, document.createTextNode(" " + label));
+    }
 
-    // ---------- Tiện ích ----------
-    const $ = (id) => document.getElementById(id);
-    const el = {
-        tabs: $('posTabs'), grid: $('posGrid'), empty: $('posEmpty'), search: $('posSearch'),
-        cartList: $('posCartList'), cartCount: $('posCartCount'), clear: $('posClear'),
-        promo: $('posPromo'), promoMsg: $('posPromoMsg'),
-        subtotal: $('posSubtotal'), taxLabel: $('posTaxLabel'), tax: $('posTax'),
-        discount: $('posDiscount'), total: $('posTotal'), checkout: $('posCheckout'),
-    };
+    function getPaymentMethod() {
+        const selected = document.querySelector("input[name='payment-method']:checked");
+        return selected ? selected.value : "cash";
+    }
 
-    const fmt = (n) => n.toLocaleString('vi-VN') + ' ₫';
-    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    function getTotals() {
+        let subtotal = 0;
+        cart.forEach(function (item) {
+            subtotal += Number(item.product.price) * item.quantity;
+        });
+        const discountPercent = Math.min(100, Math.max(0, Number(discountInput.value) || 0));
+        const discountAmount = subtotal * discountPercent / 100;
+        const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+        const configuredTaxRate = Number(storeSettings.tax_rate);
+        const taxRate = Number.isFinite(configuredTaxRate)
+            ? Math.min(100, Math.max(0, configuredTaxRate))
+            : 10;
+        const taxAmount = discountedSubtotal * taxRate / 100;
+        const totalAmount = discountedSubtotal + taxAmount;
+        const paymentMethod = getPaymentMethod();
+        const amountReceived = paymentMethod === "cash"
+            ? Math.max(0, Number(receivedInput.value) || 0)
+            : paymentMethod === "qr_code" && !cartState.qrConfirmed ? 0 : totalAmount;
+        const changeAmount = paymentMethod === "cash"
+            ? Math.max(0, amountReceived - totalAmount)
+            : 0;
 
-    const t = (key, vars = {}) => {
-        const dict = translations[lang] || translations.en || {};
-        const str = dict[key] ?? (translations.en && translations.en[key]) ?? key;
-        return str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
-    };
+        document.getElementById("subtotal").textContent = window.PosCommon.formatCurrency(subtotal);
+        document.getElementById("discount-rate").textContent = String(discountPercent);
+        document.getElementById("discount-total").textContent = window.PosCommon.formatCurrency(discountAmount);
+        taxRateLabel.textContent = "Thuế VAT (" + taxRate + "%)";
+        document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(taxAmount);
+        document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
+        document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(changeAmount);
+        if (paymentMethod !== "cash") receivedInput.value = String(amountReceived);
+        return {
+            subtotal: subtotal,
+            discountPercent: discountPercent,
+            discountAmount: discountAmount,
+            taxAmount: taxAmount,
+            totalAmount: totalAmount,
+            amountReceived: amountReceived,
+            changeAmount: changeAmount,
+            paymentMethod: paymentMethod
+        };
+    }
 
-    const inCart = (id) => state.cart.filter(l => l.id === id).reduce((s, l) => s + l.qty, 0);
-    const remaining = (p) => p.stock - inCart(p.id);
-    const cartQty = () => state.cart.reduce((s, l) => s + l.qty, 0);
+    function createProductCard(product) {
+        const column = document.createElement("div");
+        column.className = "col-6 col-md-4 col-xl-4";
 
-    const calc = () => {
-        const sub = state.cart.reduce((s, l) => s + byId(l.id).price * l.qty, 0);
-        const discount = state.promo ? Math.round(sub * state.promo.pct / 100) : 0;
-        const base = sub - discount;
-        const tax = Math.round(base * TAX_RATE);
-        return { sub, discount, tax, total: base + tax };
-    };
+        const card = document.createElement("article");
+        card.className = "pos-product-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", "Thêm " + (product.name || "sản phẩm") + " vào giỏ");
+        card.dataset.productCardId = String(product.id);
 
-    // ---------- Render: tabs + sản phẩm ----------
-    const renderTabs = () => {
-        // Danh mục bị xóa/đổi tên ở Products -> quay về "Tất cả"
-        if (state.cat && !categories().includes(state.cat)) state.cat = '';
-        el.tabs.innerHTML = ['', ...categories()].map(c => {
-            const count = c === '' ? all().length : all().filter(p => p.category === c).length;
-            const active = state.cat === c;
-            const label = c === '' ? t('pos_cat_all') : c;
-            return `<button type="button" data-act="cat" data-id="${esc(c)}"
-                class="flex items-center gap-2.5 px-5 py-3 rounded-full text-xs font-bold whitespace-nowrap border transition-colors ${active
-                    ? 'bg-orange-500 border-orange-500 text-white shadow-sm'
-                    : 'bg-white dark:bg-gray-800/40 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-orange-300'}">
-                ${esc(label)}
-                <span class="px-2 py-0.5 rounded-full text-[11px] ${active ? 'bg-white/25 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}">${count}</span>
-            </button>`;
-        }).join('');
-    };
-
-    const cardHTML = (p) => {
-        const left = remaining(p);
-        const out = left <= 0;
-        const low = !out && left <= LOW_STOCK;
-        const badge = out ? t('pos_out_of_stock') : t('pos_stock_left', { n: left });
-        return `<article class="pos-card bg-white dark:bg-gray-800/40 rounded-3xl p-4 border border-gray-100 dark:border-gray-700/60 shadow-sm flex flex-col">
-            <div class="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[4/3]">
-                ${imgHTML(p, 'w-full h-full object-cover ' + (out ? 'grayscale opacity-60' : ''), p.name)}
-                <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-bold text-white ${out ? 'bg-red-500' : low ? 'bg-orange-500' : 'bg-gray-900/85'}">${esc(badge)}</span>
-            </div>
-            <div class="px-1 pt-4 flex-1 flex flex-col">
-                <h4 class="font-extrabold text-sm text-gray-900 dark:text-white leading-snug pos-clamp-2">${esc(p.name)}</h4>
-                <p class="text-xs leading-relaxed text-gray-400 mt-1.5 pos-clamp-2">${esc(p.desc || '')}</p>
-                <p class="mt-auto pt-4 font-extrabold text-base text-gray-900 dark:text-white">${fmt(p.price)}</p>
-            </div>
-            <button type="button" data-act="add" data-id="${p.id}" ${out ? 'disabled' : ''}
-                class="mt-4 w-full py-3 rounded-2xl text-xs font-extrabold border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-700 dark:disabled:hover:text-gray-200 disabled:hover:border-gray-200">
-                <i class="fas fa-plus mr-2"></i>${esc(t('pos_add'))}
-            </button>
-        </article>`;
-    };
-
-    const renderProducts = () => {
-        const q = state.q.trim().toLowerCase();
-        const list = all().filter(p =>
-            (state.cat === '' || p.category === state.cat) && p.name.toLowerCase().includes(q));
-        el.grid.innerHTML = list.map(cardHTML).join('');
-        el.empty.classList.toggle('hidden', list.length > 0);
-    };
-
-    // ---------- Render: giỏ hàng ----------
-    const lineHTML = (l, i) => {
-        const p = byId(l.id);
-        const canInc = remaining(p) > 0;
-        return `<li class="flex gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
-            ${imgHTML(p, 'w-[72px] h-[72px] rounded-xl object-cover flex-shrink-0')}
-            <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                    <p class="font-bold text-sm text-gray-900 dark:text-white leading-snug pos-clamp-2">${esc(p.name)}</p>
-                    <button type="button" data-act="remove" data-i="${i}" aria-label="${esc(t('pos_remove'))}" class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <select data-act="size" data-i="${i}" aria-label="${esc(t('pos_size'))}"
-                    class="pos-size mt-2 pl-3 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-300 focus:outline-none focus:border-orange-500">
-                    ${SIZES.map(s => `<option value="${s}" ${s === l.size ? 'selected' : ''}>${esc(t('pos_size'))} ${s}</option>`).join('')}
-                </select>
-                <div class="flex items-center justify-between mt-3">
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" data-act="dec" data-i="${i}" aria-label="${esc(t('pos_decrease'))}"
-                            class="w-7 h-7 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors"><i class="fas fa-minus text-[10px]"></i></button>
-                        <span class="pos-qty-num text-sm font-extrabold text-gray-900 dark:text-white">${String(l.qty).padStart(2, '0')}</span>
-                        <button type="button" data-act="inc" data-i="${i}" ${canInc ? '' : 'disabled'} aria-label="${esc(t('pos_increase'))}"
-                            class="w-7 h-7 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-orange-500"><i class="fas fa-plus text-[10px]"></i></button>
-                    </div>
-                    <span class="font-extrabold text-sm text-gray-900 dark:text-white">${fmt(p.price * l.qty)}</span>
-                </div>
-            </div>
-        </li>`;
-    };
-
-    const renderCart = () => {
-        if (state.cart.length === 0) {
-            el.cartList.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-8 px-4">
-                <div class="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center mb-3">
-                    <i class="fas fa-shopping-bag text-xl"></i>
-                </div>
-                <p class="font-extrabold text-sm text-gray-900 dark:text-white">${esc(t('pos_cart_empty'))}</p>
-                <p class="text-xs text-gray-400 mt-1">${esc(t('pos_cart_empty_desc'))}</p>
-            </div>`;
+        const imageFrame = document.createElement("div");
+        imageFrame.className = "pos-product-image";
+        if (product.image) {
+            const image = document.createElement("img");
+            image.src = product.image;
+            image.alt = product.name || "Sản phẩm thời trang";
+            image.loading = "lazy";
+            image.onerror = function () {
+                image.remove();
+                imageFrame.classList.add("is-image-missing");
+                imageFrame.textContent = "B'TRIPLE";
+            };
+            imageFrame.append(image);
         } else {
-            el.cartList.innerHTML = `<ul class="space-y-4 pb-1">${state.cart.map(lineHTML).join('')}</ul>`;
+            imageFrame.classList.add("is-image-missing");
+            imageFrame.textContent = "B'TRIPLE";
         }
-        el.cartCount.textContent = t('pos_cart_items', { n: cartQty() });
-        el.clear.classList.toggle('hidden', state.cart.length === 0);
-    };
 
-    const renderSummary = () => {
-        const c = calc();
-        el.subtotal.textContent = fmt(c.sub);
-        el.taxLabel.textContent = t('pos_tax', { n: Math.round(TAX_RATE * 100) });
-        el.tax.textContent = fmt(c.tax);
-        el.discount.textContent = c.discount ? '−' + fmt(c.discount) : fmt(0);
-        el.total.textContent = fmt(c.total);
-        el.checkout.disabled = state.cart.length === 0;
-    };
+        const content = document.createElement("div");
+        content.className = "pos-product-content";
+        const name = document.createElement("h3");
+        name.className = "pos-product-name";
+        name.textContent = product.name || "Sản phẩm";
+        const barcode = document.createElement("p");
+        barcode.className = "pos-product-barcode";
+        barcode.textContent = "Mã: " + (product.barcode || "—");
 
-    const renderPromoMsg = (invalid = false) => {
-        const msg = el.promoMsg;
-        msg.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'text-red-500');
-        if (invalid) {
-            msg.textContent = t('pos_promo_invalid');
-            msg.classList.add('text-red-500');
-            msg.classList.remove('hidden');
-        } else if (state.promo) {
-            msg.textContent = t('pos_promo_applied', { code: state.promo.code, pct: state.promo.pct });
-            msg.classList.add('text-emerald-600', 'dark:text-emerald-400');
-            msg.classList.remove('hidden');
-        } else {
-            msg.classList.add('hidden');
+        const tags = document.createElement("div");
+        tags.className = "pos-product-tags";
+        [product.size, product.color].filter(Boolean).forEach(function (tagText) {
+            const tag = document.createElement("span");
+            tag.className = "pos-product-tag";
+            tag.textContent = tagText;
+            tags.append(tag);
+        });
+        if (!tags.childElementCount) {
+            const material = document.createElement("span");
+            material.className = "pos-product-tag";
+            material.textContent = product.material || getCategoryName(product);
+            tags.append(material);
         }
-    };
 
-    const renderPay = () => {
-        root.querySelectorAll('.pos-pay').forEach(btn =>
-            btn.classList.toggle('is-active', btn.dataset.method === state.pay));
-    };
+        const meta = document.createElement("div");
+        meta.className = "pos-product-meta";
+        const price = document.createElement("strong");
+        price.className = "pos-product-price";
+        price.textContent = window.PosCommon.formatCurrency(product.price);
+        const stock = document.createElement("span");
+        stock.className = "pos-product-stock";
+        const quantity = Number(product.stock_quantity);
+        stock.textContent = Number.isFinite(quantity) ? "Tồn: " + quantity : "Còn hàng";
+        content.append(name, barcode, tags, meta);
+        meta.append(price, stock);
+        const categoryTag = document.createElement("span");
+        categoryTag.className = "pos-product-tag";
+        categoryTag.textContent = getCategoryName(product);
+        categoryTag.setAttribute("aria-label", "Danh mục: " + getCategoryName(product));
+        const categoryTagRow = document.createElement("div");
+        categoryTagRow.className = "pos-product-tags mt-2";
+        categoryTagRow.append(categoryTag);
+        content.append(categoryTagRow);
+        card.append(imageFrame, content);
 
-    const applyStaticText = () => {
-        el.search.placeholder = t('pos_search');
-        el.promo.placeholder = t('pos_promo_placeholder');
-    };
-
-    const renderAll = () => {
-        applyStaticText();
-        renderTabs();
-        renderProducts();
-        renderCart();
-        renderSummary();
-        renderPromoMsg();
-        renderPay();
-    };
-
-    // Thay đổi giỏ -> vẽ lại phần bị ảnh hưởng (số tồn kho trên thẻ thay đổi theo giỏ)
-    const cartChanged = () => {
-        renderProducts();
-        renderCart();
-        renderSummary();
-    };
-
-    // ---------- Thao tác giỏ hàng ----------
-    const addToCart = (id) => {
-        const p = byId(id);
-        if (!p || remaining(p) <= 0) return;
-        const line = state.cart.find(l => l.id === id && l.size === DEFAULT_SIZE);
-        if (line) line.qty += 1;
-        else state.cart.push({ id, size: DEFAULT_SIZE, qty: 1 });
-        cartChanged();
-    };
-
-    const changeQty = (i, delta) => {
-        const line = state.cart[i];
-        if (!line) return;
-        if (delta > 0 && remaining(byId(line.id)) <= 0) return;
-        line.qty += delta;
-        if (line.qty <= 0) state.cart.splice(i, 1);
-        cartChanged();
-    };
-
-    const changeSize = (i, size) => {
-        const line = state.cart[i];
-        if (!line) return;
-        line.size = size;
-        // Cùng sản phẩm + cùng size thì gộp dòng
-        const other = state.cart.findIndex((l, j) => j !== i && l.id === line.id && l.size === size);
-        if (other !== -1) {
-            state.cart[other].qty += line.qty;
-            state.cart.splice(i, 1);
+        if (Number.isFinite(quantity) && quantity <= 0) {
+            card.classList.add("is-out-of-stock");
+            card.setAttribute("aria-disabled", "true");
         }
-        cartChanged();
-    };
+        column.append(card);
+        return column;
+    }
 
-    const removeLine = (i) => {
-        state.cart.splice(i, 1);
-        cartChanged();
-    };
-
-    const clearCart = () => {
-        state.cart = [];
-        cartChanged();
-    };
-
-    const applyPromo = () => {
-        const code = el.promo.value.trim().toUpperCase();
-        if (!code) {
-            state.promo = null;
-            renderPromoMsg();
-        } else if (PROMOS[code]) {
-            state.promo = { code, pct: PROMOS[code] };
-            renderPromoMsg();
-        } else {
-            state.promo = null;
-            renderPromoMsg(true);
-        }
-        renderSummary();
-    };
-
-    const checkout = () => {
-        if (state.cart.length === 0) return;
-        const lines = state.cart.map(l => ({ id: l.id, qty: l.qty }));
-        state.cart = [];
-        state.promo = null;
-        el.promo.value = '';
-        // Trừ tồn kho thật trong kho dùng chung -> trang Products tự cập nhật theo
-        Store.adjustStock(lines);
-        renderAll();
-        if (typeof window.showToast === 'function') window.showToast('pos_toast_paid');
-    };
-
-    // ---------- Sự kiện ----------
-    root.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-act]');
-        if (!btn || btn.disabled || btn.tagName === 'SELECT') return;
-        const i = Number(btn.dataset.i);
-        switch (btn.dataset.act) {
-            case 'cat':         state.cat = btn.dataset.id; renderTabs(); renderProducts(); break;
-            case 'add':         addToCart(btn.dataset.id); break;
-            case 'inc':         changeQty(i, 1); break;
-            case 'dec':         changeQty(i, -1); break;
-            case 'remove':      removeLine(i); break;
-            case 'clear':       clearCart(); break;
-            case 'promo-apply': applyPromo(); break;
-            case 'pay':         state.pay = btn.dataset.method; renderPay(); break;
-            case 'checkout':    checkout(); break;
-        }
-    });
-
-    root.addEventListener('change', (e) => {
-        if (e.target.dataset.act === 'size') changeSize(Number(e.target.dataset.i), Number(e.target.value));
-    });
-
-    el.search.addEventListener('input', () => {
-        state.q = el.search.value;
-        renderProducts();
-    });
-
-    el.promo.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); applyPromo(); }
-    });
-
-    // Đổi ngôn ngữ ở Settings -> vẽ lại phần chữ do JS tạo.
-    // Dùng e.target.value vì listener này chạy trước listener của settings.js (chưa kịp ghi localStorage).
-    const langSelect = document.getElementById('languageSelect');
-    if (langSelect) {
-        langSelect.addEventListener('change', (e) => {
-            lang = e.target.value;
-            renderAll();
+    function getVisibleProducts() {
+        const query = productSearch.value.trim().toLocaleLowerCase("vi");
+        const selectedCategory = categoryFilter.querySelector(".category-chip.is-active");
+        const categoryId = selectedCategory ? selectedCategory.dataset.categoryId : "all";
+        return products.filter(function (product) {
+            const matchesQuery = [
+                product.name,
+                product.material,
+                product.barcode,
+                product.size,
+                product.color
+            ].join(" ").toLocaleLowerCase("vi").includes(query);
+            const matchesCategory = categoryId === "all" || String(product.category_id) === categoryId;
+            return matchesQuery && matchesCategory;
         });
     }
 
-    // Giỏ hàng khớp lại với kho: sản phẩm bị xóa thì bỏ khỏi giỏ, tồn kho giảm thì hạ số lượng
-    const reconcileCart = () => {
-        const used = {};
-        state.cart = state.cart.filter(l => {
-            const p = byId(l.id);
-            if (!p) return false;
-            const left = p.stock - (used[l.id] || 0);
-            if (left <= 0) return false;
-            l.qty = Math.min(l.qty, left);
-            used[l.id] = (used[l.id] || 0) + l.qty;
-            return true;
+    function renderProducts() {
+        const visibleProducts = getVisibleProducts();
+        productList.replaceChildren();
+        document.getElementById("product-count").textContent = visibleProducts.length + " sản phẩm";
+        if (!visibleProducts.length) {
+            const empty = document.createElement("div");
+            empty.className = "col-12";
+            const message = document.createElement("p");
+            message.className = "empty-state";
+            message.textContent = "Không tìm thấy sản phẩm phù hợp.";
+            empty.append(message);
+            productList.append(empty);
+            return;
+        }
+        visibleProducts.forEach(function (product) {
+            productList.append(createProductCard(product));
         });
-    };
+    }
 
-    // Trang Products (hoặc tab khác) đổi dữ liệu -> đồng bộ lại POS
-    document.addEventListener('store:products', () => {
-        reconcileCart();
-        renderAll();
+    function renderCategories() {
+        categoryFilter.querySelectorAll("[data-category-id]:not([data-category-id='all'])").forEach(function (button) {
+            button.remove();
+        });
+        categoriesById.forEach(function (category, id) {
+            const button = document.createElement("button");
+            button.className = "category-chip";
+            button.type = "button";
+            button.dataset.categoryId = id;
+            button.setAttribute("aria-pressed", "false");
+            button.textContent = category.name;
+            categoryFilter.append(button);
+        });
+    }
+
+    function addProduct(product) {
+        if (!product) return;
+        const available = Number(product.stock_quantity);
+        if (Number.isFinite(available) && available <= 0) {
+            window.PosCommon.notify("Sản phẩm đã hết hàng.", "warning");
+            return;
+        }
+        const id = String(product.id);
+        const item = cart.get(id);
+        const quantity = item ? item.quantity + 1 : 1;
+        if (Number.isFinite(available) && quantity > available) {
+            window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
+            return;
+        }
+        cart.set(id, { product: product, quantity: quantity });
+        renderCart();
+    }
+
+    function createCartRow(item, id) {
+        const row = document.createElement("article");
+        row.className = "pos-cart-item";
+
+        const description = document.createElement("div");
+        description.className = "pos-cart-description";
+        const name = document.createElement("h3");
+        name.className = "pos-cart-name";
+        name.textContent = item.product.name || "Sản phẩm";
+        const variant = document.createElement("p");
+        variant.className = "pos-cart-variant";
+        variant.textContent = [item.product.size, item.product.color].filter(Boolean).join(" · ") || "Thời trang";
+        const unitPrice = document.createElement("span");
+        unitPrice.className = "pos-cart-unit-price";
+        unitPrice.textContent = window.PosCommon.formatCurrency(item.product.price) + " / sản phẩm";
+        description.append(name, variant, unitPrice);
+
+        const controls = document.createElement("div");
+        controls.className = "pos-cart-controls";
+        const quantityControls = document.createElement("div");
+        quantityControls.className = "pos-quantity-controls";
+        [["decrease", "−", "Giảm số lượng"], ["increase", "+", "Tăng số lượng"]].forEach(function (entry) {
+            const button = document.createElement("button");
+            button.className = "pos-quantity-button";
+            button.type = "button";
+            button.dataset.cartAction = entry[0];
+            button.dataset.productId = id;
+            button.setAttribute("aria-label", entry[2]);
+            button.textContent = entry[1];
+            quantityControls.append(button);
+        });
+        const quantity = document.createElement("span");
+        quantity.className = "pos-cart-quantity";
+        quantity.textContent = String(item.quantity);
+        quantityControls.insertBefore(quantity, quantityControls.lastChild);
+
+        const lineTotal = document.createElement("strong");
+        lineTotal.className = "pos-cart-line-total";
+        lineTotal.textContent = window.PosCommon.formatCurrency(Number(item.product.price) * item.quantity);
+        const remove = document.createElement("button");
+        remove.className = "btn btn-link btn-sm text-danger p-0";
+        remove.type = "button";
+        remove.dataset.cartAction = "remove";
+        remove.dataset.productId = id;
+        remove.textContent = "Bỏ";
+        controls.append(quantityControls, lineTotal, remove);
+        row.append(description, controls);
+        return row;
+    }
+
+    function renderCart() {
+        cartElement.replaceChildren();
+        let itemCount = 0;
+        cart.forEach(function (item, id) {
+            itemCount += item.quantity;
+            cartElement.append(createCartRow(item, id));
+        });
+        document.getElementById("cart-item-count").textContent = itemCount
+            ? itemCount + " sản phẩm"
+            : "0 sản phẩm";
+        if (!cart.size) {
+            const empty = document.createElement("p");
+            empty.className = "empty-state mb-0";
+            empty.textContent = "Chưa có sản phẩm trong giỏ";
+            cartElement.append(empty);
+            cartState.qrConfirmed = false;
+        }
+        updatePaymentFields();
+        getTotals();
+    }
+
+    function updatePaymentFields() {
+        const paymentMethod = getPaymentMethod();
+        const isCash = paymentMethod === "cash";
+        receivedInput.readOnly = !isCash;
+        receivedInput.setAttribute("aria-readonly", String(!isCash));
+        if (!isCash) getTotals();
+        document.getElementById("confirm-qr-payment").disabled = !cart.size;
+    }
+
+    async function loadProducts() {
+        productStatus.textContent = "Đang tải sản phẩm...";
+        productStatus.classList.remove("is-error");
+        try {
+            products = window.PosCommon.unwrapList(await window.PosApi.get("products?status=active"));
+            productStatus.textContent = products.length + " sản phẩm đang bán";
+            renderProducts();
+        } catch (error) {
+            products = [];
+            productStatus.textContent = "Không tải được sản phẩm: " + error.message;
+            productStatus.classList.add("is-error");
+            renderProducts();
+            window.PosCommon.notify("Không tải được sản phẩm: " + error.message, "danger");
+        }
+    }
+
+    async function loadCategories() {
+        try {
+            const response = await window.PosApi.get("categories");
+            const categories = window.PosCommon.unwrapList(response);
+            categories.forEach(function (category) {
+                categoriesById.set(String(category.id), category);
+            });
+            renderCategories();
+            renderProducts();
+        } catch (error) {
+            categoriesById.clear();
+            renderCategories();
+            renderProducts();
+            window.PosCommon.notify("Không tải được danh mục: " + error.message, "danger");
+        }
+    }
+
+    async function loadReceiptSettings() {
+        try {
+            const response = await window.PosApi.get("store_settings");
+            const settings = valueFromResponse(response, "settings");
+            if (Array.isArray(settings)) {
+                settings.forEach(function (setting) {
+                    storeSettings[setting.setting_key] = setting.setting_value;
+                });
+            } else if (settings && typeof settings === "object") {
+                storeSettings = settings;
+            }
+        } catch (error) {
+            window.PosCommon.notify("Không tải được thông tin cửa hàng: " + error.message, "warning");
+        }
+        getTotals();
+    }
+
+    async function loadPaymentQr() {
+        const status = document.getElementById("qr-status");
+        const image = document.getElementById("payment-qr-image");
+        image.hidden = true;
+        status.hidden = false;
+        status.textContent = "Đang tải mã QR...";
+        try {
+            const response = await window.PosApi.get("payment_qrcodes?is_active=1");
+            const records = window.PosCommon.unwrapList(response);
+            paymentQr = records.find(function (record) {
+                return record.is_active === true || Number(record.is_active) === 1;
+            });
+            if (!paymentQr || !paymentQr.qr_code_path) {
+                throw new Error("Chưa cấu hình mã QR thanh toán đang hoạt động.");
+            }
+            image.src = paymentQr.qr_code_path;
+            image.alt = paymentQr.description || "Mã QR thanh toán";
+            image.hidden = false;
+            status.hidden = true;
+            document.getElementById("qr-payment-description").textContent = paymentQr.description || paymentQr.payment_method || "";
+            cartState.qrLoaded = true;
+        } catch (error) {
+            status.textContent = error.message;
+            cartState.qrLoaded = false;
+            window.PosCommon.notify(error.message, "danger");
+        }
+    }
+
+    async function lookupCustomer() {
+        const phone = phoneInput.value.trim();
+        resetCustomer(false);
+        const lookupSequence = ++customerLookupSequence;
+        if (!phone) {
+            customerStatus.textContent = "Khách lẻ";
+            return;
+        }
+        customerStatus.textContent = "Đang tra cứu khách hàng...";
+        customerStatus.classList.remove("text-danger");
+        try {
+            const response = await window.PosApi.get("customers/lookup?phone=" + encodeURIComponent(phone));
+            if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
+            const customer = valueFromResponse(response, "customer");
+            if (!customer || customer.id == null) {
+                throw new Error("Máy chủ không trả về dữ liệu khách hàng hợp lệ.");
+            }
+            cartState.customerId = customer.id;
+            cartState.customerType = "existing";
+            customerName.value = customer.full_name || "";
+            customerAddress.value = customer.address || "";
+            customerName.readOnly = true;
+            customerAddress.readOnly = true;
+            customerFields.hidden = false;
+            customerStatus.textContent = "Khách hàng cũ: " + customerName.value;
+            setCustomerType("bi-person-check", "Returning Customer");
+        } catch (error) {
+            if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
+            if (error.status === 404) {
+                cartState.customerType = "new";
+                customerName.readOnly = false;
+                customerAddress.readOnly = false;
+                customerFields.hidden = false;
+                customerStatus.textContent = "Khách mới — nhập họ tên; địa chỉ không bắt buộc.";
+                setCustomerType("bi-person-plus", "New Customer");
+                return;
+            }
+            customerStatus.textContent = error.message;
+            customerStatus.classList.add("text-danger");
+            throw error;
+        }
+    }
+
+    function resetCustomer(clearPhone) {
+        customerLookupSequence += 1;
+        cartState.customerId = null;
+        cartState.customerType = "guest";
+        customerName.value = "";
+        customerAddress.value = "";
+        customerName.readOnly = false;
+        customerAddress.readOnly = false;
+        customerFields.hidden = true;
+        customerStatus.classList.remove("text-danger");
+        customerStatus.textContent = "Khách lẻ";
+        setCustomerType("bi-person", "Khách lẻ");
+        if (clearPhone) phoneInput.value = "";
+    }
+
+    function validateCheckout(totals, requirePayment) {
+        if (!cart.size) {
+            window.PosCommon.notify("Thêm ít nhất một sản phẩm vào giỏ hàng.", "warning");
+            return false;
+        }
+        if (phoneInput.value.trim() && cartState.customerType === "guest") {
+            window.PosCommon.notify("Tra cứu số điện thoại trước khi thanh toán.", "warning");
+            phoneInput.focus();
+            return false;
+        }
+        if (cartState.customerType === "new") {
+            if (!phoneInput.value.trim()) {
+                window.PosCommon.notify("Nhập số điện thoại khách hàng mới.", "warning");
+                phoneInput.focus();
+                return false;
+            }
+            if (!customerName.value.trim()) {
+                window.PosCommon.notify("Nhập họ tên khách hàng.", "warning");
+                customerName.focus();
+                return false;
+            }
+        }
+        if (requirePayment && totals.paymentMethod === "cash" && totals.amountReceived < totals.totalAmount) {
+            window.PosCommon.notify("Tiền khách đưa chưa đủ thanh toán.", "warning");
+            receivedInput.focus();
+            return false;
+        }
+        if (requirePayment && totals.paymentMethod === "qr_code" && !cartState.qrConfirmed) {
+            window.PosCommon.notify("Xác nhận đã nhận thanh toán QR trước khi hoàn tất.", "warning");
+            return false;
+        }
+        return true;
+    }
+
+    function appendReceiptLine(parent, label, value, emphasized) {
+        const line = document.createElement("div");
+        line.className = "receipt-line" + (emphasized ? " is-emphasized" : "");
+        const name = document.createElement("span");
+        name.textContent = label;
+        const amount = document.createElement("strong");
+        amount.textContent = value;
+        line.append(name, amount);
+        parent.append(line);
+    }
+
+    function buildReceipt(orderResponse, totals, items, customer) {
+        const order = valueFromResponse(orderResponse, "order") || {};
+        const receipt = document.getElementById("invoice-content");
+        receipt.replaceChildren();
+
+        const logo = document.createElement("div");
+        logo.className = "receipt-logo";
+        logo.textContent = storeSettings.logo_text || "B'TRIPLE";
+        const storeName = document.createElement("h3");
+        storeName.className = "receipt-store-name";
+        storeName.textContent = storeSettings.store_name || storeSettings.name || "B'TRIPLE Fashion Store";
+        const address = document.createElement("p");
+        address.className = "receipt-store-address";
+        address.textContent = storeSettings.store_address || storeSettings.address || "";
+        const title = document.createElement("h4");
+        title.className = "receipt-title";
+        title.textContent = "HÓA ĐƠN BÁN LẺ";
+        const meta = document.createElement("div");
+        meta.className = "receipt-meta";
+        const orderNo = document.createElement("p");
+        orderNo.textContent = "Mã đơn: " + (order.order_number || orderResponse.order_number || order.id || "Đang cập nhật");
+        const date = document.createElement("p");
+        date.textContent = "Ngày: " + (order.created_at ? new Date(order.created_at).toLocaleString("vi-VN") : new Date().toLocaleString("vi-VN"));
+        const cashier = document.createElement("p");
+        cashier.textContent = "Thu ngân: " + (sessionStorage.getItem("pos-user-name") || "Nhân viên bán hàng");
+        const customerLine = document.createElement("p");
+        customerLine.textContent = "Khách hàng: " + (customer.full_name || "Khách lẻ");
+        const customerPhoneLine = document.createElement("p");
+        customerPhoneLine.textContent = "SĐT: " + (customer.phone || "—");
+        const customerAddressLine = document.createElement("p");
+        customerAddressLine.textContent = "Địa chỉ: " + (customer.address || "—");
+        meta.append(orderNo, date, cashier, customerLine, customerPhoneLine, customerAddressLine);
+
+        const divider = document.createElement("hr");
+        divider.className = "receipt-divider";
+        const itemList = document.createElement("div");
+        itemList.className = "receipt-items";
+        items.forEach(function (item) {
+            const entry = document.createElement("div");
+            entry.className = "receipt-item";
+            const itemName = document.createElement("strong");
+            itemName.textContent = item.product.name + " × " + item.quantity;
+            const variant = document.createElement("small");
+            variant.textContent = [item.product.size, item.product.color].filter(Boolean).join(" · ") || " ";
+            const detail = document.createElement("div");
+            detail.className = "receipt-line";
+            const unitPrice = document.createElement("span");
+            unitPrice.textContent = window.PosCommon.formatCurrency(item.product.price);
+            const lineTotal = document.createElement("strong");
+            lineTotal.textContent = window.PosCommon.formatCurrency(Number(item.product.price) * item.quantity);
+            detail.append(unitPrice, lineTotal);
+            entry.append(itemName, variant, detail);
+            itemList.append(entry);
+        });
+
+        const totalsBlock = document.createElement("div");
+        totalsBlock.className = "receipt-totals";
+        appendReceiptLine(totalsBlock, "Tạm tính", window.PosCommon.formatCurrency(totals.subtotal));
+        appendReceiptLine(totalsBlock, "Chiết khấu", window.PosCommon.formatCurrency(totals.discountAmount));
+        appendReceiptLine(totalsBlock, "Thuế", window.PosCommon.formatCurrency(totals.taxAmount));
+        appendReceiptLine(totalsBlock, "Tổng cộng", window.PosCommon.formatCurrency(totals.totalAmount), true);
+        const paymentLabels = { cash: "Cash", card: "Card", qr_code: "Digital / QR" };
+        appendReceiptLine(totalsBlock, "Phương thức", paymentLabels[totals.paymentMethod] || totals.paymentMethod);
+        appendReceiptLine(totalsBlock, "Khách đưa", window.PosCommon.formatCurrency(totals.amountReceived));
+        appendReceiptLine(totalsBlock, "Tiền thừa", window.PosCommon.formatCurrency(totals.changeAmount));
+        const footerDivider = document.createElement("hr");
+        footerDivider.className = "receipt-divider";
+        const thanks = document.createElement("p");
+        thanks.className = "receipt-thanks";
+        thanks.textContent = storeSettings.receipt_thank_you || "Cảm ơn quý khách đã mua hàng!";
+        const policy = document.createElement("p");
+        policy.className = "receipt-policy";
+        const returnDays = Math.max(0, Number(storeSettings.return_policy_days) || 7);
+        policy.textContent = "Chính sách đổi trả: hỗ trợ đổi hàng trong " + returnDays + " ngày theo điều kiện cửa hàng.";
+        receipt.append(logo, storeName, address, title, meta, divider, itemList, totalsBlock, footerDivider, thanks, policy);
+    }
+
+    function buildOrderPayload(status, totals, customer, cartItems) {
+        return {
+            customer: {
+                phone: customer.phone || null,
+                full_name: customer.full_name || "Khách vãng lai",
+                address: customer.address || ""
+            },
+            discount_percent: totals.discountPercent,
+            totals: {
+                subtotal: totals.subtotal,
+                discount_amount: totals.discountAmount,
+                tax_amount: totals.taxAmount,
+                total_amount: totals.totalAmount
+            },
+            payment_method: totals.paymentMethod,
+            amount_received: totals.amountReceived,
+            change_amount: totals.changeAmount,
+            status: status,
+            items: cartItems.map(function (item) {
+                return {
+                    product_id: item.product.id,
+                    quantity: item.quantity
+                };
+            })
+        };
+    }
+
+    function resetSaleForm() {
+        window.clearTimeout(customerLookupTimer);
+        cart.clear();
+        receivedInput.value = "";
+        discountInput.value = "0";
+        document.getElementById("payment-cash").checked = true;
+        resetCustomer(true);
+        cartState.qrConfirmed = false;
+        renderCart();
+    }
+
+    async function submitOrder(status, button) {
+        const isComplete = status === "completed";
+        const totals = getTotals();
+        if (!validateCheckout(totals, isComplete)) return;
+
+        button.disabled = true;
+        const cartItems = Array.from(cart.values()).map(function (item) {
+            return { product_id: item.product.id, quantity: item.quantity, product: item.product };
+        });
+        const customer = getCurrentCustomer();
+        try {
+            const orderData = buildOrderPayload(status, totals, customer, cartItems);
+            const orderResponse = await window.PosApi.post("orders", orderData);
+            if (isComplete) {
+                buildReceipt(orderResponse, totals, cartItems.map(function (item) {
+                    return { product: item.product, quantity: item.quantity };
+                }), customer);
+                resetSaleForm();
+                invoiceModal.show();
+            } else {
+                resetSaleForm();
+                window.PosCommon.notify("Đã lưu đơn bán hàng chờ xử lý.", "success");
+            }
+        } catch (error) {
+            window.PosCommon.notify(error.message, "danger");
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function setCurrentTime() {
+        document.getElementById("pos-current-time").textContent = new Date().toLocaleString("vi-VN", {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
+
+    productList.addEventListener("click", function (event) {
+        const card = event.target.closest("[data-product-card-id]");
+        if (!card || card.classList.contains("is-out-of-stock")) return;
+        addProduct(products.find(function (product) {
+            return String(product.id) === card.dataset.productCardId;
+        }));
+    });
+    productList.addEventListener("keydown", function (event) {
+        const card = event.target.closest("[data-product-card-id]");
+        if (card && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            card.click();
+        }
+    });
+    productSearch.addEventListener("input", renderProducts);
+    productSearch.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
+        const searchValue = productSearch.value.trim();
+        if (!searchValue) return;
+        const barcode = searchValue.toLocaleLowerCase("vi");
+        const product = products.find(function (item) {
+            return item.barcode && String(item.barcode).toLocaleLowerCase("vi") === barcode;
+        });
+        if (!product) {
+            const visibleProducts = getVisibleProducts();
+            if (visibleProducts.length) return;
+            event.preventDefault();
+            window.PosCommon.notify("Không tìm thấy sản phẩm có barcode này.", "warning");
+            productSearch.select();
+            return;
+        }
+        event.preventDefault();
+        addProduct(product);
+        productSearch.value = "";
+        renderProducts();
+        productSearch.focus();
+    });
+    categoryFilter.addEventListener("click", function (event) {
+        const button = event.target.closest("[data-category-id]");
+        if (!button) return;
+        categoryFilter.querySelectorAll(".category-chip").forEach(function (chip) {
+            const active = chip === button;
+            chip.classList.toggle("is-active", active);
+            chip.setAttribute("aria-pressed", String(active));
+        });
+        renderProducts();
+    });
+    cartElement.addEventListener("click", function (event) {
+        const button = event.target.closest("[data-cart-action]");
+        if (!button) return;
+        const id = button.dataset.productId;
+        const item = cart.get(id);
+        if (!item) return;
+        if (button.dataset.cartAction === "remove" || (button.dataset.cartAction === "decrease" && item.quantity <= 1)) {
+            cart.delete(id);
+        } else {
+            const nextQuantity = item.quantity + (button.dataset.cartAction === "increase" ? 1 : -1);
+            const stock = Number(item.product.stock_quantity);
+            if (button.dataset.cartAction === "increase" && Number.isFinite(stock) && nextQuantity > stock) {
+                window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
+                return;
+            }
+            item.quantity = nextQuantity;
+        }
+        renderCart();
+    });
+    document.getElementById("clear-cart").addEventListener("click", function () {
+        cart.clear();
+        cartState.qrConfirmed = false;
+        renderCart();
+    });
+    document.getElementById("lookup-customer").addEventListener("click", function () {
+        lookupCustomer().catch(function (error) {
+            window.PosCommon.notify(error.message, "danger");
+        });
+    });
+    phoneInput.addEventListener("input", function () {
+        window.clearTimeout(customerLookupTimer);
+        resetCustomer(false);
+        const digits = phoneInput.value.replace(/\D/g, "");
+        if (digits.length < 8) {
+            customerStatus.textContent = digits.length ? "Nhập đủ số điện thoại để tra cứu." : "Khách lẻ";
+            return;
+        }
+        customerLookupTimer = window.setTimeout(function () {
+            lookupCustomer().catch(function (error) {
+                window.PosCommon.notify(error.message, "danger");
+            });
+        }, 350);
+    });
+    phoneInput.addEventListener("change", function () {
+        window.clearTimeout(customerLookupTimer);
+        if (phoneInput.value.trim()) {
+            lookupCustomer().catch(function (error) {
+                window.PosCommon.notify(error.message, "danger");
+            });
+        }
+    });
+    phoneInput.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        window.clearTimeout(customerLookupTimer);
+        lookupCustomer().catch(function (error) {
+            window.PosCommon.notify(error.message, "danger");
+        });
+    });
+    document.querySelectorAll("input[name='payment-method']").forEach(function (radio) {
+        radio.addEventListener("change", function () {
+            cartState.qrConfirmed = false;
+            updatePaymentFields();
+            getTotals();
+            if (getPaymentMethod() === "qr_code") {
+                document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(getTotals().totalAmount);
+                qrModal.show();
+                if (!cartState.qrLoaded) loadPaymentQr();
+            }
+        });
+    });
+    discountInput.addEventListener("input", getTotals);
+    receivedInput.addEventListener("input", getTotals);
+    document.getElementById("confirm-qr-payment").addEventListener("click", function () {
+        if (!cartState.qrLoaded) {
+            window.PosCommon.notify("Chưa tải được mã QR. Vui lòng kiểm tra cấu hình thanh toán.", "warning");
+            return;
+        }
+        if (!cart.size) {
+            window.PosCommon.notify("Thêm sản phẩm vào giỏ trước khi xác nhận thanh toán.", "warning");
+            return;
+        }
+        cartState.qrConfirmed = true;
+        qrModal.hide();
+        getTotals();
+    });
+    document.getElementById("complete-order").addEventListener("click", function () {
+        submitOrder("completed", this);
+    });
+    document.getElementById("save-sale").addEventListener("click", function () {
+        submitOrder("pending", this);
+    });
+    document.getElementById("print-invoice").addEventListener("click", function () {
+        const originalTitle = document.title;
+        const receiptNumber = document.querySelector("#invoice-content .receipt-meta p");
+        const orderNumber = receiptNumber ? receiptNumber.textContent.replace("Mã đơn: ", "") : "pos";
+        document.title = "hoa-don-" + orderNumber.replace(/[^a-z0-9-]/gi, "-");
+        window.addEventListener("afterprint", function () {
+            document.title = originalTitle;
+        }, { once: true });
+        window.print();
     });
 
-    renderAll();
-})();
+    setCurrentTime();
+    window.setInterval(setCurrentTime, 60000);
+    renderCart();
+    Promise.all([loadProducts(), loadCategories(), loadReceiptSettings()]);
+}());
