@@ -97,45 +97,28 @@
     }
 
     function getTotals() {
-        let subtotal = 0;
-        cart.forEach(function (item) {
-            subtotal += Number(item.product.price) * item.quantity;
-        });
-        const discountPercent = Math.min(100, Math.max(0, Number(discountInput.value) || 0));
-        const discountAmount = subtotal * discountPercent / 100;
-        const discountedSubtotal = Math.max(0, subtotal - discountAmount);
         const configuredTaxRate = Number(storeSettings.tax_rate);
         const taxRate = Number.isFinite(configuredTaxRate)
             ? Math.min(100, Math.max(0, configuredTaxRate))
             : 10;
-        const taxAmount = discountedSubtotal * taxRate / 100;
-        const totalAmount = discountedSubtotal + taxAmount;
         const paymentMethod = getPaymentMethod();
-        const amountReceived = paymentMethod === "cash"
-            ? Math.max(0, Number(receivedInput.value) || 0)
-            : paymentMethod === "qr_code" && !cartState.qrConfirmed ? 0 : totalAmount;
-        const changeAmount = paymentMethod === "cash"
-            ? Math.max(0, amountReceived - totalAmount)
-            : 0;
+        const totals = window.PosDomain.calculateTotals(cart, {
+            discountPercent: discountInput.value,
+            taxRate: taxRate,
+            paymentMethod: paymentMethod,
+            amountReceived: receivedInput.value,
+            qrConfirmed: cartState.qrConfirmed
+        });
 
-        document.getElementById("subtotal").textContent = window.PosCommon.formatCurrency(subtotal);
-        document.getElementById("discount-rate").textContent = String(discountPercent);
-        document.getElementById("discount-total").textContent = window.PosCommon.formatCurrency(discountAmount);
-        taxRateLabel.textContent = "Thuế VAT (" + taxRate + "%)";
-        document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(taxAmount);
-        document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
-        document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(changeAmount);
-        if (paymentMethod !== "cash") receivedInput.value = String(amountReceived);
-        return {
-            subtotal: subtotal,
-            discountPercent: discountPercent,
-            discountAmount: discountAmount,
-            taxAmount: taxAmount,
-            totalAmount: totalAmount,
-            amountReceived: amountReceived,
-            changeAmount: changeAmount,
-            paymentMethod: paymentMethod
-        };
+        document.getElementById("subtotal").textContent = window.PosCommon.formatCurrency(totals.subtotal);
+        document.getElementById("discount-rate").textContent = String(totals.discountPercent);
+        document.getElementById("discount-total").textContent = window.PosCommon.formatCurrency(totals.discountAmount);
+        taxRateLabel.textContent = "Thuế VAT (" + totals.taxRate + "%)";
+        document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(totals.taxAmount);
+        document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totals.totalAmount);
+        document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(totals.changeAmount);
+        if (paymentMethod !== "cash") receivedInput.value = String(totals.amountReceived);
+        return totals;
     }
 
     function createProductCard(product) {
@@ -273,19 +256,19 @@
 
     function addProduct(product) {
         if (!product) return;
-        const available = Number(product.stock_quantity);
-        if (Number.isFinite(available) && available <= 0) {
+        const result = window.PosDomain.addProduct(cart, product);
+        if (!result.added && result.reason === "out-of-stock") {
             window.PosCommon.notify("Sản phẩm đã hết hàng.", "warning");
             return;
         }
-        const id = String(product.id);
-        const item = cart.get(id);
-        const quantity = item ? item.quantity + 1 : 1;
-        if (Number.isFinite(available) && quantity > available) {
+        if (!result.added && result.reason === "stock-limit") {
             window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
             return;
         }
-        cart.set(id, { product: product, quantity: quantity });
+        if (!result.added) {
+            window.PosCommon.notify("Không thể thêm sản phẩm: dữ liệu sản phẩm không hợp lệ.", "danger");
+            return;
+        }
         renderCart();
     }
 
@@ -506,37 +489,36 @@
     }
 
     function validateCheckout(totals, requirePayment) {
-        if (!cart.size) {
-            window.PosCommon.notify("Thêm ít nhất một sản phẩm vào giỏ hàng.", "warning");
-            return false;
-        }
-        if (phoneInput.value.trim() && cartState.customerType === "guest") {
-            window.PosCommon.notify("Tra cứu số điện thoại trước khi thanh toán.", "warning");
+        const error = window.PosDomain.validateCheckout({
+            cart: cart,
+            customer: {
+                phone: phoneInput.value,
+                fullName: customerName.value,
+                customerType: cartState.customerType
+            },
+            totals: totals,
+            requirePayment: requirePayment,
+            qrConfirmed: cartState.qrConfirmed
+        });
+        if (!error) return true;
+
+        const messages = {
+            "empty-cart": "Thêm ít nhất một sản phẩm vào giỏ hàng.",
+            "lookup-required": "Tra cứu số điện thoại trước khi thanh toán.",
+            "phone-required": "Nhập số điện thoại khách hàng mới.",
+            "name-required": "Nhập họ tên khách hàng.",
+            "insufficient-cash": "Tiền khách đưa chưa đủ thanh toán.",
+            "qr-not-confirmed": "Xác nhận đã nhận thanh toán QR trước khi hoàn tất."
+        };
+        window.PosCommon.notify(messages[error] || "Thông tin thanh toán không hợp lệ.", "warning");
+        if (error === "phone-required" || error === "lookup-required") {
             phoneInput.focus();
-            return false;
-        }
-        if (cartState.customerType === "new") {
-            if (!phoneInput.value.trim()) {
-                window.PosCommon.notify("Nhập số điện thoại khách hàng mới.", "warning");
-                phoneInput.focus();
-                return false;
-            }
-            if (!customerName.value.trim()) {
-                window.PosCommon.notify("Nhập họ tên khách hàng.", "warning");
-                customerName.focus();
-                return false;
-            }
-        }
-        if (requirePayment && totals.paymentMethod === "cash" && totals.amountReceived < totals.totalAmount) {
-            window.PosCommon.notify("Tiền khách đưa chưa đủ thanh toán.", "warning");
+        } else if (error === "name-required") {
+            customerName.focus();
+        } else if (error === "insufficient-cash") {
             receivedInput.focus();
-            return false;
         }
-        if (requirePayment && totals.paymentMethod === "qr_code" && !cartState.qrConfirmed) {
-            window.PosCommon.notify("Xác nhận đã nhận thanh toán QR trước khi hoàn tất.", "warning");
-            return false;
-        }
-        return true;
+        return false;
     }
 
     function appendReceiptLine(parent, label, value, emphasized) {
@@ -725,10 +707,7 @@
         if (event.key !== "Enter") return;
         const searchValue = productSearch.value.trim();
         if (!searchValue) return;
-        const barcode = searchValue.toLocaleLowerCase("vi");
-        const product = products.find(function (item) {
-            return item.barcode && String(item.barcode).toLocaleLowerCase("vi") === barcode;
-        });
+        const product = window.PosDomain.findByBarcode(products, searchValue);
         if (!product) {
             const visibleProducts = getVisibleProducts();
             if (visibleProducts.length) return;
@@ -759,16 +738,10 @@
         const id = button.dataset.productId;
         const item = cart.get(id);
         if (!item) return;
-        if (button.dataset.cartAction === "remove" || (button.dataset.cartAction === "decrease" && item.quantity <= 1)) {
-            cart.delete(id);
-        } else {
-            const nextQuantity = item.quantity + (button.dataset.cartAction === "increase" ? 1 : -1);
-            const stock = Number(item.product.stock_quantity);
-            if (button.dataset.cartAction === "increase" && Number.isFinite(stock) && nextQuantity > stock) {
-                window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
-                return;
-            }
-            item.quantity = nextQuantity;
+        const result = window.PosDomain.updateQuantity(cart, id, button.dataset.cartAction);
+        if (!result.updated && result.reason === "stock-limit") {
+            window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
+            return;
         }
         renderCart();
     });

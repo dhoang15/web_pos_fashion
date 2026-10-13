@@ -51,7 +51,9 @@
                 material: "Cotton",
                 category_id: 1,
                 category_name: "Áo",
-                status: "active"
+                status: "active",
+                created_at: "2026-01-10T09:00:00+07:00",
+                has_orders: false
             },
             {
                 id: 2,
@@ -67,12 +69,14 @@
                 material: "Denim",
                 category_id: 2,
                 category_name: "Quần",
-                status: "active"
+                status: "active",
+                created_at: "2026-01-11T09:00:00+07:00",
+                has_orders: false
             }
         ],
         categories: [
-            { id: 1, name: "Áo", description: "Danh mục demo" },
-            { id: 2, name: "Quần", description: "Danh mục demo" }
+            { id: 1, name: "Áo", description: "Danh mục demo", created_at: "2026-01-10T09:00:00+07:00", created_by_name: "Quản trị Demo" },
+            { id: 2, name: "Quần", description: "Danh mục demo", created_at: "2026-01-11T09:00:00+07:00", created_by_name: "Quản trị Demo" }
         ],
         customers: [
             { id: 1, full_name: "Khách hàng Demo", phone: "0900000001", address: "Địa chỉ mẫu" }
@@ -81,9 +85,87 @@
         payment_qrcodes: []
     };
 
+    function getBodyValues(body) {
+        const values = {};
+        if (body instanceof FormData) {
+            body.forEach(function (value, key) {
+                values[key] = value;
+            });
+            return values;
+        }
+        return body || values;
+    }
+
+    function nextId(items) {
+        return items.reduce(function (maximum, item) {
+            return Math.max(maximum, Number(item.id) || 0);
+        }, 0) + 1;
+    }
+
+    function mutateDemoCollection(collectionName, method, id, body) {
+        if (sessionStorage.getItem("pos-role") !== "admin") {
+            throw new ApiError("Bạn không có quyền thay đổi dữ liệu quản lý.", 403);
+        }
+        const items = demoCollections[collectionName];
+        const index = id == null ? -1 : items.findIndex(function (item) {
+            return String(item.id) === String(id);
+        });
+        if (id != null && index < 0) {
+            throw new ApiError("Không tìm thấy dữ liệu cần cập nhật.", 404);
+        }
+
+        if (method === "DELETE") {
+            if (collectionName === "products" && items[index].has_orders) {
+                throw new ApiError("Không thể xóa sản phẩm đã nằm trong đơn hàng.", 409);
+            }
+            if (collectionName === "categories" && demoCollections.products.some(function (product) {
+                return String(product.category_id) === String(id);
+            })) {
+                throw new ApiError("Không thể xóa danh mục đang được sản phẩm sử dụng.", 409);
+            }
+            items.splice(index, 1);
+            return { success: true };
+        }
+
+        const values = getBodyValues(body);
+        const file = values.image_file;
+        delete values._method;
+        delete values.image_file;
+        if (file instanceof File && file.size > 0) {
+            values.image = URL.createObjectURL(file);
+        }
+        if (collectionName === "products" && items.some(function (product) {
+            return product.barcode === values.barcode && String(product.id) !== String(id);
+        })) {
+            throw new ApiError("Barcode đã được sử dụng cho sản phẩm khác.", 409);
+        }
+
+        if (method === "POST") {
+            const item = Object.assign({
+                id: nextId(items),
+                created_at: new Date().toISOString(),
+                has_orders: false
+            }, values);
+            if (collectionName === "categories") {
+                item.created_by = Number(sessionStorage.getItem("pos-user-id")) || null;
+                item.created_by_name = sessionStorage.getItem("pos-user-name") || "Quản trị viên";
+            }
+            items.push(item);
+            return { success: true, item: item };
+        }
+
+        const item = Object.assign({}, items[index], values);
+        items[index] = item;
+        return { success: true, item: item };
+    }
+
     function demoRequest(path, options) {
         const settings = options || {};
-        const method = settings.method || "GET";
+        const body = settings.body;
+        const bodyValues = getBodyValues(body);
+        const method = settings.method === "POST" && bodyValues._method
+            ? String(bodyValues._method).toUpperCase()
+            : settings.method || "GET";
         const normalizedPath = path.replace(/^\/+/, "").split("?")[0].replace(/\/+$/, "");
 
         if (method === "POST" && normalizedPath === "auth/login") {
@@ -120,10 +202,22 @@
             return { data: { items: [], summary: {}, trend: [] } };
         }
         if (method === "GET" && Object.prototype.hasOwnProperty.call(demoCollections, normalizedPath)) {
-            return { items: demoCollections[normalizedPath] };
+            const items = demoCollections[normalizedPath];
+            if (normalizedPath === "products" && sessionStorage.getItem("pos-role") !== "admin") {
+                return { items: items.map(function (item) {
+                    const copy = Object.assign({}, item);
+                    delete copy.import_price;
+                    return copy;
+                }) };
+            }
+            return { items: items };
         }
         if (method === "GET" && normalizedPath === "customers/lookup") {
             return { customer: null };
+        }
+        const collectionMatch = normalizedPath.match(/^(products|categories)(?:\/(\d+))?$/);
+        if (collectionMatch && ["POST", "PUT", "DELETE"].includes(method)) {
+            return mutateDemoCollection(collectionMatch[1], method, collectionMatch[2] || null, body);
         }
         if (["POST", "PUT", "DELETE"].includes(method) &&
             (/^(auth\/(profile|change-password)|store_settings|payment_qrcodes|users(?:\/\d+(?:\/(?:status|resend-invitation))?)?|products(?:\/\d+)?|categories(?:\/\d+)?|customers(?:\/\d+)?|orders)$/.test(normalizedPath))) {

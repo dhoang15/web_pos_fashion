@@ -12,12 +12,17 @@
     const categoryStatus = document.getElementById("categories-status");
     const search = document.getElementById("search-products");
     const categorySelect = document.getElementById("product-category");
+    const productImageInput = document.getElementById("product-image-file");
+    const productImagePreviewWrap = document.getElementById("product-image-preview-wrap");
+    const productImagePreview = document.getElementById("product-image-preview");
+    const productImageName = document.getElementById("product-image-name");
     const categoryFilter = document.getElementById("filter-product-category");
     const statusFilter = document.getElementById("filter-product-status");
     const authenticatedAdmin = sessionStorage.getItem("pos-role") === "admin";
     let previewRole = authenticatedAdmin ? "admin" : "staff";
     let products = [];
     let categories = [];
+    let productImagePreviewUrl = "";
 
     function isAdminView() {
         return authenticatedAdmin && previewRole === "admin";
@@ -49,6 +54,31 @@
         return product.has_orders === true ||
             Number(product.order_count) > 0 ||
             product.ever_sold === true;
+    }
+
+    function categoryCreator(category) {
+        const creator = category.created_by_user || category.creator || {};
+        return creator.name ||
+            [creator.first_name, creator.last_name].filter(Boolean).join(" ") ||
+            category.created_by_name ||
+            category.creator_name ||
+            "—";
+    }
+
+    function setProductImagePreview(src, label) {
+        if (productImagePreviewUrl) {
+            URL.revokeObjectURL(productImagePreviewUrl);
+            productImagePreviewUrl = "";
+        }
+        if (!src) {
+            productImagePreviewWrap.hidden = true;
+            productImagePreview.removeAttribute("src");
+            productImageName.textContent = "";
+            return;
+        }
+        productImagePreview.src = src;
+        productImageName.textContent = label || "";
+        productImagePreviewWrap.hidden = false;
     }
 
     function renderSummary() {
@@ -192,6 +222,7 @@
             name.classList.add("fw-semibold");
             appendCell(row, category.description);
             appendCell(row, category.created_at ? new Date(category.created_at).toLocaleDateString("vi-VN") : "");
+            appendCell(row, categoryCreator(category));
             const actions = document.createElement("td");
             actions.className = "text-end text-nowrap";
             actions.hidden = !isAdminView();
@@ -214,13 +245,13 @@
         if (!categories.length) {
             const row = document.createElement("tr");
             const empty = document.createElement("td");
-            empty.colSpan = 4;
+            empty.colSpan = 5;
             empty.className = "empty-state";
             empty.textContent = "Chưa có danh mục.";
             row.append(empty);
             categoryTable.append(row);
         }
-        replaceOptions(categorySelect, "Chưa phân loại");
+        replaceOptions(categorySelect, "Chọn danh mục");
         renderCategoryFilter();
         renderSummary();
         render();
@@ -259,12 +290,12 @@
         form.reset();
         form.dataset.id = product ? String(product.id) : "";
         document.getElementById("product-modal-title").textContent = product ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
-        replaceOptions(categorySelect, "Chưa phân loại", product && product.category_id);
+        setProductImagePreview(product && product.image, product && product.image ? "Ảnh hiện tại" : "");
+        replaceOptions(categorySelect, "Chọn danh mục", product && product.category_id);
         if (product) {
             form.elements.name.value = product.name || "";
             form.elements.barcode.value = product.barcode || "";
             form.elements.sku.value = product.sku || "";
-            form.elements.image.value = product.image || "";
             form.elements.category_id.value = product.category_id || "";
             form.elements.import_price.value = product.import_price == null ? "0" : product.import_price;
             form.elements.price.value = product.price == null ? "0" : product.price;
@@ -344,27 +375,52 @@
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
         if (!isAdminView()) return;
+        if (!form.reportValidity()) return;
         const button = document.getElementById("save-product");
+        const imageFile = productImageInput.files[0];
+        if (imageFile && !["image/png", "image/jpeg", "image/webp"].includes(imageFile.type)) {
+            window.PosCommon.notify("Chọn ảnh PNG, JPG hoặc WebP.", "warning");
+            productImageInput.focus();
+            return;
+        }
+        if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+            window.PosCommon.notify("Ảnh sản phẩm không được vượt quá 5 MB.", "warning");
+            productImageInput.focus();
+            return;
+        }
         const product = {
             name: form.elements.name.value.trim(),
-            barcode: form.elements.barcode.value.trim() || null,
+            barcode: form.elements.barcode.value.trim(),
             sku: form.elements.sku.value.trim() || null,
-            category_id: form.elements.category_id.value ? Number(form.elements.category_id.value) : null,
+            category_id: Number(form.elements.category_id.value),
             import_price: Number(form.elements.import_price.value),
             price: Number(form.elements.price.value),
             stock_quantity: Number(form.elements.stock_quantity.value),
             size: form.elements.size.value.trim() || null,
             color: form.elements.color.value.trim() || null,
             material: form.elements.material.value.trim() || null,
-            image: form.elements.image.value.trim() || null,
+            image: products.find(function (item) {
+                return String(item.id) === form.dataset.id;
+            })?.image || null,
             low_stock_threshold: Number(form.elements.low_stock_threshold.value),
             description: form.elements.description.value.trim() || null,
             status: form.elements.status.value
         };
         button.disabled = true;
         try {
-            if (form.dataset.id) {
-                await window.PosApi.put("products/" + encodeURIComponent(form.dataset.id), product);
+            const productPath = form.dataset.id
+                ? "products/" + encodeURIComponent(form.dataset.id)
+                : "products";
+            if (imageFile) {
+                const payload = new FormData();
+                Object.keys(product).forEach(function (key) {
+                    if (product[key] != null) payload.append(key, String(product[key]));
+                });
+                payload.append("image_file", imageFile);
+                if (form.dataset.id) payload.append("_method", "PUT");
+                await window.PosApi.upload(productPath, payload);
+            } else if (form.dataset.id) {
+                await window.PosApi.put(productPath, product);
             } else {
                 await window.PosApi.post("products", product);
             }
@@ -443,6 +499,33 @@
 
     document.getElementById("product-modal").addEventListener("show.bs.modal", function () {
         document.getElementById("product-import-price").closest(".col-md-6").hidden = !isAdminView();
+    });
+
+    productImageInput.addEventListener("change", function () {
+        const file = productImageInput.files[0];
+        if (!file) return;
+        if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+            productImageInput.value = "";
+            setProductImagePreview(null);
+            window.PosCommon.notify("Chọn ảnh PNG, JPG hoặc WebP.", "warning");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            productImageInput.value = "";
+            setProductImagePreview(null);
+            window.PosCommon.notify("Ảnh sản phẩm không được vượt quá 5 MB.", "warning");
+            return;
+        }
+        if (productImagePreviewUrl) URL.revokeObjectURL(productImagePreviewUrl);
+        productImagePreviewUrl = URL.createObjectURL(file);
+        productImagePreview.src = productImagePreviewUrl;
+        productImageName.textContent = file.name;
+        productImagePreviewWrap.hidden = false;
+    });
+
+    document.getElementById("product-modal").addEventListener("hidden.bs.modal", function () {
+        setProductImagePreview(null);
+        productImageInput.value = "";
     });
 
     if (!authenticatedAdmin) {

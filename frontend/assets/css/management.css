@@ -241,6 +241,25 @@
     background: #f8fafc;
 }
 
+.product-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.product-image-preview[hidden] {
+    display: none !important;
+}
+
+.product-image-preview img {
+    width: 72px;
+    height: 72px;
+    border: 1px solid var(--management-border);
+    border-radius: 8px;
+    background: #fff;
+    object-fit: cover;
+}
+
 .user-list-avatar {
     display: inline-grid;
     width: 40px;
