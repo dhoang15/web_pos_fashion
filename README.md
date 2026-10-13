@@ -57,3 +57,6 @@ Frontend không còn tài khoản, dữ liệu hoặc API giả lập. Cần ch�
 cùng origin với frontend và cung cấp các route `/api/` trước khi đăng nhập hoặc
 thực hiện các thao tác cần dữ liệu. Khi backend chưa chạy, frontend sẽ báo lỗi
 kết nối thay vì hiển thị hoặc xác nhận dữ liệu mẫu.
+
+Các endpoint, trường dữ liệu, định dạng phản hồi và quy tắc upload được ghi
+trong [`frontend/API_CONTRACT.md`](frontend/API_CONTRACT.md).

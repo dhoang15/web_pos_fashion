@@ -42,7 +42,8 @@
     } else {
         window.PosApi.get("auth/invitations/validate?token=" + encodeURIComponent(token)).then(function (result) {
             const data = result && result.data && typeof result.data === "object" ? result.data : result;
-            if (data && data.valid === false) {
+            const isValid = data && (data.valid === true || data.valid === 1 || data.valid === "1");
+            if (!isValid) {
                 showError("Liên kết kích hoạt không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu quản trị viên gửi lại email.");
                 return;
             }

@@ -147,10 +147,16 @@
                 const actionCell = document.createElement("td");
                 const actionGroup = document.createElement("div");
                 actionGroup.className = "invoice-action-group";
-                [
-                    ["view", "bi-eye", "Xem chi tiết đơn " + (order.order_number || order.id)],
-                    ["print", "bi-printer", "In lại hóa đơn " + (order.order_number || order.id)]
-                ].forEach(function (action) {
+                const actions = order.status === "pending"
+                    ? [
+                        ["view", "bi-eye", "Xem đơn nháp " + (order.order_number || order.id)],
+                        ["resume", "bi-play-circle", "Tiếp tục đơn " + (order.order_number || order.id)]
+                    ]
+                    : [
+                        ["view", "bi-eye", "Xem chi tiết đơn " + (order.order_number || order.id)],
+                        ["print", "bi-printer", "In lại hóa đơn " + (order.order_number || order.id)]
+                    ];
+                actions.forEach(function (action) {
                     const button = document.createElement("button");
                     button.className = "invoice-action-button";
                     button.type = "button";
@@ -183,11 +189,17 @@
         }
 
         function renderTodayStats(summary, orders) {
-            const orderCount = Number(summary.order_count ?? summary.total_orders ?? summary.total_count ?? orders.length);
-            const received = Number(summary.total_received ?? summary.total_revenue ?? summary.revenue) ||
-                orders.reduce(function (sum, order) {
+            const completedOrders = orders.filter(function (order) {
+                return order.status === "completed";
+            });
+            const reportedOrderCount = summary.order_count ?? summary.total_orders ?? summary.total_count;
+            const reportedRevenue = summary.total_received ?? summary.total_revenue ?? summary.revenue;
+            const orderCount = Number(reportedOrderCount ?? completedOrders.length);
+            const received = reportedRevenue == null
+                ? completedOrders.reduce(function (sum, order) {
                     return sum + (Number(order.total_amount) || 0);
-                }, 0);
+                }, 0)
+                : Number(reportedRevenue) || 0;
             document.getElementById("today-order-count").textContent = orderCount.toLocaleString("vi-VN") + " đơn";
             document.getElementById("today-revenue").textContent = window.PosCommon.formatCurrency(received);
             document.getElementById("today-average").textContent = window.PosCommon.formatCurrency(orderCount ? received / orderCount : 0) + "/đơn";
@@ -446,6 +458,10 @@
         table.addEventListener("click", function (event) {
             const actionButton = event.target.closest("[data-order-action]");
             if (actionButton) {
+                if (actionButton.dataset.orderAction === "resume") {
+                    window.location.href = "../pos/index.html?resume_order=" + encodeURIComponent(actionButton.dataset.orderId);
+                    return;
+                }
                 openOrder(actionButton.dataset.orderId, actionButton, actionButton.dataset.orderAction === "print");
                 return;
             }

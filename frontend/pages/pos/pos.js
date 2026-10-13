@@ -35,7 +35,7 @@
     }
     const cart = new Map();
     const categoriesById = new Map();
-    const cartState = { customerId: null, customerType: "guest", paymentConfirmed: false, qrLoaded: false };
+    const cartState = { customerId: null, customerType: "guest", paymentConfirmed: false, qrLoaded: false, pendingOrderId: null };
     let customerLookupSequence = 0;
     let customerLookupTimer = null;
     let products = [];
@@ -102,39 +102,31 @@
     }
 
     function getTotals() {
-        let subtotal = 0;
-        cart.forEach(function (item) {
-            subtotal += Number(item.product.price) * item.quantity;
-        });
-        const discountPercent = Math.min(100, Math.max(0, Number(discountInput.value) || 0));
-        const discountAmount = Math.round(subtotal * discountPercent / 100);
-        const discountedSubtotal = Math.max(0, subtotal - discountAmount);
         const configuredTaxRate = Number(storeSettings.tax_rate);
         const taxRate = Number.isFinite(configuredTaxRate)
             ? Math.min(100, Math.max(0, configuredTaxRate))
             : 10;
-        const taxAmount = Math.round(discountedSubtotal * taxRate / 100);
-        const totalAmount = Math.round(discountedSubtotal + taxAmount);
         const paymentMethod = getPaymentMethod();
-        const amountReceived = paymentMethod === "cash"
-            ? Math.max(0, Number(receivedInput.value) || 0)
-            : cartState.paymentConfirmed ? totalAmount : 0;
-        const changeAmount = paymentMethod === "cash"
-            ? Math.max(0, amountReceived - totalAmount)
-            : 0;
+        const totals = window.PosDomain.calculateTotals(cart, {
+            discountPercent: discountInput.value,
+            taxRate: taxRate,
+            paymentMethod: paymentMethod,
+            amountReceived: receivedInput.value,
+            paymentConfirmed: cartState.paymentConfirmed
+        });
 
-        document.getElementById("subtotal").textContent = window.PosCommon.formatCurrency(subtotal);
-        document.getElementById("discount-rate").textContent = String(discountPercent);
-        document.getElementById("discount-total").textContent = window.PosCommon.formatCurrency(discountAmount);
-        taxRateLabel.textContent = "Thuế VAT (" + taxRate + "%)";
-        document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(taxAmount);
-        document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
-        document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(changeAmount);
-        document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
-        if (paymentMethod !== "cash") receivedInput.value = String(amountReceived);
+        document.getElementById("subtotal").textContent = window.PosCommon.formatCurrency(totals.subtotal);
+        document.getElementById("discount-rate").textContent = String(totals.discountPercent);
+        document.getElementById("discount-total").textContent = window.PosCommon.formatCurrency(totals.discountAmount);
+        taxRateLabel.textContent = "Thuế VAT (" + totals.taxRate + "%)";
+        document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(totals.taxAmount);
+        document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totals.totalAmount);
+        document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(totals.changeAmount);
+        document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(totals.totalAmount);
         document.getElementById("card-payment-confirmation").hidden = paymentMethod !== "card";
         document.getElementById("qr-payment-confirmation").hidden = paymentMethod !== "qr_code";
         document.getElementById("confirm-card-payment").disabled = !cart.size || cartState.paymentConfirmed;
+        document.getElementById("confirm-qr-payment").disabled = !cart.size || cartState.paymentConfirmed;
         document.getElementById("open-qr-modal").disabled = !cart.size;
         document.getElementById("card-payment-status").textContent = cartState.paymentConfirmed
             ? "Đã xác nhận thanh toán thẻ cho số tiền hiện tại."
@@ -142,16 +134,8 @@
         document.getElementById("qr-payment-confirmation-status").textContent = cartState.paymentConfirmed
             ? "Đã xác nhận thanh toán QR cho số tiền hiện tại. Nếu thay đổi giỏ hàng hoặc giảm giá, cần xác nhận lại."
             : "Cần xác nhận giao dịch cho số tiền hiện tại.";
-        return {
-            subtotal: subtotal,
-            discountPercent: discountPercent,
-            discountAmount: discountAmount,
-            taxAmount: taxAmount,
-            totalAmount: totalAmount,
-            amountReceived: amountReceived,
-            changeAmount: changeAmount,
-            paymentMethod: paymentMethod
-        };
+        if (paymentMethod !== "cash") receivedInput.value = String(totals.amountReceived);
+        return totals;
     }
 
     function createProductCard(product) {
@@ -289,20 +273,20 @@
 
     function addProduct(product) {
         if (!product) return;
-        const available = Number(product.stock_quantity);
-        if (Number.isFinite(available) && available <= 0) {
+        const result = window.PosDomain.addProduct(cart, product);
+        if (!result.added && result.reason === "out-of-stock") {
             window.PosCommon.notify("Sản phẩm đã hết hàng.", "warning");
             return;
         }
-        const id = String(product.id);
-        const item = cart.get(id);
-        const quantity = item ? item.quantity + 1 : 1;
-        if (Number.isFinite(available) && quantity > available) {
+        if (!result.added && result.reason === "stock-limit") {
             window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
             return;
         }
+        if (!result.added) {
+            window.PosCommon.notify("Không thể thêm sản phẩm: dữ liệu sản phẩm không hợp lệ.", "danger");
+            return;
+        }
         invalidatePaymentConfirmation();
-        cart.set(id, { product: product, quantity: quantity });
         renderCart();
     }
 
@@ -533,45 +517,42 @@
     }
 
     function validateCheckout(totals, requirePayment) {
-        if (!cart.size) {
-            window.PosCommon.notify("Thêm ít nhất một sản phẩm vào giỏ hàng.", "warning");
-            return false;
-        }
-        if (phoneInput.value.trim() && cartState.customerType === "guest") {
-            window.PosCommon.notify("Tra cứu số điện thoại trước khi thanh toán.", "warning");
+        const error = window.PosDomain.validateCheckout({
+            cart: cart,
+            customer: {
+                phone: phoneInput.value,
+                fullName: customerName.value,
+                address: customerAddress.value,
+                customerType: cartState.customerType
+            },
+            totals: totals,
+            requirePayment: requirePayment,
+            paymentConfirmed: cartState.paymentConfirmed
+        });
+        if (!error) return true;
+
+        const messages = {
+            "empty-cart": "Thêm ít nhất một sản phẩm vào giỏ hàng.",
+            "lookup-required": "Tra cứu số điện thoại trước khi thanh toán.",
+            "phone-required": "Nhập số điện thoại khách hàng mới.",
+            "invalid-phone": "Số điện thoại khách hàng phải có từ 8 đến 15 chữ số.",
+            "name-required": "Nhập họ tên khách hàng.",
+            "address-required": "Nhập địa chỉ khách hàng mới.",
+            "insufficient-cash": "Tiền khách đưa chưa đủ thanh toán.",
+            "qr-not-confirmed": "Xác nhận đã nhận thanh toán QR cho số tiền hiện tại trước khi hoàn tất.",
+            "card-not-confirmed": "Xác nhận thiết bị thẻ đã báo giao dịch thành công trước khi hoàn tất."
+        };
+        window.PosCommon.notify(messages[error] || "Thông tin thanh toán không hợp lệ.", "warning");
+        if (["phone-required", "lookup-required", "invalid-phone"].includes(error)) {
             phoneInput.focus();
-            return false;
-        }
-        if (cartState.customerType === "new") {
-            const digits = phoneInput.value.replace(/\D/g, "");
-            if (digits.length < 8 || digits.length > 15) {
-                window.PosCommon.notify("Số điện thoại khách hàng phải có từ 8 đến 15 chữ số.", "warning");
-                phoneInput.focus();
-                return false;
-            }
-            if (!customerName.value.trim()) {
-                window.PosCommon.notify("Nhập họ tên khách hàng.", "warning");
-                customerName.focus();
-                return false;
-            }
-            if (!customerAddress.value.trim()) {
-                window.PosCommon.notify("Nhập địa chỉ khách hàng mới.", "warning");
-                customerAddress.focus();
-                return false;
-            }
-        }
-        if (requirePayment && totals.paymentMethod === "cash" && totals.amountReceived < totals.totalAmount) {
-            window.PosCommon.notify("Tiền khách đưa chưa đủ thanh toán.", "warning");
+        } else if (error === "name-required") {
+            customerName.focus();
+        } else if (error === "address-required") {
+            customerAddress.focus();
+        } else if (error === "insufficient-cash") {
             receivedInput.focus();
-            return false;
         }
-        if (requirePayment && ["qr_code", "card"].includes(totals.paymentMethod) && !cartState.paymentConfirmed) {
-            window.PosCommon.notify(totals.paymentMethod === "qr_code"
-                ? "Xác nhận đã nhận thanh toán QR cho số tiền hiện tại trước khi hoàn tất."
-                : "Xác nhận thiết bị thẻ đã báo giao dịch thành công trước khi hoàn tất.", "warning");
-            return false;
-        }
-        return true;
+        return false;
     }
 
     function appendReceiptLine(parent, label, value, emphasized) {
@@ -585,8 +566,15 @@
         parent.append(line);
     }
 
-    function buildReceipt(orderResponse, totals, items, customer) {
+    function buildReceipt(orderResponse) {
         const order = valueFromResponse(orderResponse, "order") || {};
+        const items = Array.isArray(order.items)
+            ? order.items
+            : Array.isArray(order.order_items) ? order.order_items : [];
+        const customer = order.customer || {};
+        if (order.id == null || !items.length) {
+            throw new Error("Máy chủ chưa trả về đủ chi tiết đơn hàng để in hóa đơn.");
+        }
         const receipt = document.getElementById("invoice-content");
         receipt.replaceChildren();
 
@@ -609,13 +597,16 @@
         const date = document.createElement("p");
         date.textContent = "Ngày: " + (order.created_at ? new Date(order.created_at).toLocaleString("vi-VN") : new Date().toLocaleString("vi-VN"));
         const cashier = document.createElement("p");
-        cashier.textContent = "Thu ngân: " + (sessionStorage.getItem("pos-user-name") || "Nhân viên bán hàng");
+        const cashierInfo = order.cashier || order.user || {};
+        cashier.textContent = "Thu ngân: " +
+            ([cashierInfo.first_name, cashierInfo.last_name].filter(Boolean).join(" ") ||
+                cashierInfo.name || order.cashier_name || sessionStorage.getItem("pos-user-name") || "Nhân viên bán hàng");
         const customerLine = document.createElement("p");
-        customerLine.textContent = "Khách hàng: " + (customer.full_name || "Khách lẻ");
+        customerLine.textContent = "Khách hàng: " + (customer.full_name || order.customer_name || "Khách lẻ");
         const customerPhoneLine = document.createElement("p");
-        customerPhoneLine.textContent = "SĐT: " + (customer.phone || "—");
+        customerPhoneLine.textContent = "SĐT: " + (customer.phone || order.customer_phone || "—");
         const customerAddressLine = document.createElement("p");
-        customerAddressLine.textContent = "Địa chỉ: " + (customer.address || "—");
+        customerAddressLine.textContent = "Địa chỉ: " + (customer.address || order.customer_address || "—");
         meta.append(orderNo, date, cashier, customerLine, customerPhoneLine, customerAddressLine);
 
         const divider = document.createElement("hr");
@@ -623,33 +614,37 @@
         const itemList = document.createElement("div");
         itemList.className = "receipt-items";
         items.forEach(function (item) {
+            const product = item.product || {};
+            const quantity = Number(item.quantity) || 0;
+            const unitPrice = Number(item.unit_price ?? product.price) || 0;
+            const itemName = item.product_name || product.name || "Sản phẩm";
             const entry = document.createElement("div");
             entry.className = "receipt-item";
-            const itemName = document.createElement("strong");
-            itemName.textContent = item.product.name + " × " + item.quantity;
+            const itemHeading = document.createElement("strong");
+            itemHeading.textContent = itemName + " × " + quantity;
             const variant = document.createElement("small");
-            variant.textContent = [item.product.size, item.product.color].filter(Boolean).join(" · ") || " ";
+            variant.textContent = [item.size || product.size, item.color || product.color].filter(Boolean).join(" · ") || " ";
             const detail = document.createElement("div");
             detail.className = "receipt-line";
-            const unitPrice = document.createElement("span");
-            unitPrice.textContent = window.PosCommon.formatCurrency(item.product.price);
+            const unitPriceLabel = document.createElement("span");
+            unitPriceLabel.textContent = window.PosCommon.formatCurrency(unitPrice);
             const lineTotal = document.createElement("strong");
-            lineTotal.textContent = window.PosCommon.formatCurrency(Number(item.product.price) * item.quantity);
-            detail.append(unitPrice, lineTotal);
-            entry.append(itemName, variant, detail);
+            lineTotal.textContent = window.PosCommon.formatCurrency(item.total_price ?? unitPrice * quantity);
+            detail.append(unitPriceLabel, lineTotal);
+            entry.append(itemHeading, variant, detail);
             itemList.append(entry);
         });
 
         const totalsBlock = document.createElement("div");
         totalsBlock.className = "receipt-totals";
-        appendReceiptLine(totalsBlock, "Tạm tính", window.PosCommon.formatCurrency(totals.subtotal));
-        appendReceiptLine(totalsBlock, "Chiết khấu", window.PosCommon.formatCurrency(totals.discountAmount));
-        appendReceiptLine(totalsBlock, "Thuế", window.PosCommon.formatCurrency(totals.taxAmount));
-        appendReceiptLine(totalsBlock, "Tổng cộng", window.PosCommon.formatCurrency(totals.totalAmount), true);
-        const paymentLabels = { cash: "Cash", card: "Card", qr_code: "Digital / QR" };
-        appendReceiptLine(totalsBlock, "Phương thức", paymentLabels[totals.paymentMethod] || totals.paymentMethod);
-        appendReceiptLine(totalsBlock, "Khách đưa", window.PosCommon.formatCurrency(totals.amountReceived));
-        appendReceiptLine(totalsBlock, "Tiền thừa", window.PosCommon.formatCurrency(totals.changeAmount));
+        appendReceiptLine(totalsBlock, "Tạm tính", window.PosCommon.formatCurrency(order.subtotal));
+        appendReceiptLine(totalsBlock, "Chiết khấu", window.PosCommon.formatCurrency(order.discount_amount));
+        appendReceiptLine(totalsBlock, "Thuế", window.PosCommon.formatCurrency(order.tax_amount));
+        appendReceiptLine(totalsBlock, "Tổng cộng", window.PosCommon.formatCurrency(order.total_amount), true);
+        const paymentLabels = { cash: "Tiền mặt", card: "Thẻ", qr_code: "Chuyển khoản / QR" };
+        appendReceiptLine(totalsBlock, "Phương thức", paymentLabels[order.payment_method] || order.payment_method);
+        appendReceiptLine(totalsBlock, "Khách đưa", window.PosCommon.formatCurrency(order.amount_received));
+        appendReceiptLine(totalsBlock, "Tiền thừa", window.PosCommon.formatCurrency(order.change_amount));
         const footerDivider = document.createElement("hr");
         footerDivider.className = "receipt-divider";
         const thanks = document.createElement("p");
@@ -693,6 +688,7 @@
     function resetSaleForm() {
         window.clearTimeout(customerLookupTimer);
         cart.clear();
+        cartState.pendingOrderId = null;
         receivedInput.value = "";
         discountInput.value = "0";
         document.getElementById("payment-cash").checked = true;
@@ -707,19 +703,37 @@
         if (!validateCheckout(totals, isComplete)) return;
 
         button.disabled = true;
+        const pendingOrderId = cartState.pendingOrderId;
         const cartItems = Array.from(cart.values()).map(function (item) {
             return { product_id: item.product.id, quantity: item.quantity, product: item.product };
         });
         const customer = getCurrentCustomer();
         try {
             const orderData = buildOrderPayload(status, totals, customer, cartItems);
-            const orderResponse = await window.PosApi.post("orders", orderData);
+            const orderPath = pendingOrderId
+                ? "orders/" + encodeURIComponent(pendingOrderId)
+                : "orders";
+            const orderResponse = pendingOrderId
+                ? await window.PosApi.put(orderPath, orderData)
+                : await window.PosApi.post(orderPath, orderData);
             if (isComplete) {
-                buildReceipt(orderResponse, totals, cartItems.map(function (item) {
-                    return { product: item.product, quantity: item.quantity };
-                }), customer);
                 resetSaleForm();
-                invoiceModal.show();
+                const createdOrder = valueFromResponse(orderResponse, "order") || {};
+                try {
+                    let receiptResponse = orderResponse;
+                    const createdItems = Array.isArray(createdOrder.items) || Array.isArray(createdOrder.order_items);
+                    if (!createdItems) {
+                        if (createdOrder.id == null) {
+                            throw new Error("Máy chủ chưa trả về mã đơn hàng để tải chi tiết hóa đơn.");
+                        }
+                        receiptResponse = await window.PosApi.get("orders/" + encodeURIComponent(createdOrder.id));
+                    }
+                    buildReceipt(receiptResponse);
+                    invoiceModal.show();
+                } catch (receiptError) {
+                    const orderNumber = createdOrder.order_number || createdOrder.id || "vừa tạo";
+                    window.PosCommon.notify("Đơn " + orderNumber + " đã được lưu, nhưng chưa tải được chi tiết hóa đơn. Bạn có thể mở lại đơn trong mục Hóa đơn.", "warning");
+                }
             } else {
                 resetSaleForm();
                 window.PosCommon.notify("Đã lưu đơn bán hàng chờ xử lý.", "success");
@@ -728,6 +742,86 @@
             window.PosCommon.notify(error.message, "danger");
         } finally {
             button.disabled = false;
+        }
+    }
+
+    async function resumePendingOrder() {
+        const orderId = new URLSearchParams(window.location.search).get("resume_order");
+        if (!orderId) return;
+
+        try {
+            const response = await window.PosApi.get("orders/" + encodeURIComponent(orderId));
+            const order = valueFromResponse(response, "order") || response;
+            const items = Array.isArray(order.items)
+                ? order.items
+                : Array.isArray(order.order_items) ? order.order_items : [];
+            if (order.status !== "pending" || !items.length) {
+                throw new Error("Đơn này không còn là đơn nháp có thể tiếp tục.");
+            }
+
+            cart.clear();
+            items.forEach(function (item) {
+                const productInfo = item.product || {};
+                const productId = item.product_id ?? productInfo.id;
+                const currentProduct = products.find(function (product) {
+                    return String(product.id) === String(productId);
+                }) || {};
+                const price = Number(item.unit_price ?? productInfo.price ?? currentProduct.price);
+                const quantity = Number(item.quantity);
+                if (productId == null || !Number.isFinite(price) || !Number.isInteger(quantity) || quantity < 1) {
+                    throw new Error("Chi tiết sản phẩm trong đơn nháp không hợp lệ.");
+                }
+                const product = Object.assign({}, currentProduct, productInfo, {
+                    id: productId,
+                    name: item.product_name || productInfo.name || currentProduct.name || "Sản phẩm",
+                    price: price,
+                    size: item.size || productInfo.size || currentProduct.size || "",
+                    color: item.color || productInfo.color || currentProduct.color || ""
+                });
+                cart.set(String(productId), { product: product, quantity: quantity });
+            });
+
+            cartState.pendingOrderId = order.id;
+            cartState.paymentConfirmed = false;
+            discountInput.value = String(order.discount_percent || 0);
+            const method = ["cash", "card", "qr_code"].includes(order.payment_method)
+                ? order.payment_method
+                : "cash";
+            const methodInput = document.querySelector("input[name='payment-method'][value='" + method + "']");
+            if (methodInput) methodInput.checked = true;
+            receivedInput.value = method === "cash" ? String(order.amount_received || 0) : "";
+
+            const customer = order.customer || {};
+            const customerId = order.customer_id ?? customer.id;
+            phoneInput.value = customer.phone || order.customer_phone || "";
+            customerName.value = customer.full_name || order.customer_name || "";
+            customerAddress.value = customer.address || order.customer_address || "";
+            cartState.customerId = customerId == null ? null : customerId;
+            if (cartState.customerId != null) {
+                cartState.customerType = "existing";
+                customerName.readOnly = true;
+                customerAddress.readOnly = true;
+                customerFields.hidden = false;
+                document.getElementById("customer-history").hidden = false;
+                customerStatus.textContent = "Đơn nháp của khách hàng cũ.";
+                setCustomerType("bi-person-check", "Khách hàng cũ");
+            } else if (phoneInput.value.trim()) {
+                cartState.customerType = "new";
+                customerName.readOnly = false;
+                customerAddress.readOnly = false;
+                customerFields.hidden = false;
+                document.getElementById("customer-history").hidden = true;
+                customerStatus.textContent = "Khách mới trong đơn nháp.";
+                setCustomerType("bi-person-plus", "Khách mới");
+            } else {
+                resetCustomer(false);
+            }
+
+            renderCart();
+            getTotals();
+            window.PosCommon.notify("Đã mở đơn nháp " + (order.order_number || order.id) + ". Hãy xác nhận thanh toán lại trước khi hoàn tất.", "info");
+        } catch (error) {
+            window.PosCommon.notify("Không thể tiếp tục đơn nháp: " + error.message, "danger");
         }
     }
 
@@ -910,10 +1004,7 @@
         if (event.key !== "Enter") return;
         const searchValue = productSearch.value.trim();
         if (!searchValue) return;
-        const barcode = searchValue.toLocaleLowerCase("vi");
-        const product = products.find(function (item) {
-            return item.barcode && String(item.barcode).toLocaleLowerCase("vi") === barcode;
-        });
+        const product = window.PosDomain.findByBarcode(products, searchValue);
         if (!product) {
             const visibleProducts = getVisibleProducts();
             if (visibleProducts.length) return;
@@ -944,16 +1035,10 @@
         const id = button.dataset.productId;
         const item = cart.get(id);
         if (!item) return;
-        if (button.dataset.cartAction === "remove" || (button.dataset.cartAction === "decrease" && item.quantity <= 1)) {
-            cart.delete(id);
-        } else {
-            const nextQuantity = item.quantity + (button.dataset.cartAction === "increase" ? 1 : -1);
-            const stock = Number(item.product.stock_quantity);
-            if (button.dataset.cartAction === "increase" && Number.isFinite(stock) && nextQuantity > stock) {
-                window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
-                return;
-            }
-            item.quantity = nextQuantity;
+        const result = window.PosDomain.updateQuantity(cart, id, button.dataset.cartAction);
+        if (!result.updated && result.reason === "stock-limit") {
+            window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
+            return;
         }
         invalidatePaymentConfirmation();
         renderCart();
@@ -1068,5 +1153,7 @@
     setCurrentTime();
     window.setInterval(setCurrentTime, 60000);
     renderCart();
-    Promise.all([loadProducts(), loadCategories(), loadReceiptSettings()]);
+    Promise.all([loadProducts(), loadCategories(), loadReceiptSettings()]).then(function () {
+        return resumePendingOrder();
+    });
 }());

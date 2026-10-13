@@ -9,7 +9,9 @@
         const status = document.getElementById("report-status");
         const dateFrom = document.getElementById("date-from");
         const dateTo = document.getElementById("date-to");
-        const isAdmin = sessionStorage.getItem("pos-role") === "admin";
+        const currentRole = sessionStorage.getItem("pos-role");
+        const isAdmin = currentRole === "admin";
+        const currentUserId = sessionStorage.getItem("pos-user-id");
         const profitCard = document.getElementById("profit-card");
         const exportButton = document.getElementById("export-report-pdf");
         const detailModalElement = document.getElementById("order-detail-modal");
@@ -265,7 +267,7 @@
                     : window.PosCommon.formatCurrency(profit);
             }
 
-            renderRows(orders);
+            renderRows(completedOrders);
             chartPoints = Array.isArray(data.trend) ? data.trend : Array.isArray(data.daily_revenue) ? data.daily_revenue : trendFromOrders(orders);
             drawChart(chartPoints);
             const periodLabel = document.getElementById("chart-period-label");
@@ -296,6 +298,10 @@
 
             try {
                 const query = new URLSearchParams({ from: from, to: to });
+                if (currentRole === "cashier") {
+                    if (!currentUserId) throw new Error("Không xác định được tài khoản thu ngân để lọc báo cáo.");
+                    query.set("user_id", currentUserId);
+                }
                 const payload = await window.PosApi.get("reports/sales?" + query.toString());
                 if (requestSequence !== reportRequestSequence) return;
                 const data = responseData(payload);

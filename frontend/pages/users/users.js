@@ -67,7 +67,7 @@
     function renderSummary() {
         document.getElementById("total-users").textContent = String(users.length);
         document.getElementById("active-users").textContent = String(users.filter(function (user) {
-            return user.status === "active";
+            return user.status === "active" && !needsActivation(user);
         }).length);
         document.getElementById("pending-users").textContent = String(users.filter(isUnactivated).length);
         document.getElementById("inactive-users").textContent = String(users.filter(isInactive).length);
@@ -346,11 +346,15 @@
 
             const data = response && response.data && !Array.isArray(response.data) ? response.data : response || {};
             const summary = data.summary || {};
-            const orders = reportOrders(response);
-            const totalReceived = summary.total_received ?? summary.total_revenue ?? summary.revenue ??
-                orders.reduce(function (total, order) {
+            const orders = reportOrders(response).filter(function (order) {
+                return !order.status || order.status === "completed";
+            });
+            const reportedRevenue = summary.total_received ?? summary.total_revenue ?? summary.revenue;
+            const totalReceived = reportedRevenue == null
+                ? orders.reduce(function (total, order) {
                     return total + (Number(order.total_amount ?? order.total) || 0);
-                }, 0);
+                }, 0)
+                : Number(reportedRevenue) || 0;
             const orderCount = summary.order_count ?? summary.total_orders ?? orders.length;
             const itemsSold = summary.items_sold ?? summary.total_items_sold ?? summary.product_count ?? summary.total_items ??
                 orders.reduce(function (total, order) {

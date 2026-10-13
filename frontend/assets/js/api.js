@@ -84,7 +84,7 @@
         }
 
         if (!response.ok) {
-            if (response.status === 401 && !/^auth\/(login|logout|invitations\/validate|first-login)/.test(String(path).replace(/^\/+/, ""))) {
+            if (response.status === 401 && !/^auth\/(login|logout|invitations\/validate|first-login)/.test(normalizedPath)) {
                 window.dispatchEvent(new CustomEvent("pos:unauthorized", { detail: { path: path } }));
             }
             throw new ApiError(getErrorMessage(payload) || "Yêu cầu không thành công. Vui lòng thử lại.", response.status, payload);

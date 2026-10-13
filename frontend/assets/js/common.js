@@ -17,8 +17,8 @@
     };
     const roleRoutes = {
         admin: ["dashboard", "pos", "invoices", "products", "categories", "customers", "reports", "users", "settings", "profile"],
-        staff: ["dashboard", "pos", "invoices", "products", "categories", "customers", "reports", "profile"],
-        cashier: ["pos", "profile"]
+        staff: ["dashboard", "pos", "invoices", "products", "customers", "reports", "profile"],
+        cashier: ["pos", "reports", "profile"]
     };
     const components = [
         ["#header-container", "components/header.html"],
@@ -116,7 +116,14 @@
             return;
         }
 
-        if (!allowedRoutes.includes(currentPage)) {
+        const requestedRoute = currentPage === "products" && window.location.hash === "#categories"
+            ? "categories"
+            : currentPage;
+        if (!allowedRoutes.includes(requestedRoute)) {
+            if (currentPage === "products" && role !== "admin") {
+                window.location.replace(new URL(routes.products, componentRoot).href);
+                return;
+            }
             const fallback = role === "admin" ? routes.dashboard : routes.pos;
             window.location.replace(new URL(fallback, componentRoot).href);
             return;

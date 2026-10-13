@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `sku` varchar(64) DEFAULT NULL,
-  `category_id` int DEFAULT NULL,
-  `barcode` varchar(100) DEFAULT NULL,
+  `category_id` int NOT NULL,
+  `barcode` varchar(100) NOT NULL,
   `import_price` decimal(10,2) NOT NULL DEFAULT '0.00', -- Giá nhập (Giá gốc để tính lợi nhuận)
   `price` decimal(10,2) NOT NULL DEFAULT '0.00',        -- Giá bán lẻ tại quầy
   `stock_quantity` int DEFAULT '0',
