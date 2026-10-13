@@ -19,6 +19,7 @@
         let chartPoints = [];
         let currentOrders = [];
         let reportLoaded = false;
+        let reportRequestSequence = 0;
 
         if (profitCard) profitCard.hidden = !isAdmin;
         if (document.getElementById("dashboard-user-name")) {
@@ -79,9 +80,11 @@
         }
 
         function renderRows(orders) {
-            currentOrders = orders;
+            currentOrders = orders.slice().sort(function (left, right) {
+                return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
+            });
             table.replaceChildren();
-            orders.forEach(function (order) {
+            currentOrders.forEach(function (order) {
                 const row = document.createElement("tr");
                 addCell(row, order.order_number || order.id, "fw-semibold");
                 addCell(row, customerName(order));
@@ -125,6 +128,7 @@
         function trendFromOrders(orders) {
             const totals = new Map();
             orders.forEach(function (order) {
+                if (order.status && order.status !== "completed") return;
                 if (!order.created_at) return;
                 const date = /^\d{4}-\d{2}-\d{2}/.test(String(order.created_at))
                     ? String(order.created_at).slice(0, 10)
@@ -233,20 +237,32 @@
         function renderReportData(data, from, to) {
             const summary = data.summary || {};
             const orders = unwrapOrders(data);
-            const receivedTotal = summary.total_received ?? summary.total_revenue ?? summary.revenue ?? 0;
-            const orderCount = summary.order_count ?? summary.total_orders ?? orders.length;
+            const completedOrders = orders.filter(function (order) {
+                return !order.status || order.status === "completed";
+            });
+            const receivedTotal = summary.total_received ?? summary.total_revenue ?? summary.revenue ??
+                completedOrders.reduce(function (sum, order) {
+                    return sum + (Number(order.total_amount) || 0);
+                }, 0);
+            const orderCount = summary.order_count ?? summary.total_orders ?? completedOrders.length;
             const soldQuantity = summary.items_sold ?? summary.total_items_sold ?? summary.product_count ?? summary.total_items ??
-                orders.reduce(function (sum, order) {
-                    return sum + Number(order.items_sold || 0);
+                completedOrders.reduce(function (sum, order) {
+                    const reported = order.items_sold ?? order.total_items ?? order.quantity_sold;
+                    if (reported != null && Number.isFinite(Number(reported))) return sum + Number(reported);
+                    const items = Array.isArray(order.items) ? order.items : Array.isArray(order.order_items) ? order.order_items : [];
+                    return sum + items.reduce(function (quantity, item) {
+                        return quantity + (Number(item.quantity) || 0);
+                    }, 0);
                 }, 0);
 
             document.getElementById("report-revenue").textContent = window.PosCommon.formatCurrency(receivedTotal);
             document.getElementById("report-orders").textContent = String(orderCount);
             document.getElementById("report-items").textContent = String(soldQuantity);
             if (isAdmin) {
-                const profit = summary.total_profit ?? summary.profit ??
-                    (Number(summary.total_revenue ?? summary.revenue ?? receivedTotal) - Number(summary.total_import_cost ?? summary.import_cost ?? 0));
-                document.getElementById("report-profit").textContent = window.PosCommon.formatCurrency(profit);
+                const profit = summary.total_profit ?? summary.profit;
+                document.getElementById("report-profit").textContent = profit == null
+                    ? "Chưa có dữ liệu"
+                    : window.PosCommon.formatCurrency(profit);
             }
 
             renderRows(orders);
@@ -262,11 +278,14 @@
         }
 
         async function loadReport() {
+            const requestSequence = ++reportRequestSequence;
             const from = dateFrom.value;
             const to = dateTo.value;
             if (!from || !to || from > to) {
                 reportMessage("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.", true);
                 setEmptyStats();
+                const invalidRangeButton = document.getElementById("load-report");
+                if (invalidRangeButton) invalidRangeButton.disabled = false;
                 return;
             }
 
@@ -278,15 +297,17 @@
             try {
                 const query = new URLSearchParams({ from: from, to: to });
                 const payload = await window.PosApi.get("reports/sales?" + query.toString());
+                if (requestSequence !== reportRequestSequence) return;
                 const data = responseData(payload);
                 const orders = renderReportData(data, from, to);
                 reportMessage(orders.length + " đơn hàng trong khoảng thời gian đã chọn.", false);
             } catch (error) {
+                if (requestSequence !== reportRequestSequence) return;
                 setEmptyStats();
                 reportMessage("Không tải được báo cáo: " + error.message, true);
                 window.PosCommon.notify("Không tải được báo cáo: " + error.message, "danger");
             } finally {
-                if (loadButton) loadButton.disabled = false;
+                if (requestSequence === reportRequestSequence && loadButton) loadButton.disabled = false;
             }
         }
 

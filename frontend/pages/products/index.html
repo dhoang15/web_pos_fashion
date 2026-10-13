@@ -20,8 +20,6 @@
             <section class="page-heading d-flex flex-wrap align-items-end justify-content-between gap-3">
                 <div><span class="management-eyebrow">INVENTORY</span><h1>Sản phẩm</h1><p>Quản lý danh mục, giá bán và tồn kho thời trang.</p></div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div class="role-preview-control" id="role-preview-control" aria-label="Xem trước giao diện theo vai trò" hidden>
-                    </div>
                     <button class="btn btn-management-primary px-4" type="button" id="add-product" data-admin-only><i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Thêm sản phẩm</button>
                 </div>
             </section>
@@ -77,9 +75,9 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6"><label class="form-label fw-semibold" for="product-name">Tên sản phẩm</label><input class="form-control" id="product-name" name="name" maxlength="100" required></div>
-                        <div class="col-md-3"><label class="form-label fw-semibold" for="product-barcode">Barcode</label><input class="form-control" id="product-barcode" name="barcode" maxlength="100"></div>
+                        <div class="col-md-3"><label class="form-label fw-semibold" for="product-barcode">Barcode</label><input class="form-control" id="product-barcode" name="barcode" maxlength="100" required></div>
                         <div class="col-md-3"><label class="form-label fw-semibold" for="product-sku">SKU</label><input class="form-control" id="product-sku" name="sku" maxlength="64"></div>
-                        <div class="col-md-6"><label class="form-label fw-semibold" for="product-category">Danh mục</label><select class="form-select" id="product-category" name="category_id"><option value="">Chưa phân loại</option></select></div>
+                        <div class="col-md-6"><label class="form-label fw-semibold" for="product-category">Danh mục</label><select class="form-select" id="product-category" name="category_id" required><option value="">Chọn danh mục</option></select></div>
                         <div class="col-md-6"><label class="form-label fw-semibold" for="product-image">Đường dẫn ảnh</label><input class="form-control" id="product-image" name="image" maxlength="255" placeholder="assets/images/product.jpg"></div>
                         <div class="col-md-6 role-admin-only" data-admin-only><label class="form-label fw-semibold" for="product-import-price">Giá nhập (₫)</label><input class="form-control" id="product-import-price" name="import_price" type="number" min="0" step="1000" required></div>
                         <div class="col-md-6"><label class="form-label fw-semibold" for="product-price">Giá bán lẻ (₫)</label><input class="form-control" id="product-price" name="price" type="number" min="0" step="1000" required></div>
@@ -111,7 +109,7 @@
                 </form>
                 <p id="categories-status" class="status-message small" aria-live="polite"></p>
                 <div class="table-responsive"><table class="table table-hover align-middle management-table mb-0">
-                    <thead><tr><th>Danh mục</th><th>Mô tả</th><th>Ngày tạo</th><th class="text-end" data-admin-only>Thao tác</th></tr></thead>
+                    <thead><tr><th>Danh mục</th><th>Mô tả</th><th>Ngày tạo</th><th>Người tạo</th><th class="text-end" data-admin-only>Thao tác</th></tr></thead>
                     <tbody id="categories-table"></tbody>
                 </table></div>
             </div>

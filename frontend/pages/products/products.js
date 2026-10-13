@@ -15,12 +15,11 @@
     const categoryFilter = document.getElementById("filter-product-category");
     const statusFilter = document.getElementById("filter-product-status");
     const authenticatedAdmin = sessionStorage.getItem("pos-role") === "admin";
-    let previewRole = authenticatedAdmin ? "admin" : "staff";
     let products = [];
     let categories = [];
 
     function isAdminView() {
-        return authenticatedAdmin && previewRole === "admin";
+        return authenticatedAdmin;
     }
 
     function setStatus(element, message, isError) {
@@ -192,6 +191,8 @@
             name.classList.add("fw-semibold");
             appendCell(row, category.description);
             appendCell(row, category.created_at ? new Date(category.created_at).toLocaleDateString("vi-VN") : "");
+            const creator = category.creator || category.created_by_user || {};
+            appendCell(row, creator.name || [creator.first_name, creator.last_name].filter(Boolean).join(" ") || category.created_by_name || category.created_by);
             const actions = document.createElement("td");
             actions.className = "text-end text-nowrap";
             actions.hidden = !isAdminView();
@@ -214,13 +215,13 @@
         if (!categories.length) {
             const row = document.createElement("tr");
             const empty = document.createElement("td");
-            empty.colSpan = 4;
+            empty.colSpan = 5;
             empty.className = "empty-state";
             empty.textContent = "Chưa có danh mục.";
             row.append(empty);
             categoryTable.append(row);
         }
-        replaceOptions(categorySelect, "Chưa phân loại");
+        replaceOptions(categorySelect, "Chọn danh mục");
         renderCategoryFilter();
         renderSummary();
         render();
@@ -259,7 +260,7 @@
         form.reset();
         form.dataset.id = product ? String(product.id) : "";
         document.getElementById("product-modal-title").textContent = product ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
-        replaceOptions(categorySelect, "Chưa phân loại", product && product.category_id);
+        replaceOptions(categorySelect, "Chọn danh mục", product && product.category_id);
         if (product) {
             form.elements.name.value = product.name || "";
             form.elements.barcode.value = product.barcode || "";
@@ -279,32 +280,9 @@
         productModal.show();
     }
 
-    function applyRolePreview(role) {
-        previewRole = role === "staff" ? "staff" : "admin";
-        document.body.classList.toggle("is-staff-preview", previewRole === "staff");
-        document.querySelectorAll("[data-preview-role]").forEach(function (button) {
-            const active = button.dataset.previewRole === previewRole;
-            button.classList.toggle("is-active", active);
-            button.setAttribute("aria-pressed", String(active));
-        });
-        document.querySelectorAll("[data-admin-only]").forEach(function (element) {
-            element.hidden = !isAdminView();
-        });
-        document.querySelectorAll("#sidebar-container [data-route='users']").forEach(function (element) {
-            element.hidden = !isAdminView();
-        });
-        renderCategories();
-        render();
-    }
-
     if (authenticatedAdmin) {
-        document.getElementById("role-preview-control").hidden = false;
-        document.getElementById("role-preview-control").addEventListener("click", function (event) {
-            const button = event.target.closest("[data-preview-role]");
-            if (button) applyRolePreview(button.dataset.previewRole);
-        });
         document.getElementById("add-product").addEventListener("click", function () {
-            if (isAdminView()) openProductForm(null);
+            openProductForm(null);
         });
     }
 
@@ -347,9 +325,9 @@
         const button = document.getElementById("save-product");
         const product = {
             name: form.elements.name.value.trim(),
-            barcode: form.elements.barcode.value.trim() || null,
+            barcode: form.elements.barcode.value.trim(),
             sku: form.elements.sku.value.trim() || null,
-            category_id: form.elements.category_id.value ? Number(form.elements.category_id.value) : null,
+            category_id: Number(form.elements.category_id.value),
             import_price: Number(form.elements.import_price.value),
             price: Number(form.elements.price.value),
             stock_quantity: Number(form.elements.stock_quantity.value),
@@ -446,12 +424,9 @@
     });
 
     if (!authenticatedAdmin) {
-        document.getElementById("role-preview-control").hidden = true;
         document.querySelectorAll("[data-admin-only]").forEach(function (element) {
             element.hidden = true;
         });
-    } else {
-        applyRolePreview("admin");
     }
 
     function openCategoriesRoute() {

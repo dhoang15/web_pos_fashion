@@ -6,13 +6,14 @@
     const avatarInput = document.getElementById("profile-avatar");
     const avatarPreview = document.getElementById("avatar-preview");
     const avatarPlaceholder = document.getElementById("avatar-placeholder");
-    let avatarUrl = "";
+    let savedAvatarUrl = "";
+    let previewUrl = "";
 
     function setAvatar(url) {
-        avatarUrl = url || "";
-        avatarPreview.hidden = !avatarUrl;
-        avatarPlaceholder.hidden = Boolean(avatarUrl);
-        if (avatarUrl) avatarPreview.src = avatarUrl;
+        const source = url || "";
+        avatarPreview.hidden = !source;
+        avatarPlaceholder.hidden = Boolean(source);
+        if (source) avatarPreview.src = source;
     }
 
     async function loadProfile() {
@@ -21,7 +22,8 @@
             const user = response && (response.user || response.data && (response.data.user || response.data)) || {};
             document.getElementById("profile-name").value = user.name || [user.first_name, user.last_name].filter(Boolean).join(" ");
             document.getElementById("profile-phone").value = user.phone || "";
-            setAvatar(user.avatar || user.avatar_url);
+            savedAvatarUrl = user.avatar || user.avatar_url || "";
+            setAvatar(savedAvatarUrl);
         } catch (error) {
             window.PosCommon.notify(error.message, "danger");
         }
@@ -29,16 +31,20 @@
 
     avatarInput.addEventListener("change", function () {
         const file = avatarInput.files && avatarInput.files[0];
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = "";
         if (!file) {
-            setAvatar(avatarUrl);
+            setAvatar(savedAvatarUrl);
             return;
         }
         if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
             avatarInput.value = "";
             window.PosCommon.notify("Chọn ảnh PNG, JPG hoặc WebP tối đa 5 MB.", "warning");
+            setAvatar(savedAvatarUrl);
             return;
         }
-        setAvatar(URL.createObjectURL(file));
+        previewUrl = URL.createObjectURL(file);
+        setAvatar(previewUrl);
     });
 
     profileForm.addEventListener("submit", async function (event) {
@@ -57,11 +63,19 @@
                 formData.set("avatar", avatarInput.files[0]);
                 const result = await window.PosApi.upload("auth/profile", formData);
                 const user = result && (result.user || result.data && (result.data.user || result.data)) || {};
-                setAvatar(user.avatar || user.avatar_url || avatarUrl);
+                if (user.avatar || user.avatar_url) {
+                    savedAvatarUrl = user.avatar || user.avatar_url;
+                    if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    previewUrl = "";
+                    setAvatar(savedAvatarUrl);
+                }
             } else {
                 const result = await window.PosApi.put("auth/profile", data);
                 const user = result && (result.user || result.data && (result.data.user || result.data)) || {};
-                if (user.avatar || user.avatar_url) setAvatar(user.avatar || user.avatar_url);
+                if (user.avatar || user.avatar_url) {
+                    savedAvatarUrl = user.avatar || user.avatar_url;
+                    setAvatar(savedAvatarUrl);
+                }
             }
             sessionStorage.setItem("pos-user-name", data.name);
             document.querySelectorAll(".topbar-user-name").forEach(function (element) {
@@ -74,6 +88,10 @@
         } finally {
             button.disabled = false;
         }
+    });
+
+    window.addEventListener("beforeunload", function () {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
     });
 
     document.getElementById("password-form").addEventListener("submit", async function (event) {

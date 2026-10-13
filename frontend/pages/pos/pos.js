@@ -18,6 +18,7 @@
     const taxRateLabel = document.getElementById("tax-rate-label");
     const qrModal = createModal(document.getElementById("qr-modal"));
     const invoiceModal = createModal(document.getElementById("invoice-modal"));
+    const customerHistoryModal = createModal(document.getElementById("pos-customer-history-modal"));
     if (!window.bootstrap || !window.bootstrap.Modal) {
         document.querySelectorAll(".modal [data-bs-dismiss='modal']").forEach(function (button) {
             button.addEventListener("click", function () {
@@ -34,7 +35,7 @@
     }
     const cart = new Map();
     const categoriesById = new Map();
-    const cartState = { customerId: null, customerType: "guest", qrConfirmed: false, qrLoaded: false };
+    const cartState = { customerId: null, customerType: "guest", paymentConfirmed: false, qrLoaded: false };
     let customerLookupSequence = 0;
     let customerLookupTimer = null;
     let products = [];
@@ -96,24 +97,28 @@
         return selected ? selected.value : "cash";
     }
 
+    function invalidatePaymentConfirmation() {
+        cartState.paymentConfirmed = false;
+    }
+
     function getTotals() {
         let subtotal = 0;
         cart.forEach(function (item) {
             subtotal += Number(item.product.price) * item.quantity;
         });
         const discountPercent = Math.min(100, Math.max(0, Number(discountInput.value) || 0));
-        const discountAmount = subtotal * discountPercent / 100;
+        const discountAmount = Math.round(subtotal * discountPercent / 100);
         const discountedSubtotal = Math.max(0, subtotal - discountAmount);
         const configuredTaxRate = Number(storeSettings.tax_rate);
         const taxRate = Number.isFinite(configuredTaxRate)
             ? Math.min(100, Math.max(0, configuredTaxRate))
             : 10;
-        const taxAmount = discountedSubtotal * taxRate / 100;
-        const totalAmount = discountedSubtotal + taxAmount;
+        const taxAmount = Math.round(discountedSubtotal * taxRate / 100);
+        const totalAmount = Math.round(discountedSubtotal + taxAmount);
         const paymentMethod = getPaymentMethod();
         const amountReceived = paymentMethod === "cash"
             ? Math.max(0, Number(receivedInput.value) || 0)
-            : paymentMethod === "qr_code" && !cartState.qrConfirmed ? 0 : totalAmount;
+            : cartState.paymentConfirmed ? totalAmount : 0;
         const changeAmount = paymentMethod === "cash"
             ? Math.max(0, amountReceived - totalAmount)
             : 0;
@@ -125,7 +130,18 @@
         document.getElementById("tax-total").textContent = window.PosCommon.formatCurrency(taxAmount);
         document.getElementById("total-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
         document.getElementById("change-amount").textContent = window.PosCommon.formatCurrency(changeAmount);
+        document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(totalAmount);
         if (paymentMethod !== "cash") receivedInput.value = String(amountReceived);
+        document.getElementById("card-payment-confirmation").hidden = paymentMethod !== "card";
+        document.getElementById("qr-payment-confirmation").hidden = paymentMethod !== "qr_code";
+        document.getElementById("confirm-card-payment").disabled = !cart.size || cartState.paymentConfirmed;
+        document.getElementById("open-qr-modal").disabled = !cart.size;
+        document.getElementById("card-payment-status").textContent = cartState.paymentConfirmed
+            ? "Đã xác nhận thanh toán thẻ cho số tiền hiện tại."
+            : "Xác nhận sau khi thiết bị thẻ cho biết giao dịch đã thành công.";
+        document.getElementById("qr-payment-confirmation-status").textContent = cartState.paymentConfirmed
+            ? "Đã xác nhận thanh toán QR cho số tiền hiện tại. Nếu thay đổi giỏ hàng hoặc giảm giá, cần xác nhận lại."
+            : "Cần xác nhận giao dịch cho số tiền hiện tại.";
         return {
             subtotal: subtotal,
             discountPercent: discountPercent,
@@ -285,6 +301,7 @@
             window.PosCommon.notify("Số lượng trong giỏ vượt quá tồn kho.", "warning");
             return;
         }
+        invalidatePaymentConfirmation();
         cart.set(id, { product: product, quantity: quantity });
         renderCart();
     }
@@ -354,7 +371,7 @@
             empty.className = "empty-state mb-0";
             empty.textContent = "Chưa có sản phẩm trong giỏ";
             cartElement.append(empty);
-            cartState.qrConfirmed = false;
+            invalidatePaymentConfirmation();
         }
         updatePaymentFields();
         getTotals();
@@ -366,7 +383,7 @@
         receivedInput.readOnly = !isCash;
         receivedInput.setAttribute("aria-readonly", String(!isCash));
         if (!isCash) getTotals();
-        document.getElementById("confirm-qr-payment").disabled = !cart.size;
+        document.getElementById("confirm-qr-payment").disabled = !cart.size || cartState.paymentConfirmed;
     }
 
     async function loadProducts() {
@@ -462,7 +479,14 @@
             if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
             const customer = valueFromResponse(response, "customer");
             if (!customer || customer.id == null) {
-                throw new Error("Máy chủ không trả về dữ liệu khách hàng hợp lệ.");
+                cartState.customerType = "new";
+                customerName.readOnly = false;
+                customerAddress.readOnly = false;
+                customerFields.hidden = false;
+                customerStatus.textContent = "Khách mới — nhập họ tên và địa chỉ.";
+                document.getElementById("customer-history").hidden = true;
+                setCustomerType("bi-person-plus", "Khách mới");
+                return;
             }
             cartState.customerId = customer.id;
             cartState.customerType = "existing";
@@ -472,7 +496,8 @@
             customerAddress.readOnly = true;
             customerFields.hidden = false;
             customerStatus.textContent = "Khách hàng cũ: " + customerName.value;
-            setCustomerType("bi-person-check", "Returning Customer");
+            document.getElementById("customer-history").hidden = false;
+            setCustomerType("bi-person-check", "Khách hàng cũ");
         } catch (error) {
             if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
             if (error.status === 404) {
@@ -480,8 +505,9 @@
                 customerName.readOnly = false;
                 customerAddress.readOnly = false;
                 customerFields.hidden = false;
-                customerStatus.textContent = "Khách mới — nhập họ tên; địa chỉ không bắt buộc.";
-                setCustomerType("bi-person-plus", "New Customer");
+                customerStatus.textContent = "Khách mới — nhập họ tên và địa chỉ.";
+                document.getElementById("customer-history").hidden = true;
+                setCustomerType("bi-person-plus", "Khách mới");
                 return;
             }
             customerStatus.textContent = error.message;
@@ -499,6 +525,7 @@
         customerName.readOnly = false;
         customerAddress.readOnly = false;
         customerFields.hidden = true;
+        document.getElementById("customer-history").hidden = true;
         customerStatus.classList.remove("text-danger");
         customerStatus.textContent = "Khách lẻ";
         setCustomerType("bi-person", "Khách lẻ");
@@ -516,8 +543,9 @@
             return false;
         }
         if (cartState.customerType === "new") {
-            if (!phoneInput.value.trim()) {
-                window.PosCommon.notify("Nhập số điện thoại khách hàng mới.", "warning");
+            const digits = phoneInput.value.replace(/\D/g, "");
+            if (digits.length < 8 || digits.length > 15) {
+                window.PosCommon.notify("Số điện thoại khách hàng phải có từ 8 đến 15 chữ số.", "warning");
                 phoneInput.focus();
                 return false;
             }
@@ -526,14 +554,21 @@
                 customerName.focus();
                 return false;
             }
+            if (!customerAddress.value.trim()) {
+                window.PosCommon.notify("Nhập địa chỉ khách hàng mới.", "warning");
+                customerAddress.focus();
+                return false;
+            }
         }
         if (requirePayment && totals.paymentMethod === "cash" && totals.amountReceived < totals.totalAmount) {
             window.PosCommon.notify("Tiền khách đưa chưa đủ thanh toán.", "warning");
             receivedInput.focus();
             return false;
         }
-        if (requirePayment && totals.paymentMethod === "qr_code" && !cartState.qrConfirmed) {
-            window.PosCommon.notify("Xác nhận đã nhận thanh toán QR trước khi hoàn tất.", "warning");
+        if (requirePayment && ["qr_code", "card"].includes(totals.paymentMethod) && !cartState.paymentConfirmed) {
+            window.PosCommon.notify(totals.paymentMethod === "qr_code"
+                ? "Xác nhận đã nhận thanh toán QR cho số tiền hiện tại trước khi hoàn tất."
+                : "Xác nhận thiết bị thẻ đã báo giao dịch thành công trước khi hoàn tất.", "warning");
             return false;
         }
         return true;
@@ -629,6 +664,7 @@
 
     function buildOrderPayload(status, totals, customer, cartItems) {
         return {
+            customer_id: customer.id == null ? null : customer.id,
             customer: {
                 phone: customer.phone || null,
                 full_name: customer.full_name || "Khách vãng lai",
@@ -661,7 +697,7 @@
         discountInput.value = "0";
         document.getElementById("payment-cash").checked = true;
         resetCustomer(true);
-        cartState.qrConfirmed = false;
+        invalidatePaymentConfirmation();
         renderCart();
     }
 
@@ -704,6 +740,155 @@
             hour: "2-digit",
             minute: "2-digit"
         });
+    }
+
+    function customerOrderItems(order) {
+        return Array.isArray(order.items) ? order.items : Array.isArray(order.order_items) ? order.order_items : [];
+    }
+
+    function customerOrderQuantity(order) {
+        const reportedQuantity = order.items_sold ?? order.total_items ?? order.product_count;
+        if (reportedQuantity != null && Number.isFinite(Number(reportedQuantity))) return Number(reportedQuantity);
+        return customerOrderItems(order).reduce(function (total, item) {
+            return total + (Number(item.quantity) || 0);
+        }, 0);
+    }
+
+    function customerHistoryOrders(payload) {
+        try {
+            return window.PosCommon.unwrapList(payload);
+        } catch (error) {
+            const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
+            if (data && Array.isArray(data.orders)) return data.orders;
+            throw error;
+        }
+    }
+
+    function renderCustomerOrderDetails(order) {
+        const section = document.getElementById("pos-customer-order-detail");
+        section.replaceChildren();
+        section.hidden = false;
+        const title = document.createElement("h3");
+        title.className = "h6 fw-bold";
+        title.textContent = "Chi tiết đơn " + (order.order_number || "ORD-" + order.id);
+        const table = document.createElement("table");
+        table.className = "table table-sm mb-0";
+        const head = document.createElement("thead");
+        const headRow = document.createElement("tr");
+        ["Sản phẩm", "Số lượng", "Đơn giá", "Thành tiền"].forEach(function (label) {
+            const cell = document.createElement("th");
+            cell.textContent = label;
+            cell.scope = "col";
+            headRow.append(cell);
+        });
+        head.append(headRow);
+        const body = document.createElement("tbody");
+        customerOrderItems(order).forEach(function (item) {
+            const product = item.product || item.products || {};
+            const row = document.createElement("tr");
+            [
+                product.name || item.product_name || "Sản phẩm",
+                Number(item.quantity) || 0,
+                window.PosCommon.formatCurrency(item.unit_price ?? item.price),
+                window.PosCommon.formatCurrency(item.total_price ?? Number(item.unit_price || 0) * Number(item.quantity || 0))
+            ].forEach(function (value) {
+                const cell = document.createElement("td");
+                cell.textContent = String(value);
+                row.append(cell);
+            });
+            body.append(row);
+        });
+        if (!body.childElementCount) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = 4;
+            cell.textContent = "Máy chủ chưa trả về chi tiết sản phẩm của đơn hàng.";
+            row.append(cell);
+            body.append(row);
+        }
+        table.append(head, body);
+        section.append(title, table);
+    }
+
+    async function loadCustomerHistory() {
+        if (cartState.customerType !== "existing" || cartState.customerId == null) return;
+        const customer = getCurrentCustomer();
+        const status = document.getElementById("pos-customer-history-status");
+        const table = document.getElementById("pos-customer-orders");
+        const detail = document.getElementById("pos-customer-order-detail");
+        status.textContent = "Đang tải lịch sử giao dịch...";
+        status.classList.remove("text-danger");
+        table.replaceChildren();
+        detail.replaceChildren();
+        detail.hidden = true;
+        document.getElementById("pos-customer-history-title").textContent = "Lịch sử mua hàng — " + (customer.full_name || "Khách hàng");
+        document.getElementById("pos-customer-history-summary").textContent = [customer.phone, customer.address].filter(Boolean).join(" · ");
+        customerHistoryModal.show();
+
+        try {
+            const payload = await window.PosApi.get("customers/" + encodeURIComponent(customer.id) + "/orders");
+            const orders = customerHistoryOrders(payload).slice().sort(function (left, right) {
+                return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
+            });
+            orders.forEach(function (order) {
+                const row = document.createElement("tr");
+                const values = [
+                    order.order_number || "ORD-" + order.id,
+                    order.created_at ? new Date(String(order.created_at).replace(" ", "T")).toLocaleString("vi-VN") : "—",
+                    customerOrderQuantity(order).toLocaleString("vi-VN"),
+                    window.PosCommon.formatCurrency(order.total_amount ?? order.total),
+                    window.PosCommon.formatCurrency(order.amount_received),
+                    window.PosCommon.formatCurrency(order.change_amount)
+                ];
+                values.forEach(function (value, index) {
+                    const cell = document.createElement("td");
+                    cell.textContent = String(value);
+                    if (index >= 2) cell.className = "text-end text-nowrap";
+                    row.append(cell);
+                });
+                const action = document.createElement("td");
+                action.className = "text-end";
+                const button = document.createElement("button");
+                button.className = "btn btn-sm btn-outline-secondary";
+                button.type = "button";
+                button.dataset.customerOrderId = String(order.id);
+                button.textContent = "Chi tiết";
+                action.append(button);
+                row.append(action);
+                table.append(row);
+            });
+            if (!orders.length) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 7;
+                cell.className = "empty-state";
+                cell.textContent = "Khách hàng chưa có đơn hàng.";
+                row.append(cell);
+                table.append(row);
+            }
+            status.textContent = orders.length + " đơn hàng";
+        } catch (error) {
+            status.textContent = "Không tải được lịch sử: " + error.message;
+            status.classList.add("text-danger");
+        }
+    }
+
+    async function loadCustomerOrderDetails(orderId, button) {
+        button.disabled = true;
+        const section = document.getElementById("pos-customer-order-detail");
+        section.hidden = false;
+        section.textContent = "Đang tải chi tiết đơn hàng...";
+        try {
+            const response = await window.PosApi.get("orders/" + encodeURIComponent(orderId));
+            const data = response && response.data && !Array.isArray(response.data) ? response.data : response;
+            const order = data && (data.order || data);
+            if (!order || order.id == null) throw new Error("Máy chủ không trả về chi tiết đơn hợp lệ.");
+            renderCustomerOrderDetails(order);
+        } catch (error) {
+            section.textContent = "Không tải được chi tiết đơn hàng: " + error.message;
+        } finally {
+            button.disabled = false;
+        }
     }
 
     productList.addEventListener("click", function (event) {
@@ -770,12 +955,18 @@
             }
             item.quantity = nextQuantity;
         }
+        invalidatePaymentConfirmation();
         renderCart();
     });
     document.getElementById("clear-cart").addEventListener("click", function () {
         cart.clear();
-        cartState.qrConfirmed = false;
+        invalidatePaymentConfirmation();
         renderCart();
+    });
+    document.getElementById("customer-history").addEventListener("click", loadCustomerHistory);
+    document.getElementById("pos-customer-orders").addEventListener("click", function (event) {
+        const button = event.target.closest("[data-customer-order-id]");
+        if (button) loadCustomerOrderDetails(button.dataset.customerOrderId, button);
     });
     document.getElementById("lookup-customer").addEventListener("click", function () {
         lookupCustomer().catch(function (error) {
@@ -814,17 +1005,27 @@
     });
     document.querySelectorAll("input[name='payment-method']").forEach(function (radio) {
         radio.addEventListener("change", function () {
-            cartState.qrConfirmed = false;
+            invalidatePaymentConfirmation();
+            receivedInput.value = "";
             updatePaymentFields();
             getTotals();
             if (getPaymentMethod() === "qr_code") {
-                document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(getTotals().totalAmount);
-                qrModal.show();
-                if (!cartState.qrLoaded) loadPaymentQr();
+                openQrPaymentModal();
             }
         });
     });
-    discountInput.addEventListener("input", getTotals);
+    function openQrPaymentModal() {
+        const totals = getTotals();
+        document.getElementById("qr-payment-amount").textContent = window.PosCommon.formatCurrency(totals.totalAmount);
+        qrModal.show();
+        if (!cartState.qrLoaded) loadPaymentQr();
+    }
+
+    document.getElementById("open-qr-modal").addEventListener("click", openQrPaymentModal);
+    discountInput.addEventListener("input", function () {
+        invalidatePaymentConfirmation();
+        getTotals();
+    });
     receivedInput.addEventListener("input", getTotals);
     document.getElementById("confirm-qr-payment").addEventListener("click", function () {
         if (!cartState.qrLoaded) {
@@ -835,8 +1036,16 @@
             window.PosCommon.notify("Thêm sản phẩm vào giỏ trước khi xác nhận thanh toán.", "warning");
             return;
         }
-        cartState.qrConfirmed = true;
+        cartState.paymentConfirmed = true;
         qrModal.hide();
+        getTotals();
+    });
+    document.getElementById("confirm-card-payment").addEventListener("click", function () {
+        if (!cart.size) {
+            window.PosCommon.notify("Thêm sản phẩm vào giỏ trước khi xác nhận thanh toán.", "warning");
+            return;
+        }
+        cartState.paymentConfirmed = true;
         getTotals();
     });
     document.getElementById("complete-order").addEventListener("click", function () {

@@ -51,14 +51,9 @@ máy chủ PHP ở trên; đây là thiếu sót chung của repository, không 
 Windows/macOS/Linux. File cấu hình database hiện có cũng chưa triển khai kết
 nối hay API.
 
-## Tài khoản giả lập giao diện
+## Kiểm thử giao diện
 
-Trên trang đăng nhập, chọn một trong hai nút dùng thử:
-
-- Admin: `admin.demo` / `Admin123!`
-- Nhân viên: `staff.demo` / `Staff123!`
-
-Chế độ này chỉ giả lập đăng nhập, điều hướng và quyền giao diện trong tab hiện
-tại. Các API demo trả dữ liệu rỗng hoặc xác nhận thao tác giả lập; không có dữ
-liệu nào được lưu lên máy chủ hay thay thế backend thật. Trang đã đăng nhập sẽ
-hiện cảnh báo DEMO.
+Frontend không còn tài khoản, dữ liệu hoặc API giả lập. Cần chạy backend tại
+cùng origin với frontend và cung cấp các route `/api/` trước khi đăng nhập hoặc
+thực hiện các thao tác cần dữ liệu. Khi backend chưa chạy, frontend sẽ báo lỗi
+kết nối thay vì hiển thị hoặc xác nhận dữ liệu mẫu.

@@ -108,15 +108,6 @@
             return loadComponent(component[0], component[1], componentRoot);
         }));
 
-        if (sessionStorage.getItem("pos-demo-mode") === "1") {
-            const banner = document.createElement("div");
-            banner.className = "alert alert-warning text-center rounded-0 mb-0 py-2";
-            banner.setAttribute("role", "status");
-            banner.textContent = "CHẾ ĐỘ DEMO — tài khoản và quyền truy cập được giả lập; dữ liệu không lưu lên máy chủ.";
-            const header = document.getElementById("header-container");
-            if (header) header.before(banner);
-        }
-
         const role = sessionStorage.getItem("pos-role");
         const allowedRoutes = roleRoutes[role];
         const currentPage = body.dataset.page;
@@ -175,19 +166,41 @@
         if (!logoutButton) return;
         logoutButton.disabled = true;
         window.PosApi.post("auth/logout", {}).then(function () {
-            sessionStorage.removeItem("pos-role");
-            sessionStorage.removeItem("pos-user-name");
-            sessionStorage.removeItem("pos-user-id");
-            sessionStorage.removeItem("pos-demo-mode");
-            window.location.href = new URL("pages/auth/login.html", new URL(pageRoot.replace(/\/?$/, "/"), window.location.href)).href;
+            finishLogout();
         }).catch(function (error) {
-            logoutButton.disabled = false;
-            notify(error && error.message ? error.message : "Không thể đăng xuất.", "danger");
+            notify("Đã xóa phiên đăng nhập trên trình duyệt. Máy chủ chưa xác nhận đăng xuất: " +
+                (error && error.message ? error.message : "lỗi kết nối."), "warning");
+            finishLogout();
         });
     });
 
-    initializeLayout().catch(function (error) {
-        console.error(error);
-        notify(error.message, "danger");
+    function finishLogout() {
+        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role", "pos-first-login-token"].forEach(function (key) {
+            sessionStorage.removeItem(key);
+        });
+        window.location.replace(new URL("pages/auth/login.html", new URL(pageRoot.replace(/\/?$/, "/"), window.location.href)).href);
+    }
+
+    function redirectToFirstLoginIfRequired() {
+        if (sessionStorage.getItem("pos-first-login") !== "1") return false;
+
+        body.hidden = true;
+        const componentRoot = new URL(pageRoot.replace(/\/?$/, "/"), window.location.href);
+        const firstLoginUrl = new URL("pages/auth/first-login.html", componentRoot);
+        const token = sessionStorage.getItem("pos-first-login-token");
+        if (token) firstLoginUrl.searchParams.set("token", token);
+        window.location.replace(firstLoginUrl.href);
+        return true;
+    }
+
+    window.addEventListener("pos:unauthorized", function () {
+        finishLogout();
     });
+
+    if (!redirectToFirstLoginIfRequired()) {
+        initializeLayout().catch(function (error) {
+            console.error(error);
+            notify(error.message, "danger");
+        });
+    }
 }());

@@ -1522,3 +1522,23 @@ body.pos-page {
         min-height: 650px;
     }
 }
+
+.pos-customer-history {
+    margin-top: 0.25rem;
+}
+
+.pos-payment-confirmation {
+    padding: 0.75rem;
+    margin-top: 0.65rem;
+    border: 1px solid var(--pos-border, #e8ddd5);
+    border-radius: 0.75rem;
+    background: #fffaf5;
+}
+
+.pos-customer-order-detail {
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 1px solid var(--pos-border, #e8ddd5);
+    border-radius: 0.75rem;
+    background: #faf8f5;
+}

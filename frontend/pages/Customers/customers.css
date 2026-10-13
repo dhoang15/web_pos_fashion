@@ -1,0 +1,29 @@
+.customer-list-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.customer-search-input {
+    max-width: 22rem;
+}
+
+.customer-order-detail {
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: #faf8f5;
+}
+
+@media (max-width: 575.98px) {
+    .customer-list-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .customer-search-input {
+        max-width: none;
+    }
+}

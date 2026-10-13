@@ -8,8 +8,17 @@
     const confirmPassword = document.getElementById("confirm-password");
     const errorBox = document.getElementById("password-error");
     const submit = document.getElementById("change-password-submit");
-    const token = new URLSearchParams(window.location.search).get("token");
+    const token = new URLSearchParams(window.location.search).get("token") ||
+        sessionStorage.getItem("pos-first-login-token");
     const logout = document.getElementById("first-login-logout");
+
+    if (token) {
+        sessionStorage.setItem("pos-first-login", "1");
+        sessionStorage.setItem("pos-first-login-token", token);
+        ["pos-role", "pos-user-name", "pos-user-id"].forEach(function (key) {
+            sessionStorage.removeItem(key);
+        });
+    }
 
     function showError(message) {
         errorBox.textContent = message;
@@ -18,10 +27,29 @@
         });
     }
 
+    function clearSessionState() {
+        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role", "pos-first-login-token"].forEach(function (key) {
+            sessionStorage.removeItem(key);
+        });
+    }
+
+    form.querySelectorAll("input, button[type='submit']").forEach(function (control) {
+        control.disabled = true;
+    });
+
     if (!token) {
         showError("Liên kết kích hoạt không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu quản trị viên gửi lại email.");
     } else {
-        window.PosApi.get("auth/invitations/validate?token=" + encodeURIComponent(token)).catch(function (error) {
+        window.PosApi.get("auth/invitations/validate?token=" + encodeURIComponent(token)).then(function (result) {
+            const data = result && result.data && typeof result.data === "object" ? result.data : result;
+            if (data && data.valid === false) {
+                showError("Liên kết kích hoạt không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu quản trị viên gửi lại email.");
+                return;
+            }
+            form.querySelectorAll("input, button[type='submit']").forEach(function (control) {
+                control.disabled = false;
+            });
+        }).catch(function (error) {
             showError(error.message || "Liên kết kích hoạt không hợp lệ hoặc đã hết hạn.");
         });
     }
@@ -30,13 +58,11 @@
         logout.disabled = true;
         try {
             await window.PosApi.post("auth/logout", {});
-            sessionStorage.removeItem("pos-role");
-            sessionStorage.removeItem("pos-user-name");
-            sessionStorage.removeItem("pos-user-id");
-            window.location.href = "login.html";
         } catch (error) {
-            logout.disabled = false;
-            errorBox.textContent = error.message;
+            errorBox.textContent = "Phiên đăng nhập cục bộ đã được xóa. Máy chủ chưa xác nhận đăng xuất: " + error.message;
+        } finally {
+            clearSessionState();
+            window.location.replace("login.html");
         }
     });
 
@@ -57,7 +83,9 @@
                 password: newPassword.value,
                 password_confirmation: confirmPassword.value
             });
-            window.location.href = sessionStorage.getItem("pos-role") === "admin" ? "../../index.html" : "../pos/index.html";
+            clearSessionState();
+            sessionStorage.setItem("pos-password-updated", "1");
+            window.location.replace("login.html");
         } catch (error) {
             errorBox.textContent = error.message;
             submit.disabled = false;

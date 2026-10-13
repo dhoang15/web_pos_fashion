@@ -10,7 +10,6 @@
     }
 
     const invoiceForm = document.getElementById("invoice-settings-form");
-    const securityForm = document.getElementById("security-settings-form");
     const passwordForm = document.getElementById("admin-password-form");
     const qrForm = document.getElementById("payment-qr-form");
     const qrFile = document.getElementById("payment-qr-file");
@@ -93,19 +92,17 @@
         settingsStatus.textContent = "Đang tải cài đặt...";
         settingsStatus.classList.remove("is-error");
         try {
-            const results = await Promise.all([
+            const results = await Promise.allSettled([
                 window.PosApi.get("store_settings"),
                 window.PosApi.get("payment_qrcodes")
             ]);
-            readSettings(results[0]);
+            if (results[0].status === "rejected") throw results[0].reason;
+            readSettings(results[0].value);
             setFormValues(businessForm, ["store_name", "store_address", "store_phone", "store_email", "store_tax_code"]);
             setFormValues(invoiceForm, ["order_prefix", "tax_rate", "receipt_thank_you", "return_policy_days"]);
-            setFormValues(securityForm, ["invitation_link_expiry_seconds"]);
-            if (!securityForm.elements.invitation_link_expiry_seconds.value) {
-                securityForm.elements.invitation_link_expiry_seconds.value = "60";
-            }
-            const data = results[1] && results[1].data;
-            const qrs = Array.isArray(data) ? data : data && (data.payment_qrcodes || data.qrcodes || data.items) || [];
+            const qrs = results[1].status === "fulfilled" && results[1].value
+                ? window.PosCommon.unwrapList(results[1].value)
+                : [];
             currentQr = qrs.find(function (item) {
                 return Number(item.is_active) === 1 || item.is_active === true;
             }) || qrs[0] || null;
@@ -113,8 +110,16 @@
                 qrToggle.checked = Number(currentQr.is_active) === 1 || currentQr.is_active === true;
                 qrMethod.value = currentQr.payment_method || "vnpay";
                 setQrPreview(currentQr.qr_code_path, currentQr.description);
+            } else {
+                qrToggle.checked = false;
+                setQrPreview("", "Chưa có mã QR thanh toán được cấu hình.");
             }
-            settingsStatus.textContent = "Đã tải cài đặt cửa hàng.";
+            settingsStatus.textContent = results[1].status === "rejected"
+                ? "Đã tải cài đặt cửa hàng; chưa tải được cấu hình QR."
+                : "Đã tải cài đặt cửa hàng.";
+            if (results[1].status === "rejected") {
+                qrStatus.textContent = "Không tải được danh sách QR: " + results[1].reason.message;
+            }
         } catch (error) {
             settingsStatus.textContent = error.message;
             settingsStatus.classList.add("is-error");
@@ -130,17 +135,12 @@
         event.preventDefault();
         saveSettings(invoiceForm, invoiceForm.querySelector("[type='submit']"), "Đã lưu cấu hình hóa đơn.");
     });
-    securityForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        saveSettings(securityForm, securityForm.querySelector("[type='submit']"), "Đã lưu cấu hình bảo mật.");
-    });
-
     qrFile.addEventListener("change", function () {
         const file = qrFile.files[0];
         if (!file) return;
-        if (!["image/png", "image/jpeg"].includes(file.type)) {
+        if (!["image/png", "image/jpeg"].includes(file.type) || file.size > 5 * 1024 * 1024) {
             qrFile.value = "";
-            window.PosCommon.notify("Vui lòng chọn ảnh PNG hoặc JPG.", "warning");
+            window.PosCommon.notify("Chọn ảnh PNG hoặc JPG tối đa 5 MB.", "warning");
             return;
         }
         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -188,11 +188,12 @@
             formData.append("payment_method", qrMethod.value);
             formData.append("description", "Mã QR thanh toán " + qrMethod.selectedOptions[0].text);
             const result = await window.PosApi.upload("payment_qrcodes", formData);
-            const data = result && result.data;
+            const data = result && result.data && typeof result.data === "object" ? result.data : result;
             currentQr = data && (data.qrcode || data.payment_qrcode || data) || currentQr;
             if (currentQr && currentQr.id != null) {
                 qrToggle.checked = Number(currentQr.is_active) === 1 || currentQr.is_active === true;
             }
+            if (currentQr && currentQr.qr_code_path) setQrPreview(currentQr.qr_code_path, currentQr.description || qrDescription.textContent);
             qrStatus.textContent = "Đã tải lên mã QR.";
             window.PosCommon.notify(qrStatus.textContent, "success");
         } catch (error) {
