@@ -5,11 +5,10 @@
     if (!table) return;
 
     const form = document.getElementById("product-form");
-    const categoryForm = document.getElementById("category-form");
-    const productModal = new window.bootstrap.Modal(document.getElementById("product-modal"));
-    const categoryModal = new window.bootstrap.Modal(document.getElementById("category-modal"));
+    const productModal = window.PosCommon.createModal(document.getElementById("product-modal"));
     const status = document.getElementById("products-status");
-    const categoryStatus = document.getElementById("categories-status");
+    const categoryStatus = document.getElementById("product-category-status");
+    const formStatus = document.getElementById("product-form-status");
     const search = document.getElementById("search-products");
     const categorySelect = document.getElementById("product-category");
     const productImageInput = document.getElementById("product-image-file");
@@ -53,15 +52,6 @@
         return product.has_orders === true ||
             Number(product.order_count) > 0 ||
             product.ever_sold === true;
-    }
-
-    function categoryCreator(category) {
-        const creator = category.created_by_user || category.creator || {};
-        return creator.name ||
-            [creator.first_name, creator.last_name].filter(Boolean).join(" ") ||
-            category.created_by_name ||
-            category.creator_name ||
-            "—";
     }
 
     function setProductImagePreview(src, label) {
@@ -153,7 +143,7 @@
                     remove.textContent = "Xóa";
                     wrapper.append(remove);
                     actions.append(wrapper);
-                    new window.bootstrap.Tooltip(wrapper);
+                    if (window.bootstrap && window.bootstrap.Tooltip) new window.bootstrap.Tooltip(wrapper);
                 } else {
                     const remove = document.createElement("button");
                     remove.className = "btn btn-sm btn-outline-danger";
@@ -213,44 +203,8 @@
     }
 
     function renderCategories() {
-        const categoryTable = document.getElementById("categories-table");
-        categoryTable.replaceChildren();
-        categories.forEach(function (category) {
-            const row = document.createElement("tr");
-            const name = appendCell(row, category.name);
-            name.classList.add("fw-semibold");
-            appendCell(row, category.description);
-            appendCell(row, category.created_at ? new Date(category.created_at).toLocaleDateString("vi-VN") : "");
-            appendCell(row, categoryCreator(category));
-            const actions = document.createElement("td");
-            actions.className = "text-end text-nowrap";
-            actions.hidden = !isAdminView();
-            if (isAdminView()) {
-                const edit = document.createElement("button");
-                edit.className = "btn btn-sm btn-outline-secondary me-1";
-                edit.type = "button";
-                edit.dataset.editCategoryId = String(category.id);
-                edit.textContent = "Sửa";
-                const remove = document.createElement("button");
-                remove.className = "btn btn-sm btn-outline-danger";
-                remove.type = "button";
-                remove.dataset.deleteCategoryId = String(category.id);
-                remove.textContent = "Xóa";
-                actions.append(edit, remove);
-            }
-            row.append(actions);
-            categoryTable.append(row);
-        });
-        if (!categories.length) {
-            const row = document.createElement("tr");
-            const empty = document.createElement("td");
-            empty.colSpan = 5;
-            empty.className = "empty-state";
-            empty.textContent = "Chưa có danh mục.";
-            row.append(empty);
-            categoryTable.append(row);
-        }
-        replaceOptions(categorySelect, "Chọn danh mục");
+        const editingProduct = products.find(function (product) { return String(product.id) === form.dataset.id; });
+        replaceOptions(categorySelect, "Chọn danh mục", categorySelect.value || (editingProduct && editingProduct.category_id));
         renderCategoryFilter();
         renderSummary();
         render();
@@ -273,24 +227,32 @@
     }
 
     async function loadCategories() {
+        setStatus(categoryStatus, "Đang tải danh mục...", false);
         try {
             categories = window.PosCommon.unwrapList(await window.PosApi.get("categories"));
             renderCategories();
-            setStatus(categoryStatus, categories.length + " danh mục", false);
+            setStatus(categoryStatus, categories.length
+                ? categories.length + " danh mục khả dụng."
+                : "Chưa có danh mục. Hãy tạo danh mục trước khi thêm sản phẩm.", false);
         } catch (error) {
             categories = [];
             renderCategories();
             setStatus(categoryStatus, "Không tải được danh mục: " + error.message, true);
-            window.PosCommon.notify("Không tải được danh mục: " + error.message, "danger");
         }
     }
 
     function openProductForm(product) {
         form.reset();
+        form.elements.name.setCustomValidity("");
+        form.elements.barcode.setCustomValidity("");
+        setStatus(formStatus, "", false);
         form.dataset.id = product ? String(product.id) : "";
         document.getElementById("product-modal-title").textContent = product ? "Cập nhật sản phẩm" : "Thêm sản phẩm";
         setProductImagePreview(product && product.image, product && product.image ? "Ảnh hiện tại" : "");
         replaceOptions(categorySelect, "Chọn danh mục", product && product.category_id);
+        document.getElementById("product-created-at").value = product && product.created_at
+            ? new Date(product.created_at).toLocaleString("vi-VN")
+            : "Hệ thống ghi khi lưu sản phẩm";
         if (product) {
             form.elements.name.value = product.name || "";
             form.elements.barcode.value = product.barcode || "";
@@ -351,7 +313,25 @@
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
         if (!isAdminView()) return;
+        form.elements.name.value = form.elements.name.value.trim().replace(/\s+/g, " ");
+        form.elements.barcode.value = form.elements.barcode.value.trim();
+        form.elements.name.setCustomValidity(form.elements.name.value ? "" : "Nhập tên sản phẩm.");
+        form.elements.barcode.setCustomValidity(form.elements.barcode.value ? "" : "Nhập mã vạch sản phẩm.");
         if (!form.reportValidity()) return;
+        const categoryId = Number(form.elements.category_id.value);
+        if (!Number.isSafeInteger(categoryId) || categoryId <= 0 || !categories.some(function (category) { return Number(category.id) === categoryId; })) {
+            setStatus(formStatus, "Chọn danh mục có sẵn trong hệ thống. Nếu chưa có danh mục, hãy tạo ở trang Danh mục trước.", true);
+            categorySelect.focus();
+            return;
+        }
+        const duplicateBarcode = products.some(function (product) {
+            return String(product.id) !== form.dataset.id && product.barcode === form.elements.barcode.value;
+        });
+        if (duplicateBarcode) {
+            setStatus(formStatus, "Mã vạch đã thuộc một sản phẩm khác.", true);
+            form.elements.barcode.focus();
+            return;
+        }
         const button = document.getElementById("save-product");
         const imageFile = productImageInput.files[0];
         if (imageFile && !["image/png", "image/jpeg", "image/webp"].includes(imageFile.type)) {
@@ -368,7 +348,7 @@
             name: form.elements.name.value.trim(),
             barcode: form.elements.barcode.value.trim(),
             sku: form.elements.sku.value.trim() || null,
-            category_id: Number(form.elements.category_id.value),
+            category_id: categoryId,
             import_price: Number(form.elements.import_price.value),
             price: Number(form.elements.price.value),
             stock_quantity: Number(form.elements.stock_quantity.value),
@@ -383,6 +363,7 @@
             status: form.elements.status.value
         };
         button.disabled = true;
+        setStatus(formStatus, "Đang lưu sản phẩm...", false);
         try {
             const productPath = form.dataset.id
                 ? "products/" + encodeURIComponent(form.dataset.id)
@@ -404,73 +385,15 @@
             window.PosCommon.notify("Đã lưu sản phẩm.", "success");
             await loadProducts();
         } catch (error) {
+            setStatus(formStatus, "Không thể lưu sản phẩm: " + error.message, true);
             window.PosCommon.notify(error.message, "danger");
         } finally {
             button.disabled = false;
         }
     });
 
-    categoryForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        if (!isAdminView()) return;
-        const button = document.getElementById("save-category");
-        const category = {
-            name: categoryForm.elements.name.value.trim(),
-            description: categoryForm.elements.description.value.trim() || null
-        };
-        button.disabled = true;
-        try {
-            const id = categoryForm.elements.id.value;
-            if (id) {
-                await window.PosApi.put("categories/" + encodeURIComponent(id), category);
-            } else {
-                await window.PosApi.post("categories", category);
-            }
-            categoryForm.reset();
-            button.textContent = "Thêm";
-            await loadCategories();
-            window.PosCommon.notify("Đã lưu danh mục.", "success");
-        } catch (error) {
-            window.PosCommon.notify(error.message, "danger");
-        } finally {
-            button.disabled = false;
-        }
-    });
-
-    document.getElementById("categories-table").addEventListener("click", async function (event) {
-        if (!isAdminView()) return;
-        const edit = event.target.closest("[data-edit-category-id]");
-        const remove = event.target.closest("[data-delete-category-id]");
-        if (edit) {
-            const category = categories.find(function (item) {
-                return String(item.id) === edit.dataset.editCategoryId;
-            });
-            if (!category) return;
-            categoryForm.elements.id.value = String(category.id);
-            categoryForm.elements.name.value = category.name || "";
-            categoryForm.elements.description.value = category.description || "";
-            document.getElementById("save-category").textContent = "Cập nhật";
-            return;
-        }
-        if (!remove) return;
-        if (!window.confirm("Xóa danh mục này? Sản phẩm thuộc danh mục có thể không cho phép thao tác này.")) return;
-        remove.disabled = true;
-        try {
-            await window.PosApi.delete("categories/" + encodeURIComponent(remove.dataset.deleteCategoryId));
-            categoryForm.reset();
-            document.getElementById("save-category").textContent = "Thêm";
-            await loadCategories();
-            window.PosCommon.notify("Đã xóa danh mục.", "success");
-        } catch (error) {
-            window.PosCommon.notify(error.message, "danger");
-        } finally {
-            remove.disabled = false;
-        }
-    });
-
-    document.getElementById("category-modal").addEventListener("hidden.bs.modal", function () {
-        categoryForm.reset();
-        document.getElementById("save-category").textContent = "Thêm";
+    [form.elements.name, form.elements.barcode].forEach(function (input) {
+        input.addEventListener("input", function () { input.setCustomValidity(""); });
     });
 
     document.getElementById("product-modal").addEventListener("show.bs.modal", function () {
@@ -509,19 +432,6 @@
             element.hidden = true;
         });
     }
-
-    function openCategoriesRoute() {
-        if (window.location.hash !== "#categories") return;
-        if (!isAdminView()) {
-            window.history.replaceState(null, "", window.location.pathname + window.location.search);
-            return;
-        }
-        categoryModal.show();
-        loadCategories();
-    }
-
-    window.addEventListener("hashchange", openCategoriesRoute);
-    openCategoriesRoute();
 
     loadProducts();
     loadCategories();

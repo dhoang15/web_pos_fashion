@@ -7,7 +7,7 @@
         dashboard: "index.html",
         pos: "pages/pos/index.html",
         invoices: "pages/invoices/index.html",
-        categories: "pages/products/index.html#categories",
+        categories: "pages/categories/index.html",
         products: "pages/products/index.html",
         customers: "pages/Customers/index.html",
         users: "pages/users/index.html",
@@ -18,7 +18,7 @@
     const roleRoutes = {
         admin: ["dashboard", "pos", "invoices", "products", "categories", "customers", "reports", "users", "settings", "profile"],
         staff: ["dashboard", "pos", "invoices", "products", "customers", "reports", "profile"],
-        cashier: ["pos", "reports", "profile"]
+        cashier: ["dashboard", "pos", "invoices", "products", "customers", "reports", "profile"]
     };
     const components = [
         ["#header-container", "components/header.html"],
@@ -89,6 +89,71 @@
                 currency: "VND",
                 maximumFractionDigits: 0
             }).format(Number(amount) || 0);
+        },
+        createModal: function (element) {
+            if (window.bootstrap && window.bootstrap.Modal) {
+                return new window.bootstrap.Modal(element);
+            }
+
+            let backdrop = null;
+            let isOpen = false;
+            const originalBodyOverflow = document.body.style.overflow;
+
+            function emit(name) {
+                element.dispatchEvent(new Event(name, { bubbles: true }));
+            }
+
+            function hide() {
+                if (!isOpen) return;
+                emit("hide.bs.modal");
+                isOpen = false;
+                element.classList.remove("show");
+                element.style.display = "none";
+                element.removeAttribute("aria-modal");
+                element.setAttribute("aria-hidden", "true");
+                element.style.zIndex = "";
+                document.body.classList.remove("modal-open");
+                document.body.style.overflow = originalBodyOverflow;
+                if (backdrop) backdrop.remove();
+                backdrop = null;
+                emit("hidden.bs.modal");
+            }
+
+            element.style.display = "none";
+            element.querySelectorAll("[data-bs-dismiss='modal']").forEach(function (button) {
+                button.addEventListener("click", hide);
+            });
+            element.addEventListener("click", function (event) {
+                if (event.target === element) hide();
+            });
+            document.addEventListener("keydown", function (event) {
+                if (isOpen && event.key === "Escape") hide();
+            });
+
+            return {
+                show: function () {
+                    if (isOpen) return;
+                    emit("show.bs.modal");
+                    isOpen = true;
+                    backdrop = document.createElement("div");
+                    backdrop.className = "modal-backdrop fade show";
+                    backdrop.style.cssText = "position:fixed;inset:0;z-index:1050;background:rgba(0,0,0,.5)";
+                    backdrop.addEventListener("click", hide);
+                    document.body.append(backdrop);
+                    element.style.display = "block";
+                    element.style.zIndex = "1055";
+                    element.classList.add("show");
+                    element.removeAttribute("aria-hidden");
+                    element.setAttribute("aria-modal", "true");
+                    element.setAttribute("role", "dialog");
+                    document.body.classList.add("modal-open");
+                    document.body.style.overflow = "hidden";
+                    const focusTarget = element.querySelector("input:not([type='hidden']), select, textarea, button");
+                    if (focusTarget) focusTarget.focus();
+                    emit("shown.bs.modal");
+                },
+                hide: hide
+            };
         }
     });
 
@@ -120,12 +185,13 @@
             ? "categories"
             : currentPage;
         if (!allowedRoutes.includes(requestedRoute)) {
-            if (currentPage === "products" && role !== "admin") {
-                window.location.replace(new URL(routes.products, componentRoot).href);
-                return;
-            }
             const fallback = role === "admin" ? routes.dashboard : routes.pos;
             window.location.replace(new URL(fallback, componentRoot).href);
+            return;
+        }
+
+        if (currentPage === "products" && requestedRoute === "categories") {
+            window.location.replace(new URL(routes.categories, componentRoot).href);
             return;
         }
 
@@ -133,9 +199,7 @@
         document.querySelectorAll(".topbar-user-name").forEach(function (element) {
             element.textContent = userName;
         });
-        const activePage = currentPage === "products" && window.location.hash === "#categories"
-            ? "categories"
-            : currentPage;
+        const activePage = currentPage;
         document.querySelectorAll(".sidebar-link[data-route]").forEach(function (link) {
             const key = link.dataset.route;
             link.hidden = !allowedRoutes.includes(key);

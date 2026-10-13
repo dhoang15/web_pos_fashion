@@ -56,7 +56,8 @@
                     <p class="text-muted small">Nhân viên sẽ nhận email kích hoạt có hiệu lực trong 1 phút.</p>
                     <div class="mb-3"><label class="form-label fw-semibold" for="user-name">Họ tên</label><input class="form-control" id="user-name" name="name" autocomplete="name" maxlength="100" required></div>
                     <div class="mb-3"><label class="form-label fw-semibold" for="user-phone">Số điện thoại</label><input class="form-control" id="user-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" pattern="(?:\+84|0)[0-9]{9}" placeholder="0912345678" title="Nhập số điện thoại Việt Nam gồm 10 số, hoặc bắt đầu bằng +84." required></div>
-                    <div><label class="form-label fw-semibold" for="user-email">Gmail</label><input class="form-control" id="user-email" name="email" type="email" pattern=".+@gmail\.com" placeholder="ten@gmail.com" required></div>
+                    <div><label class="form-label fw-semibold" for="user-email">Gmail</label><input class="form-control" id="user-email" name="email" type="email" maxlength="100" pattern=".+@[gG][mM][aA][iI][lL]\.[cC][oO][mM]" placeholder="ten@gmail.com" required></div>
+                    <p id="user-form-status" class="status-message small mt-3 mb-0" aria-live="polite"></p>
                 </div>
                 <div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Hủy</button><button class="btn btn-management-primary" type="submit" id="save-user">Gửi link kích hoạt</button></div>
             </form>
@@ -133,6 +134,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/api.js"></script>
     <script src="../../assets/js/common.js"></script>
-    <script src="users.js"></script>
+    <script src="../../pages/users/users.js"></script>
 </body>
 </html>

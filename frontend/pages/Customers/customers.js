@@ -7,7 +7,7 @@
     const status = document.getElementById("customers-status");
     const search = document.getElementById("search-customers");
     const historyModalElement = document.getElementById("customer-history-modal");
-    const historyModal = new window.bootstrap.Modal(historyModalElement);
+    const historyModal = window.PosCommon.createModal(historyModalElement);
     const historyStatus = document.getElementById("customer-history-status");
     const historyTable = document.getElementById("customer-orders-table");
     const orderDetail = document.getElementById("customer-order-detail");

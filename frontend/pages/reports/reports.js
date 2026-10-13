@@ -15,13 +15,15 @@
         const profitCard = document.getElementById("profit-card");
         const exportButton = document.getElementById("export-report-pdf");
         const detailModalElement = document.getElementById("order-detail-modal");
-        const detailModal = detailModalElement && window.bootstrap
-            ? new window.bootstrap.Modal(detailModalElement)
+        const detailModal = detailModalElement
+            ? window.PosCommon.createModal(detailModalElement)
             : null;
         let chartPoints = [];
         let currentOrders = [];
         let reportLoaded = false;
         let reportRequestSequence = 0;
+        let reportLoading = false;
+        let exportData = null;
 
         if (profitCard) profitCard.hidden = !isAdmin;
         if (document.getElementById("dashboard-user-name")) {
@@ -218,7 +220,7 @@
             context.textAlign = "start";
         }
 
-        function setEmptyStats() {
+        function setEmptyStats(canPrint) {
             ["report-revenue", "report-orders", "report-items", "report-profit"].forEach(function (id) {
                 const element = document.getElementById(id);
                 if (element) element.textContent = "—";
@@ -227,7 +229,8 @@
             chartPoints = [];
             drawChart(chartPoints);
             reportLoaded = false;
-            if (exportButton) exportButton.disabled = true;
+            exportData = null;
+            if (exportButton) exportButton.disabled = !canPrint;
         }
 
         function reportMessage(message, isError) {
@@ -274,6 +277,15 @@
             if (periodLabel) periodLabel.textContent = from + " — " + to;
             const printRange = document.getElementById("print-date-range");
             if (printRange) printRange.textContent = from + " — " + to;
+            exportData = {
+                title: "Báo cáo doanh thu",
+                from: from,
+                to: to,
+                summary: { revenue: receivedTotal, orderCount: orderCount, itemsSold: soldQuantity },
+                orders: currentOrders.slice(),
+                trend: chartPoints.slice()
+            };
+            if (isAdmin) exportData.summary.profit = summary.total_profit ?? summary.profit ?? null;
             reportLoaded = true;
             if (exportButton) exportButton.disabled = false;
             return orders;
@@ -284,8 +296,9 @@
             const from = dateFrom.value;
             const to = dateTo.value;
             if (!from || !to || from > to) {
+                reportLoading = false;
                 reportMessage("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.", true);
-                setEmptyStats();
+                setEmptyStats(false);
                 const invalidRangeButton = document.getElementById("load-report");
                 if (invalidRangeButton) invalidRangeButton.disabled = false;
                 return;
@@ -293,6 +306,8 @@
 
             const loadButton = document.getElementById("load-report");
             if (loadButton) loadButton.disabled = true;
+            reportLoading = true;
+            exportData = null;
             if (exportButton) exportButton.disabled = true;
             reportMessage("Đang tải báo cáo...", false);
 
@@ -309,11 +324,26 @@
                 reportMessage(orders.length + " đơn hàng trong khoảng thời gian đã chọn.", false);
             } catch (error) {
                 if (requestSequence !== reportRequestSequence) return;
-                setEmptyStats();
-                reportMessage("Không tải được báo cáo: " + error.message, true);
+                setEmptyStats(true);
+                const message = "Không tải được báo cáo: " + error.message;
+                exportData = {
+                    title: "Báo cáo doanh thu",
+                    from: from,
+                    to: to,
+                    summary: { revenue: null, orderCount: null, itemsSold: null },
+                    orders: [],
+                    trend: [],
+                    notice: message + ". Các chỉ tiêu chưa có dữ liệu xác nhận từ máy chủ."
+                };
+                if (isAdmin) exportData.summary.profit = null;
+                reportMessage(message, true);
                 window.PosCommon.notify("Không tải được báo cáo: " + error.message, "danger");
             } finally {
-                if (requestSequence === reportRequestSequence && loadButton) loadButton.disabled = false;
+                if (requestSequence === reportRequestSequence) {
+                    reportLoading = false;
+                    if (loadButton) loadButton.disabled = false;
+                    if (exportButton) exportButton.disabled = !exportData;
+                }
             }
         }
 
@@ -426,14 +456,24 @@
         });
 
         if (exportButton) {
-            exportButton.addEventListener("click", function () {
-                if (!reportLoaded) return;
-                const previousTitle = document.title;
-                document.title = "bao-cao-ban-hang-" + dateFrom.value + "-den-" + dateTo.value;
-                window.addEventListener("afterprint", function () {
-                    document.title = previousTitle;
-                }, { once: true });
-                window.print();
+            exportButton.addEventListener("click", async function () {
+                if (reportLoading || !form.reportValidity()) return;
+                if (!exportData || exportData.from !== dateFrom.value || exportData.to !== dateTo.value) {
+                    await loadReport();
+                }
+                if (!exportData || reportLoading) return;
+                const report = exportData;
+                exportButton.disabled = true;
+                exportButton.setAttribute("aria-busy", "true");
+                try {
+                    if (!window.PosReportPdf) throw new Error("Không tải được chức năng xuất PDF. Hãy tải lại trang.");
+                    await window.PosReportPdf.download(report, "bao-cao-doanh-thu-" + report.from + "-den-" + report.to + ".pdf");
+                } catch (error) {
+                    window.PosCommon.notify("Không thể xuất PDF: " + error.message, "danger");
+                } finally {
+                    exportButton.disabled = reportLoading || !exportData;
+                    exportButton.removeAttribute("aria-busy");
+                }
             });
         }
 

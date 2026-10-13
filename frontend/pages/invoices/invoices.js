@@ -8,8 +8,9 @@
         const dateFrom = document.getElementById("invoice-date-from");
         const dateTo = document.getElementById("invoice-date-to");
         const exportButton = document.getElementById("export-invoices");
-        const detailModal = new window.bootstrap.Modal(document.getElementById("invoice-detail-modal"));
+        const detailModal = window.PosCommon.createModal(document.getElementById("invoice-detail-modal"));
         const currentOrders = new Map();
+        let currentInvoice = null;
         let isLoaded = false;
         let todayStats = null;
         let invoiceRequestSequence = 0;
@@ -184,7 +185,7 @@
                 table.append(row);
             }
             document.getElementById("invoice-result-count").textContent = orders.length + " hóa đơn";
-            exportButton.disabled = !orders.length;
+            exportButton.disabled = false;
             isLoaded = true;
         }
 
@@ -254,14 +255,16 @@
             if (method) query.set("payment_method", method);
 
             try {
+                const isTodayRange = from === localDate(new Date()) && to === localDate(new Date());
+                const summaryRequest = todayStats || isTodayRange
+                    ? Promise.resolve(null)
+                    : window.PosApi.get("reports/sales?" + new URLSearchParams({
+                        from: localDate(new Date()),
+                        to: localDate(new Date())
+                    }).toString()).catch(function () { return null; });
                 const [listPayload, summaryPayload] = await Promise.all([
                     window.PosApi.get("orders?" + query.toString()),
-                    todayStats || (from === localDate(new Date()) && to === localDate(new Date()))
-                        ? Promise.resolve(null)
-                        : window.PosApi.get("reports/sales?" + new URLSearchParams({
-                            from: localDate(new Date()),
-                            to: localDate(new Date())
-                        }).toString())
+                    summaryRequest
                 ]);
                 if (requestSequence !== invoiceRequestSequence) return;
                 const orders = getOrders(listPayload);
@@ -272,7 +275,8 @@
                     renderTodayStats(summaryData.summary || {}, getOrders(summaryData));
                 } else if (!todayStats) {
                     const listData = getData(listPayload);
-                    renderTodayStats(listData.today_summary || listData.summary || {}, orders);
+                    if (listData.today_summary) renderTodayStats(listData.today_summary, []);
+                    else if (isTodayRange) renderTodayStats(listData.summary || {}, orders);
                 }
 
                 setStatus("Đã tải " + orders.length + " hóa đơn.", false);
@@ -280,7 +284,8 @@
                 if (requestSequence !== invoiceRequestSequence) return;
                 table.innerHTML = '<tr><td class="invoice-empty" colspan="8">Không thể tải hóa đơn.</td></tr>';
                 document.getElementById("invoice-result-count").textContent = "";
-                exportButton.disabled = true;
+                currentOrders.clear();
+                exportButton.disabled = false;
                 isLoaded = false;
                 setStatus(error.message, true);
                 window.PosCommon.notify("Không tải được danh sách hóa đơn: " + error.message, "danger");
@@ -314,6 +319,7 @@
         }
 
         function renderDetail(order) {
+            currentInvoice = order;
             const customer = getCustomer(order);
             const cashier = getCashier(order);
             const summary = document.getElementById("invoice-detail-summary");
@@ -386,12 +392,12 @@
             }
             document.getElementById("invoice-detail-status").textContent = "";
             renderDetail(order);
-            detailModal.show();
             if (printAfterOpen) {
                 document.getElementById("invoice-detail-modal").addEventListener("shown.bs.modal", function () {
                     window.print();
                 }, { once: true });
             }
+            detailModal.show();
         }
 
         function csvValue(value) {
@@ -400,25 +406,26 @@
         }
 
         function exportCsv() {
-            if (!isLoaded || !currentOrders.size) return;
             const headings = ["Mã hóa đơn", "Thời gian", "Khách hàng", "Số điện thoại", "Thu ngân", "Phương thức thanh toán", "Tiền khách đưa", "Tiền thối", "Tổng tiền", "Trạng thái"];
             const rows = [headings];
-            currentOrders.forEach(function (order) {
-                const customer = getCustomer(order);
-                const cashier = getCashier(order);
-                rows.push([
-                    order.order_number || order.id,
-                    formatDate(order.created_at),
-                    fullName(customer) || order.customer_name || order.customer_snapshot_name || "Khách lẻ",
-                    customer.phone || order.customer_phone || order.customer_snapshot_phone || "",
-                    fullName(cashier) || order.cashier_name || order.user_name || "",
-                    paymentLabel(order.payment_method),
-                    order.amount_received,
-                    order.change_amount,
-                    order.total_amount,
-                    order.status
-                ]);
-            });
+            if (isLoaded) {
+                currentOrders.forEach(function (order) {
+                    const customer = getCustomer(order);
+                    const cashier = getCashier(order);
+                    rows.push([
+                        order.order_number || order.id,
+                        formatDate(order.created_at),
+                        fullName(customer) || order.customer_name || order.customer_snapshot_name || "Khách lẻ",
+                        customer.phone || order.customer_phone || order.customer_snapshot_phone || "",
+                        fullName(cashier) || order.cashier_name || order.user_name || "",
+                        paymentLabel(order.payment_method),
+                        order.amount_received,
+                        order.change_amount,
+                        order.total_amount,
+                        order.status
+                    ]);
+                });
+            }
             const csv = "\uFEFF" + rows.map(function (row) {
                 return row.map(csvValue).join(",");
             }).join("\r\n");
@@ -429,7 +436,14 @@
             document.body.append(link);
             link.click();
             link.remove();
-            URL.revokeObjectURL(url);
+            window.setTimeout(function () {
+                URL.revokeObjectURL(url);
+            }, 1000);
+            if (!isLoaded) {
+                window.PosCommon.notify("Chưa tải được dữ liệu hóa đơn. Tệp CSV chỉ có hàng tiêu đề để bạn kiểm tra định dạng.", "warning");
+            } else if (!currentOrders.size) {
+                window.PosCommon.notify("Không có hóa đơn trong kết quả lọc; đã tải tệp CSV rỗng.", "info");
+            }
         }
 
         document.getElementById("invoice-filter-form").addEventListener("submit", function (event) {
@@ -459,7 +473,7 @@
             const actionButton = event.target.closest("[data-order-action]");
             if (actionButton) {
                 if (actionButton.dataset.orderAction === "resume") {
-                    window.location.href = "../pos/index.html?resume_order=" + encodeURIComponent(actionButton.dataset.orderId);
+                    window.location.href = "../../pages/pos/index.html?resume_order=" + encodeURIComponent(actionButton.dataset.orderId);
                     return;
                 }
                 openOrder(actionButton.dataset.orderId, actionButton, actionButton.dataset.orderAction === "print");
@@ -479,6 +493,18 @@
         exportButton.addEventListener("click", exportCsv);
         document.getElementById("print-invoice").addEventListener("click", function () {
             window.print();
+        });
+        document.getElementById("download-invoice").addEventListener("click", async function () {
+            if (!currentInvoice) return;
+            this.disabled = true;
+            try {
+                if (!window.PosReportPdf) throw new Error("Không tải được chức năng PDF. Hãy tải lại trang.");
+                await window.PosReportPdf.downloadInvoice(currentInvoice);
+            } catch (error) {
+                window.PosCommon.notify("Không thể tải hóa đơn PDF: " + error.message, "danger");
+            } finally {
+                this.disabled = false;
+            }
         });
 
         const today = localDate(new Date());

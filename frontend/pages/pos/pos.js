@@ -41,6 +41,7 @@
     let products = [];
     let storeSettings = {};
     let paymentQr = null;
+    let currentInvoice = null;
 
     function createModal(element) {
         if (window.bootstrap && window.bootstrap.Modal) {
@@ -576,6 +577,7 @@
         if (order.id == null || !items.length) {
             throw new Error("Máy chủ chưa trả về đủ chi tiết đơn hàng để in hóa đơn.");
         }
+        currentInvoice = order;
         const receipt = document.getElementById("invoice-content");
         receipt.replaceChildren();
 
@@ -1151,6 +1153,18 @@
             document.title = originalTitle;
         }, { once: true });
         window.print();
+    });
+    document.getElementById("download-invoice").addEventListener("click", async function () {
+        if (!currentInvoice) return;
+        this.disabled = true;
+        try {
+            if (!window.PosReportPdf) throw new Error("Không tải được chức năng PDF. Hãy tải lại trang.");
+            await window.PosReportPdf.downloadInvoice(currentInvoice, null, storeSettings);
+        } catch (error) {
+            window.PosCommon.notify("Không thể tải hóa đơn PDF: " + error.message, "danger");
+        } finally {
+            this.disabled = false;
+        }
     });
 
     setCurrentTime();

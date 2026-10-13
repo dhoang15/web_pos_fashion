@@ -199,7 +199,6 @@
     body[data-page="reports"] #report-filter,
     body[data-page="reports"] .report-period-buttons,
     body[data-page="reports"] .page-heading,
-    body[data-page="reports"] #report-status,
     body[data-page="reports"] #export-report-pdf,
     body[data-page="reports"] #order-detail-modal {
         display: none !important;

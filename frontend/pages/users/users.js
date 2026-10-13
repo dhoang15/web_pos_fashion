@@ -3,10 +3,15 @@
 
     const table = document.getElementById("users-table");
     if (!table) return;
+    if (sessionStorage.getItem("pos-role") !== "admin") {
+        document.body.hidden = true;
+        return;
+    }
 
     const form = document.getElementById("user-form");
-    const modal = new window.bootstrap.Modal(document.getElementById("user-modal"));
-    const detailModal = new window.bootstrap.Modal(document.getElementById("employee-detail-modal"));
+    const formStatus = document.getElementById("user-form-status");
+    const modal = window.PosCommon.createModal(document.getElementById("user-modal"));
+    const detailModal = window.PosCommon.createModal(document.getElementById("employee-detail-modal"));
     const status = document.getElementById("users-status");
     const search = document.getElementById("search-users");
     const salesFilter = document.getElementById("employee-sales-filter");
@@ -125,7 +130,7 @@
             detail.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">Chi tiết</span>';
             actions.append(detail);
 
-            if (String(user.id) !== currentUserId && (!needsActivation(user) || user.status === "locked")) {
+            if (String(user.id) !== currentUserId) {
                 const actionLabel = user.status === "locked"
                     ? "Mở khóa"
                     : user.status === "inactive" && !needsActivation(user) ? "Kích hoạt" : "Khóa";
@@ -378,6 +383,9 @@
 
     document.getElementById("add-user").addEventListener("click", function () {
         form.reset();
+        form.elements.name.setCustomValidity("");
+        formStatus.textContent = "";
+        formStatus.classList.remove("is-error");
         modal.show();
     });
     search.addEventListener("input", render);
@@ -406,9 +414,9 @@
         button.disabled = true;
         try {
             if (toggle) {
-                const nextStatus = user.status === "active" || user.status === "pending"
-                    ? "locked"
-                    : needsActivation(user) ? "inactive" : "active";
+                const nextStatus = user.status === "locked"
+                    ? needsActivation(user) ? "inactive" : "active"
+                    : user.status === "inactive" && !needsActivation(user) ? "active" : "locked";
                 await window.PosApi.put("users/" + encodeURIComponent(user.id) + "/status", {
                     status: nextStatus
                 });
@@ -428,6 +436,10 @@
     });
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
+        form.elements.name.value = form.elements.name.value.trim().replace(/\s+/g, " ");
+        form.elements.email.value = form.elements.email.value.trim().toLocaleLowerCase("en-US");
+        form.elements.phone.value = form.elements.phone.value.trim().replace(/[\s.-]/g, "");
+        form.elements.name.setCustomValidity(form.elements.name.value ? "" : "Nhập họ tên nhân viên.");
         if (!form.reportValidity()) return;
         const button = document.getElementById("save-user");
         const fullNameValue = form.elements.name.value.trim().replace(/\s+/g, " ");
@@ -444,18 +456,29 @@
             phone: form.elements.phone.value.trim(),
             email: emailValue
         };
+        if (user.first_name.length > 50 || user.last_name.length > 50) {
+            formStatus.textContent = "Phần họ và phần tên phải nằm trong giới hạn 50 ký tự của hệ thống.";
+            formStatus.classList.add("is-error");
+            return;
+        }
         button.disabled = true;
+        formStatus.textContent = "Đang tạo tài khoản nhân viên...";
+        formStatus.classList.remove("is-error");
         try {
             await window.PosApi.post("users", user);
             modal.hide();
             window.PosCommon.notify("Đã tạo nhân viên và gửi liên kết kích hoạt.", "success");
             await loadUsers();
         } catch (error) {
+            formStatus.textContent = "Không thể tạo nhân viên: " + error.message;
+            formStatus.classList.add("is-error");
             window.PosCommon.notify(error.message, "danger");
         } finally {
             button.disabled = false;
         }
     });
+
+    form.elements.name.addEventListener("input", function () { this.setCustomValidity(""); });
 
     loadUsers();
 }());
