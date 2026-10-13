@@ -453,7 +453,7 @@
         resetCustomer(false);
         const lookupSequence = ++customerLookupSequence;
         if (!phone) {
-            customerStatus.textContent = "Khách lẻ";
+            customerStatus.textContent = "Nhập số điện thoại để tra cứu hoặc đăng ký khách hàng mới.";
             return;
         }
         customerStatus.textContent = "Đang tra cứu khách hàng...";
@@ -511,8 +511,8 @@
         customerFields.hidden = true;
         document.getElementById("customer-history").hidden = true;
         customerStatus.classList.remove("text-danger");
-        customerStatus.textContent = "Khách lẻ";
-        setCustomerType("bi-person", "Khách lẻ");
+        customerStatus.textContent = "Nhập số điện thoại để tra cứu hoặc đăng ký khách hàng mới.";
+        setCustomerType("bi-person", "Chưa chọn khách");
         if (clearPhone) phoneInput.value = "";
     }
 
@@ -523,7 +523,8 @@
                 phone: phoneInput.value,
                 fullName: customerName.value,
                 address: customerAddress.value,
-                customerType: cartState.customerType
+                customerType: cartState.customerType,
+                customerId: cartState.customerId
             },
             totals: totals,
             requirePayment: requirePayment,
@@ -534,7 +535,7 @@
         const messages = {
             "empty-cart": "Thêm ít nhất một sản phẩm vào giỏ hàng.",
             "lookup-required": "Tra cứu số điện thoại trước khi thanh toán.",
-            "phone-required": "Nhập số điện thoại khách hàng mới.",
+            "phone-required": "Nhập số điện thoại khách hàng.",
             "invalid-phone": "Số điện thoại khách hàng phải có từ 8 đến 15 chữ số.",
             "name-required": "Nhập họ tên khách hàng.",
             "address-required": "Nhập địa chỉ khách hàng mới.",
@@ -602,11 +603,11 @@
             ([cashierInfo.first_name, cashierInfo.last_name].filter(Boolean).join(" ") ||
                 cashierInfo.name || order.cashier_name || sessionStorage.getItem("pos-user-name") || "Nhân viên bán hàng");
         const customerLine = document.createElement("p");
-        customerLine.textContent = "Khách hàng: " + (customer.full_name || order.customer_name || "Khách lẻ");
+        customerLine.textContent = "Khách hàng: " + (customer.full_name || order.customer_name || order.customer_snapshot_name || "Khách lẻ");
         const customerPhoneLine = document.createElement("p");
-        customerPhoneLine.textContent = "SĐT: " + (customer.phone || order.customer_phone || "—");
+        customerPhoneLine.textContent = "SĐT: " + (customer.phone || order.customer_phone || order.customer_snapshot_phone || "—");
         const customerAddressLine = document.createElement("p");
-        customerAddressLine.textContent = "Địa chỉ: " + (customer.address || order.customer_address || "—");
+        customerAddressLine.textContent = "Địa chỉ: " + (customer.address || order.customer_address || order.customer_snapshot_address || "—");
         meta.append(orderNo, date, cashier, customerLine, customerPhoneLine, customerAddressLine);
 
         const divider = document.createElement("hr");
@@ -793,9 +794,9 @@
 
             const customer = order.customer || {};
             const customerId = order.customer_id ?? customer.id;
-            phoneInput.value = customer.phone || order.customer_phone || "";
-            customerName.value = customer.full_name || order.customer_name || "";
-            customerAddress.value = customer.address || order.customer_address || "";
+            phoneInput.value = customer.phone || order.customer_phone || order.customer_snapshot_phone || "";
+            customerName.value = customer.full_name || order.customer_name || order.customer_snapshot_name || "";
+            customerAddress.value = customer.address || order.customer_address || order.customer_snapshot_address || "";
             cartState.customerId = customerId == null ? null : customerId;
             if (cartState.customerId != null) {
                 cartState.customerType = "existing";
@@ -1063,7 +1064,9 @@
         resetCustomer(false);
         const digits = phoneInput.value.replace(/\D/g, "");
         if (digits.length < 8) {
-            customerStatus.textContent = digits.length ? "Nhập đủ số điện thoại để tra cứu." : "Khách lẻ";
+            customerStatus.textContent = digits.length
+                ? "Nhập đủ số điện thoại để tra cứu."
+                : "Nhập số điện thoại để tra cứu hoặc đăng ký khách hàng mới.";
             return;
         }
         customerLookupTimer = window.setTimeout(function () {

@@ -63,7 +63,7 @@
 
         function customerName(order) {
             const customer = order.customer || {};
-            return customer.full_name || customer.name || order.customer_name || "Khách lẻ";
+            return customer.full_name || customer.name || order.customer_name || order.customer_snapshot_name || "Khách lẻ";
         }
 
         function cashierName(order) {
@@ -298,8 +298,8 @@
 
             try {
                 const query = new URLSearchParams({ from: from, to: to });
-                if (currentRole === "cashier") {
-                    if (!currentUserId) throw new Error("Không xác định được tài khoản thu ngân để lọc báo cáo.");
+                if (!isAdmin) {
+                    if (!currentUserId) throw new Error("Không xác định được tài khoản nhân viên để lọc báo cáo.");
                     query.set("user_id", currentUserId);
                 }
                 const payload = await window.PosApi.get("reports/sales?" + query.toString());
@@ -338,7 +338,7 @@
             heading.textContent = "Đơn " + (order.order_number || order.id || "");
             body.append(heading);
             appendDetailLine(body, "Khách hàng", customerName(order));
-            appendDetailLine(body, "Số điện thoại", order.customer && order.customer.phone || order.customer_phone);
+            appendDetailLine(body, "Số điện thoại", order.customer && order.customer.phone || order.customer_phone || order.customer_snapshot_phone);
             appendDetailLine(body, "Thu ngân", cashierName(order));
             appendDetailLine(body, "Ngày lập", order.created_at ? new Date(order.created_at).toLocaleString("vi-VN") : "");
             appendDetailLine(body, "Phương thức", order.payment_method);

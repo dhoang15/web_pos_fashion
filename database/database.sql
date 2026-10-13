@@ -32,14 +32,22 @@ CREATE TABLE IF NOT EXISTS `users` (
   `avatar` varchar(255) DEFAULT 'default-avatar.png',
   `status` enum('active','inactive','locked') DEFAULT 'active',
   `is_first_login` tinyint(1) DEFAULT '1',
-  `login_token` varchar(255) DEFAULT NULL,
+  `login_token` varchar(255) DEFAULT NULL COMMENT 'SHA-256 hash of a single-use 60-second invitation token',
   `token_time` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_users_role_status` (`role`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tài khoản mặc định theo yêu cầu đề bài: username admin, password admin.
+-- Mật khẩu được lưu bằng bcrypt để tương thích với password_verify() của PHP.
+INSERT IGNORE INTO `users`
+  (`username`, `email`, `password`, `role`, `first_name`, `last_name`, `status`, `is_first_login`)
+VALUES
+  ('admin', 'admin@gmail.com', '$2a$10$pbJdh9D2btC6Goyxc3GFju8rMNocTZH6eAAPlXTUxDxaSlio8fViO', 'admin', 'Quản trị', 'viên', 'active', 0);
 
 -- --------------------------------------------------------
 -- 2. BẢNG CATEGORIES (Danh mục sản phẩm)
@@ -83,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `barcode` (`barcode`),
   KEY `category_id` (`category_id`),
+  KEY `idx_products_status_category` (`status`,`category_id`),
   KEY `fk_products_last_updated_by` (`last_updated_by`),
   CONSTRAINT `fk_products_last_updated_by` FOREIGN KEY (`last_updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
@@ -111,6 +120,9 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `order_number` varchar(20) NOT NULL,
   `user_id` int NOT NULL,                               -- Nhân viên bán hàng
   `customer_id` int DEFAULT NULL,                       -- Khách hàng mua (Bắt buộc theo barem)
+  `customer_snapshot_name` varchar(100) DEFAULT NULL,   -- Giữ thông tin khách mới trên đơn nháp
+  `customer_snapshot_phone` varchar(20) DEFAULT NULL,
+  `customer_snapshot_address` varchar(255) DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `subtotal` decimal(10,2) DEFAULT '0.00',
   `discount_percent` decimal(5,2) DEFAULT '0.00',
@@ -124,6 +136,9 @@ CREATE TABLE IF NOT EXISTS `orders` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_number` (`order_number`),
   KEY `user_id` (`user_id`),
+  KEY `idx_orders_user_created` (`user_id`,`created_at`),
+  KEY `idx_orders_status_created` (`status`,`created_at`),
+  KEY `idx_orders_payment_created` (`payment_method`,`created_at`),
   KEY `fk_orders_customer` (`customer_id`),
   KEY `idx_orders_created_at` (`created_at`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
@@ -139,6 +154,9 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
   `product_id` int NOT NULL,
+  `product_name` varchar(100) NOT NULL,                 -- Snapshot tên sản phẩm lúc bán
+  `size` varchar(20) DEFAULT NULL,                      -- Snapshot thuộc tính sản phẩm
+  `color` varchar(50) DEFAULT NULL,
   `quantity` int NOT NULL DEFAULT '1',
   `import_price` decimal(10,2) NOT NULL DEFAULT '0.00', -- Giá gốc lúc bán
   `unit_price` decimal(10,2) NOT NULL,                  -- Giá bán lúc tạo đơn

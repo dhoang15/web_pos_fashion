@@ -70,23 +70,23 @@
                 <section class="pos-customer-panel" aria-labelledby="customer-title">
                     <div class="pos-subheading">
                         <h3 id="customer-title">Khách hàng</h3>
-                        <span class="pos-customer-type" id="customer-type-label"><i class="bi bi-person" aria-hidden="true"></i> Khách lẻ</span>
+                        <span class="pos-customer-type" id="customer-type-label"><i class="bi bi-person" aria-hidden="true"></i> Chưa chọn khách</span>
                     </div>
                     <div class="pos-phone-field">
                         <i class="bi bi-telephone" aria-hidden="true"></i>
                         <label class="visually-hidden" for="customer-phone">Số điện thoại khách hàng</label>
-                        <input id="customer-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Số điện thoại khách hàng">
+                        <input id="customer-phone" name="phone" type="tel" maxlength="20" autocomplete="tel" inputmode="tel" aria-required="true" placeholder="Số điện thoại khách hàng">
                         <button id="lookup-customer" type="button">Tra cứu</button>
                     </div>
-                    <p id="customer-status" aria-live="polite">Khách lẻ · Không cần thông tin</p>
+                    <p id="customer-status" aria-live="polite">Nhập số điện thoại để tra cứu hoặc đăng ký khách hàng mới.</p>
                     <button class="btn btn-sm btn-outline-secondary pos-customer-history" id="customer-history" type="button" hidden>
                         <i class="bi bi-clock-history me-1" aria-hidden="true"></i>Xem lịch sử mua hàng
                     </button>
                     <div id="new-customer-fields" class="pos-new-customer" hidden>
                         <label class="visually-hidden" for="customer-name">Họ tên khách hàng</label>
-                        <input id="customer-name" name="full_name" autocomplete="name" placeholder="Họ tên khách hàng">
+                        <input id="customer-name" name="full_name" maxlength="100" autocomplete="name" placeholder="Họ tên khách hàng">
                         <label class="visually-hidden" for="customer-address">Địa chỉ khách hàng</label>
-                        <input id="customer-address" name="address" autocomplete="street-address" placeholder="Địa chỉ khách hàng">
+                        <input id="customer-address" name="address" maxlength="255" autocomplete="street-address" placeholder="Địa chỉ khách hàng">
                     </div>
                 </section>
 

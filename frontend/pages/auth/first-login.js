@@ -8,14 +8,11 @@
     const confirmPassword = document.getElementById("confirm-password");
     const errorBox = document.getElementById("password-error");
     const submit = document.getElementById("change-password-submit");
-    const token = new URLSearchParams(window.location.search).get("token") ||
-        sessionStorage.getItem("pos-first-login-token");
     const logout = document.getElementById("first-login-logout");
+    let currentUser = null;
 
-    if (token) {
-        sessionStorage.setItem("pos-first-login", "1");
-        sessionStorage.setItem("pos-first-login-token", token);
-        ["pos-role", "pos-user-name", "pos-user-id"].forEach(function (key) {
+    function clearSessionState() {
+        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role"].forEach(function (key) {
             sessionStorage.removeItem(key);
         });
     }
@@ -27,33 +24,50 @@
         });
     }
 
-    function clearSessionState() {
-        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role", "pos-first-login-token"].forEach(function (key) {
-            sessionStorage.removeItem(key);
-        });
+    function userFromResponse(response) {
+        const data = response && response.data && typeof response.data === "object" ? response.data : response;
+        return data && (data.user || data);
+    }
+
+    function landingPage(user) {
+        return user && user.role === "admin" ? "../../index.html" : "../pos/index.html";
     }
 
     form.querySelectorAll("input, button[type='submit']").forEach(function (control) {
         control.disabled = true;
     });
 
-    if (!token) {
-        showError("Liên kết kích hoạt không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu quản trị viên gửi lại email.");
-    } else {
-        window.PosApi.get("auth/invitations/validate?token=" + encodeURIComponent(token)).then(function (result) {
-            const data = result && result.data && typeof result.data === "object" ? result.data : result;
-            const isValid = data && (data.valid === true || data.valid === 1 || data.valid === "1");
-            if (!isValid) {
-                showError("Liên kết kích hoạt không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu quản trị viên gửi lại email.");
-                return;
-            }
-            form.querySelectorAll("input, button[type='submit']").forEach(function (control) {
-                control.disabled = false;
-            });
-        }).catch(function (error) {
-            showError(error.message || "Liên kết kích hoạt không hợp lệ hoặc đã hết hạn.");
-        });
+    if (sessionStorage.getItem("pos-first-login") !== "1") {
+        window.location.replace("login.html");
+        return;
     }
+
+    window.PosApi.get("auth/me").then(function (response) {
+        currentUser = userFromResponse(response);
+        if (!currentUser || !["admin", "staff", "cashier"].includes(currentUser.role)) {
+            throw new Error("Không xác định được phiên đăng nhập. Vui lòng đăng nhập lại.");
+        }
+
+        sessionStorage.setItem("pos-role", currentUser.role);
+        sessionStorage.setItem("pos-user-name", [currentUser.first_name, currentUser.last_name].filter(Boolean).join(" ") || currentUser.name || currentUser.username || "Người dùng");
+        if (currentUser.id != null) sessionStorage.setItem("pos-user-id", String(currentUser.id));
+
+        const firstLoginRequired = currentUser.is_first_login === true || Number(currentUser.is_first_login) === 1;
+        if (!firstLoginRequired) {
+            sessionStorage.removeItem("pos-first-login");
+            sessionStorage.removeItem("pos-first-login-role");
+            window.location.replace(landingPage(currentUser));
+            return;
+        }
+
+        form.querySelectorAll("input, button[type='submit']").forEach(function (control) {
+            control.disabled = false;
+        });
+    }).catch(function (error) {
+        showError((error && error.status === 401)
+            ? "Phiên đăng nhập đã hết hạn. Vui lòng mở lại liên kết trong email và đăng nhập lại."
+            : error.message || "Không thể xác nhận phiên đăng nhập.");
+    });
 
     logout.addEventListener("click", async function () {
         logout.disabled = true;
@@ -80,13 +94,12 @@
         submit.textContent = "Đang cập nhật...";
         try {
             await window.PosApi.post("auth/first-login", {
-                token: token,
                 password: newPassword.value,
                 password_confirmation: confirmPassword.value
             });
-            clearSessionState();
-            sessionStorage.setItem("pos-password-updated", "1");
-            window.location.replace("login.html");
+            sessionStorage.removeItem("pos-first-login");
+            sessionStorage.removeItem("pos-first-login-role");
+            window.location.replace(landingPage(currentUser));
         } catch (error) {
             errorBox.textContent = error.message;
             submit.disabled = false;

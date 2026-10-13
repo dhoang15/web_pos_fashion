@@ -281,7 +281,7 @@
             appendSalesCell(row, order.order_number || order.id);
             appendSalesCell(row, displayDate(order.created_at, true));
             const customer = order.customer || {};
-            appendSalesCell(row, customer.full_name || customer.name || order.customer_name || "Khách lẻ");
+            appendSalesCell(row, customer.full_name || customer.name || order.customer_name || order.customer_snapshot_name || "Khách lẻ");
             appendSalesCell(row, productQuantity(order).toLocaleString("vi-VN"), "text-end");
             appendSalesCell(row, window.PosCommon.formatCurrency(order.total_amount ?? order.total), "text-end text-nowrap");
 
@@ -431,12 +431,18 @@
         if (!form.reportValidity()) return;
         const button = document.getElementById("save-user");
         const fullNameValue = form.elements.name.value.trim().replace(/\s+/g, " ");
+        const emailValue = form.elements.email.value.trim().toLocaleLowerCase("en-US");
+        if (!/^[^\s@]+@gmail\.com$/i.test(emailValue)) {
+            window.PosCommon.notify("Email nhân viên phải là địa chỉ Gmail.", "warning");
+            form.elements.email.focus();
+            return;
+        }
         const nameParts = fullNameValue.split(" ");
         const user = {
             first_name: nameParts.shift() || "",
             last_name: nameParts.join(" "),
             phone: form.elements.phone.value.trim(),
-            email: form.elements.email.value.trim().toLocaleLowerCase("en-US")
+            email: emailValue
         };
         button.disabled = true;
         try {

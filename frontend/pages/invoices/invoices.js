@@ -117,10 +117,10 @@
                 const customerCell = document.createElement("td");
                 const customerName = document.createElement("span");
                 customerName.className = "invoice-customer-name";
-                customerName.textContent = fullName(customer) || order.customer_name || "Khách lẻ";
+                customerName.textContent = fullName(customer) || order.customer_name || order.customer_snapshot_name || "Khách lẻ";
                 const customerPhone = document.createElement("span");
                 customerPhone.className = "invoice-customer-phone";
-                customerPhone.textContent = customer.phone || order.customer_phone || "";
+                customerPhone.textContent = customer.phone || order.customer_phone || order.customer_snapshot_phone || "";
                 customerCell.append(customerName, customerPhone);
                 row.append(customerCell);
 
@@ -328,9 +328,9 @@
             appendDetailTile(summary, "Trạng thái", order.status === "completed" ? "Đã hoàn thành" : order.status || "—");
             appendDetailTile(summary, "Ngày giờ giao dịch", formatDate(order.created_at));
             appendDetailTile(summary, "Thu ngân", fullName(cashier) || order.cashier_name || order.user_name || "—");
-            appendDetailTile(summary, "Khách hàng", fullName(customer) || order.customer_name || "Khách lẻ");
-            appendDetailTile(summary, "Số điện thoại", customer.phone || order.customer_phone || "—");
-            appendDetailTile(summary, "Địa chỉ", customer.address || "—");
+            appendDetailTile(summary, "Khách hàng", fullName(customer) || order.customer_name || order.customer_snapshot_name || "Khách lẻ");
+            appendDetailTile(summary, "Số điện thoại", customer.phone || order.customer_phone || order.customer_snapshot_phone || "—");
+            appendDetailTile(summary, "Địa chỉ", customer.address || order.customer_address || order.customer_snapshot_address || "—");
             appendDetailTile(summary, "Phương thức thanh toán", paymentLabel(order.payment_method));
 
             const items = order.items || order.order_items || [];
@@ -409,8 +409,8 @@
                 rows.push([
                     order.order_number || order.id,
                     formatDate(order.created_at),
-                    fullName(customer) || order.customer_name || "Khách lẻ",
-                    customer.phone || order.customer_phone || "",
+                    fullName(customer) || order.customer_name || order.customer_snapshot_name || "Khách lẻ",
+                    customer.phone || order.customer_phone || order.customer_snapshot_phone || "",
                     fullName(cashier) || order.cashier_name || order.user_name || "",
                     paymentLabel(order.payment_method),
                     order.amount_received,

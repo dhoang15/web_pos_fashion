@@ -182,7 +182,7 @@
     });
 
     function finishLogout() {
-        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role", "pos-first-login-token"].forEach(function (key) {
+        ["pos-role", "pos-user-name", "pos-user-id", "pos-first-login", "pos-first-login-role"].forEach(function (key) {
             sessionStorage.removeItem(key);
         });
         window.location.replace(new URL("pages/auth/login.html", new URL(pageRoot.replace(/\/?$/, "/"), window.location.href)).href);
@@ -194,8 +194,6 @@
         body.hidden = true;
         const componentRoot = new URL(pageRoot.replace(/\/?$/, "/"), window.location.href);
         const firstLoginUrl = new URL("pages/auth/first-login.html", componentRoot);
-        const token = sessionStorage.getItem("pos-first-login-token");
-        if (token) firstLoginUrl.searchParams.set("token", token);
         window.location.replace(firstLoginUrl.href);
         return true;
     }

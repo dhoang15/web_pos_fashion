@@ -121,12 +121,11 @@
         const value = customer || {};
         const phone = String(value.phone || "").trim();
         const type = value.customerType || "guest";
-        if (phone && type === "guest") return "lookup-required";
-        if (type === "new" && !phone) return "phone-required";
-        if (type === "new") {
-            const digits = phone.replace(/\D/g, "");
-            if (digits.length < 8 || digits.length > 15) return "invalid-phone";
-        }
+        if (!phone) return "phone-required";
+        const digits = phone.replace(/\D/g, "");
+        if (digits.length < 8 || digits.length > 15) return "invalid-phone";
+        if (type === "guest") return "lookup-required";
+        if (type === "existing" && value.customerId == null) return "lookup-required";
         if (type === "new" && !String(value.fullName || "").trim()) return "name-required";
         if (type === "new" && !String(value.address || "").trim()) return "address-required";
         return null;
@@ -136,8 +135,10 @@
         const value = options || {};
         if (!value.cart || value.cart.size === 0) return "empty-cart";
 
-        const customerError = validateCustomer(value.customer);
-        if (customerError) return customerError;
+        if (value.requirePayment) {
+            const customerError = validateCustomer(value.customer);
+            if (customerError) return customerError;
+        }
 
         const totals = value.totals || {};
         if (value.requirePayment && totals.paymentMethod === "cash" &&

@@ -35,7 +35,7 @@
     async function request(path, options) {
         const settings = options || {};
         const normalizedPath = String(path).replace(/^\/+/, "");
-        const allowedDuringFirstLogin = /^auth\/(?:login|logout|first-login|invitations\/validate)(?:[/?]|$)/.test(normalizedPath);
+        const allowedDuringFirstLogin = /^auth\/(?:login|logout|me|first-login)(?:[/?]|$)/.test(normalizedPath);
         if (sessionStorage.getItem("pos-first-login") === "1" && !allowedDuringFirstLogin) {
             throw new ApiError("Bạn cần đổi mật khẩu lần đầu trước khi sử dụng ứng dụng.", 403, {
                 code: "PASSWORD_CHANGE_REQUIRED"
