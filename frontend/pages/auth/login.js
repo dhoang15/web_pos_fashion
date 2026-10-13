@@ -9,6 +9,17 @@
     const errorBox = document.getElementById("login-error");
     const submit = document.getElementById("login-submit");
 
+    document.querySelectorAll("[data-demo-user]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const isAdmin = button.dataset.demoUser === "admin";
+            sessionStorage.setItem("pos-demo-mode", "1");
+            form.elements.username.value = isAdmin ? "admin.demo" : "staff.demo";
+            form.elements.password.value = isAdmin ? "Admin123!" : "Staff123!";
+            errorBox.textContent = "";
+            form.requestSubmit();
+        });
+    });
+
     toggle.addEventListener("click", function () {
         const visible = password.type === "password";
         password.type = visible ? "text" : "password";

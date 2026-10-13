@@ -9,7 +9,7 @@
         invoices: "pages/invoices/index.html",
         categories: "pages/products/index.html#categories",
         products: "pages/products/index.html",
-        customers: "pages/customers/index.html",
+        customers: "pages/Customers/index.html",
         users: "pages/users/index.html",
         reports: "pages/reports/index.html",
         settings: "pages/settings/index.html",
@@ -108,6 +108,15 @@
             return loadComponent(component[0], component[1], componentRoot);
         }));
 
+        if (sessionStorage.getItem("pos-demo-mode") === "1") {
+            const banner = document.createElement("div");
+            banner.className = "alert alert-warning text-center rounded-0 mb-0 py-2";
+            banner.setAttribute("role", "status");
+            banner.textContent = "CHẾ ĐỘ DEMO — tài khoản và quyền truy cập được giả lập; dữ liệu không lưu lên máy chủ.";
+            const header = document.getElementById("header-container");
+            if (header) header.before(banner);
+        }
+
         const role = sessionStorage.getItem("pos-role");
         const allowedRoutes = roleRoutes[role];
         const currentPage = body.dataset.page;
@@ -169,6 +178,7 @@
             sessionStorage.removeItem("pos-role");
             sessionStorage.removeItem("pos-user-name");
             sessionStorage.removeItem("pos-user-id");
+            sessionStorage.removeItem("pos-demo-mode");
             window.location.href = new URL("pages/auth/login.html", new URL(pageRoot.replace(/\/?$/, "/"), window.location.href)).href;
         }).catch(function (error) {
             logoutButton.disabled = false;

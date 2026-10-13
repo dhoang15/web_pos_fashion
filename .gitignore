@@ -49,3 +49,29 @@ Temporary Items
 # Ignore all local history of files
 .history
 .ionide
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated output
+node_modules/
+vendor/
+dist/
+build/
+*.log
+
+# Operating systems
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.history/
