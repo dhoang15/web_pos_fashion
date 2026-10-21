@@ -54,7 +54,8 @@
 }
 
 .report-period-button:hover,
-.report-period-button.is-active {
+.report-period-button.is-active,
+.report-period-buttons [data-range].is-active {
     border-color: var(--report-accent);
     background: var(--report-accent);
     color: #fff;
@@ -120,12 +121,18 @@
     min-width: 0;
 }
 
+.report-order-detail-button {
+    position: relative;
+}
+
 .report-panel-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
 }
 
 .report-chart-wrap {

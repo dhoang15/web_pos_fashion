@@ -42,6 +42,25 @@
     let storeSettings = {};
     let paymentQr = null;
     let currentInvoice = null;
+    let orderSubmitting = false;
+    const saleScreen = document.querySelector(".pos-screen");
+    const disabledBeforeSubmit = new Map();
+
+    function setOrderBusy(busy) {
+        orderSubmitting = busy;
+        saleScreen.inert = busy;
+        saleScreen.setAttribute("aria-busy", String(busy));
+        if (busy) {
+            saleScreen.querySelectorAll("button, input, select, textarea").forEach(function (control) {
+                disabledBeforeSubmit.set(control, control.disabled);
+                control.disabled = true;
+            });
+        } else {
+            disabledBeforeSubmit.forEach(function (disabled, control) { control.disabled = disabled; });
+            disabledBeforeSubmit.clear();
+            getTotals();
+        }
+    }
 
     function createModal(element) {
         if (window.bootstrap && window.bootstrap.Modal) {
@@ -273,7 +292,7 @@
     }
 
     function addProduct(product) {
-        if (!product) return;
+        if (!product || orderSubmitting) return;
         const result = window.PosDomain.addProduct(cart, product);
         if (!result.added && result.reason === "out-of-stock") {
             window.PosCommon.notify("Sản phẩm đã hết hàng.", "warning");
@@ -374,8 +393,10 @@
     async function loadProducts() {
         productStatus.textContent = "Đang tải sản phẩm...";
         productStatus.classList.remove("is-error");
+        const controller = new AbortController();
+        const timeout = window.setTimeout(function () { controller.abort(); }, 20000);
         try {
-            products = window.PosCommon.unwrapList(await window.PosApi.get("products?status=active"));
+            products = window.PosCommon.unwrapList(await window.PosApi.get("products?status=active", { signal: controller.signal }));
             productStatus.textContent = products.length + " sản phẩm đang bán";
             renderProducts();
         } catch (error) {
@@ -384,6 +405,8 @@
             productStatus.classList.add("is-error");
             renderProducts();
             window.PosCommon.notify("Không tải được sản phẩm: " + error.message, "danger");
+        } finally {
+            window.clearTimeout(timeout);
         }
     }
 
@@ -700,12 +723,15 @@
         renderCart();
     }
 
-    async function submitOrder(status, button) {
+    async function submitOrder(status) {
+        if (orderSubmitting) return;
         const isComplete = status === "completed";
         const totals = getTotals();
         if (!validateCheckout(totals, isComplete)) return;
 
-        button.disabled = true;
+        setOrderBusy(true);
+        window.clearTimeout(customerLookupTimer);
+        customerLookupSequence += 1;
         const pendingOrderId = cartState.pendingOrderId;
         const cartItems = Array.from(cart.values()).map(function (item) {
             return { product_id: item.product.id, quantity: item.quantity, product: item.product };
@@ -721,6 +747,7 @@
                 : await window.PosApi.post(orderPath, orderData);
             if (isComplete) {
                 resetSaleForm();
+                await loadProducts();
                 const createdOrder = valueFromResponse(orderResponse, "order") || {};
                 try {
                     let receiptResponse = orderResponse;
@@ -744,7 +771,7 @@
         } catch (error) {
             window.PosCommon.notify(error.message, "danger");
         } finally {
-            button.disabled = false;
+            setOrderBusy(false);
         }
     }
 
@@ -1033,6 +1060,7 @@
         renderProducts();
     });
     cartElement.addEventListener("click", function (event) {
+        if (orderSubmitting) return;
         const button = event.target.closest("[data-cart-action]");
         if (!button) return;
         const id = button.dataset.productId;
@@ -1047,6 +1075,7 @@
         renderCart();
     });
     document.getElementById("clear-cart").addEventListener("click", function () {
+        if (orderSubmitting) return;
         cart.clear();
         invalidatePaymentConfirmation();
         renderCart();
@@ -1139,10 +1168,10 @@
         getTotals();
     });
     document.getElementById("complete-order").addEventListener("click", function () {
-        submitOrder("completed", this);
+        submitOrder("completed");
     });
     document.getElementById("save-sale").addEventListener("click", function () {
-        submitOrder("pending", this);
+        submitOrder("pending");
     });
     document.getElementById("print-invoice").addEventListener("click", function () {
         const originalTitle = document.title;

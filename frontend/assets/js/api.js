@@ -74,11 +74,16 @@
         }
 
         const responseText = await response.text();
+        const endpoint = normalizedPath.split(/[?#]/)[0];
+        const missingApiMessage = "Không tìm thấy API " + endpoint + " (404). Kiểm tra đường dẫn API hoặc trạng thái triển khai backend.";
         let payload = null;
         if (responseText) {
             try {
                 payload = JSON.parse(responseText);
             } catch (error) {
+                if (response.status === 404) {
+                    throw new ApiError(missingApiMessage, 404, { code: "API_NOT_FOUND", endpoint: endpoint });
+                }
                 throw new ApiError("Máy chủ trả về dữ liệu không đúng định dạng JSON.", response.status, error);
             }
         }
@@ -87,7 +92,7 @@
             if (response.status === 401 && !/^auth\/(login|logout|invitations\/validate|first-login)/.test(normalizedPath)) {
                 window.dispatchEvent(new CustomEvent("pos:unauthorized", { detail: { path: path } }));
             }
-            throw new ApiError(getErrorMessage(payload) || "Yêu cầu không thành công. Vui lòng thử lại.", response.status, payload);
+            throw new ApiError(getErrorMessage(payload) || (response.status === 404 ? missingApiMessage : "Yêu cầu không thành công. Vui lòng thử lại."), response.status, payload);
         }
 
         return payload;

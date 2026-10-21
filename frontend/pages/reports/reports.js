@@ -106,7 +106,7 @@
                 const actionCell = document.createElement("td");
                 actionCell.className = "text-end";
                 const detailButton = document.createElement("button");
-                detailButton.className = "btn btn-sm btn-outline-secondary";
+                detailButton.className = "btn btn-sm btn-outline-secondary report-order-detail-button";
                 detailButton.type = "button";
                 detailButton.dataset.orderId = String(order.id);
                 detailButton.setAttribute("aria-label", "Xem đơn " + (order.order_number || order.id));
@@ -427,10 +427,12 @@
         });
 
         document.querySelectorAll("[data-range]").forEach(function (button) {
+            button.setAttribute("aria-pressed", "false");
             button.addEventListener("click", function () {
                 if (button.dataset.range === "custom") {
                     document.querySelectorAll("[data-range]").forEach(function (rangeButton) {
                         rangeButton.classList.toggle("is-active", rangeButton === button);
+                        rangeButton.setAttribute("aria-pressed", String(rangeButton === button));
                     });
                     dateFrom.focus();
                     return;
@@ -450,6 +452,7 @@
                 dateTo.value = localDate(end);
                 document.querySelectorAll("[data-range]").forEach(function (rangeButton) {
                     rangeButton.classList.toggle("is-active", rangeButton === button);
+                    rangeButton.setAttribute("aria-pressed", String(rangeButton === button));
                 });
                 loadReport();
             });
@@ -487,7 +490,10 @@
         dateFrom.value = localDate(weekStart);
         dateTo.value = localDate(today);
         const initialTodayButton = document.querySelector("[data-range='7days']");
-        if (initialTodayButton) initialTodayButton.classList.add("is-active");
+        if (initialTodayButton) {
+            initialTodayButton.classList.add("is-active");
+            initialTodayButton.setAttribute("aria-pressed", "true");
+        }
         loadReport();
     }
 
