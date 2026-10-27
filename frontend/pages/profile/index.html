@@ -24,8 +24,8 @@
                                 <span id="avatar-placeholder" class="profile-avatar-placeholder" aria-hidden="true"><i class="bi bi-person"></i></span>
                                 <div class="flex-grow-1"><label class="form-label fw-bold" for="profile-avatar">Avatar</label><input class="form-control" id="profile-avatar" type="file" accept="image/png,image/jpeg,image/webp"></div>
                             </div>
-                            <div class="mb-3"><label class="form-label fw-bold" for="profile-name">Họ tên</label><input class="form-control" id="profile-name" name="name" autocomplete="name" required></div>
-                            <div class="mb-4"><label class="form-label fw-bold" for="profile-phone">Số điện thoại</label><input class="form-control" id="profile-phone" name="phone" type="tel" autocomplete="tel"></div>
+                            <div class="mb-3"><label class="form-label fw-bold" for="profile-name">Họ tên</label><input class="form-control" id="profile-name" name="name" autocomplete="name" maxlength="100" required></div>
+                            <div class="mb-4"><label class="form-label fw-bold" for="profile-phone">Số điện thoại</label><input class="form-control" id="profile-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0912345678 hoặc +84912345678"></div>
                             <button class="btn btn-brand" type="submit" id="save-profile">Lưu hồ sơ</button>
                         </form>
                     </div>

@@ -18,11 +18,13 @@
     const taxRateLabel = document.getElementById("tax-rate-label");
     const qrModal = createModal(document.getElementById("qr-modal"));
     const invoiceModal = createModal(document.getElementById("invoice-modal"));
-    const customerHistoryModal = createModal(document.getElementById("pos-customer-history-modal"));
+    const customerHistoryModalElement = document.getElementById("pos-customer-history-modal");
+    const customerHistoryModal = createModal(customerHistoryModalElement);
     if (!window.bootstrap || !window.bootstrap.Modal) {
         document.querySelectorAll(".modal [data-bs-dismiss='modal']").forEach(function (button) {
             button.addEventListener("click", function () {
                 const modalElement = button.closest(".modal");
+                if (modalElement === customerHistoryModalElement) invalidateCustomerHistory();
                 modalElement.classList.remove("show");
                 modalElement.style.display = "none";
                 modalElement.setAttribute("aria-hidden", "true");
@@ -38,6 +40,8 @@
     const cartState = { customerId: null, customerType: "guest", paymentConfirmed: false, qrLoaded: false, pendingOrderId: null };
     let customerLookupSequence = 0;
     let customerLookupTimer = null;
+    let customerHistoryRequestSequence = 0;
+    let customerOrderRequestSequence = 0;
     let products = [];
     let storeSettings = {};
     let paymentQr = null;
@@ -45,6 +49,13 @@
     let orderSubmitting = false;
     const saleScreen = document.querySelector(".pos-screen");
     const disabledBeforeSubmit = new Map();
+
+    function invalidateCustomerHistory() {
+        customerHistoryRequestSequence += 1;
+        customerOrderRequestSequence += 1;
+    }
+
+    customerHistoryModalElement.addEventListener("hide.bs.modal", invalidateCustomerHistory);
 
     function setOrderBusy(busy) {
         orderSubmitting = busy;
@@ -485,8 +496,11 @@
         try {
             const response = await window.PosApi.get("customers/lookup?phone=" + encodeURIComponent(phone));
             if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
-            const customer = valueFromResponse(response, "customer");
-            if (!customer || customer.id == null) {
+            const data = response && typeof response === "object" && response.data !== undefined
+                ? response.data : response;
+            const customer = data && typeof data === "object" && Object.prototype.hasOwnProperty.call(data, "customer")
+                ? data.customer : data;
+            if (customer === null && response != null) {
                 cartState.customerType = "new";
                 customerName.readOnly = false;
                 customerAddress.readOnly = false;
@@ -495,6 +509,9 @@
                 document.getElementById("customer-history").hidden = true;
                 setCustomerType("bi-person-plus", "Khách mới");
                 return;
+            }
+            if (!customer || typeof customer !== "object" || customer.id == null) {
+                throw new Error("Máy chủ trả về kết quả tra cứu khách hàng không hợp lệ. Vui lòng thử lại.");
             }
             cartState.customerId = customer.id;
             cartState.customerType = "existing";
@@ -508,17 +525,7 @@
             setCustomerType("bi-person-check", "Khách hàng cũ");
         } catch (error) {
             if (lookupSequence !== customerLookupSequence || phone !== phoneInput.value.trim()) return;
-            if (error.status === 404) {
-                cartState.customerType = "new";
-                customerName.readOnly = false;
-                customerAddress.readOnly = false;
-                customerFields.hidden = false;
-                customerStatus.textContent = "Khách mới — nhập họ tên và địa chỉ.";
-                document.getElementById("customer-history").hidden = true;
-                setCustomerType("bi-person-plus", "Khách mới");
-                return;
-            }
-            customerStatus.textContent = error.message;
+            customerStatus.textContent = "Không thể tra cứu khách hàng: " + error.message;
             customerStatus.classList.add("text-danger");
             throw error;
         }
@@ -526,6 +533,7 @@
 
     function resetCustomer(clearPhone) {
         customerLookupSequence += 1;
+        invalidateCustomerHistory();
         cartState.customerId = null;
         cartState.customerType = "guest";
         customerName.value = "";
@@ -936,6 +944,8 @@
 
     async function loadCustomerHistory() {
         if (cartState.customerType !== "existing" || cartState.customerId == null) return;
+        const requestSequence = ++customerHistoryRequestSequence;
+        customerOrderRequestSequence += 1;
         const customer = getCurrentCustomer();
         const status = document.getElementById("pos-customer-history-status");
         const table = document.getElementById("pos-customer-orders");
@@ -951,9 +961,11 @@
 
         try {
             const payload = await window.PosApi.get("customers/" + encodeURIComponent(customer.id) + "/orders");
+            if (requestSequence !== customerHistoryRequestSequence) return;
             const orders = customerHistoryOrders(payload).slice().sort(function (left, right) {
                 return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
             });
+            table.replaceChildren();
             orders.forEach(function (order) {
                 const row = document.createElement("tr");
                 const values = [
@@ -992,23 +1004,28 @@
             }
             status.textContent = orders.length + " đơn hàng";
         } catch (error) {
+            if (requestSequence !== customerHistoryRequestSequence) return;
             status.textContent = "Không tải được lịch sử: " + error.message;
             status.classList.add("text-danger");
         }
     }
 
     async function loadCustomerOrderDetails(orderId, button) {
+        const historySequence = customerHistoryRequestSequence;
+        const requestSequence = ++customerOrderRequestSequence;
         button.disabled = true;
         const section = document.getElementById("pos-customer-order-detail");
         section.hidden = false;
         section.textContent = "Đang tải chi tiết đơn hàng...";
         try {
             const response = await window.PosApi.get("orders/" + encodeURIComponent(orderId));
+            if (historySequence !== customerHistoryRequestSequence || requestSequence !== customerOrderRequestSequence) return;
             const data = response && response.data && !Array.isArray(response.data) ? response.data : response;
             const order = data && (data.order || data);
             if (!order || order.id == null) throw new Error("Máy chủ không trả về chi tiết đơn hợp lệ.");
             renderCustomerOrderDetails(order);
         } catch (error) {
+            if (historySequence !== customerHistoryRequestSequence || requestSequence !== customerOrderRequestSequence) return;
             section.textContent = "Không tải được chi tiết đơn hàng: " + error.message;
         } finally {
             button.disabled = false;

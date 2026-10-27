@@ -6,6 +6,8 @@
     const avatarInput = document.getElementById("profile-avatar");
     const avatarPreview = document.getElementById("avatar-preview");
     const avatarPlaceholder = document.getElementById("avatar-placeholder");
+    const nameInput = document.getElementById("profile-name");
+    const phoneInput = document.getElementById("profile-phone");
     let savedAvatarUrl = "";
     let previewUrl = "";
 
@@ -49,11 +51,27 @@
 
     profileForm.addEventListener("submit", async function (event) {
         event.preventDefault();
+        nameInput.value = nameInput.value.trim().replace(/\s+/g, " ");
+        phoneInput.value = phoneInput.value.trim().replace(/[\s.-]/g, "");
+        const nameParts = nameInput.value.split(" ");
+        const firstName = nameParts.shift() || "";
+        const lastName = nameParts.join(" ");
+        let nameError = "";
+        if (!nameInput.value) {
+            nameError = "Nhập họ tên, không được chỉ chứa khoảng trắng.";
+        } else if (nameInput.value.length > 100 || firstName.length > 50 || lastName.length > 50) {
+            nameError = "Họ tên tối đa 100 ký tự; phần họ và phần tên mỗi phần tối đa 50 ký tự.";
+        }
+        nameInput.setCustomValidity(nameError);
+        phoneInput.setCustomValidity(phoneInput.value && !/^(?:\+84|0)[0-9]{9}$/.test(phoneInput.value)
+            ? "Nhập số điện thoại Việt Nam gồm 10 số bắt đầu bằng 0, hoặc +84 kèm 9 số."
+            : "");
+        if (!profileForm.reportValidity()) return;
         const button = document.getElementById("save-profile");
         button.disabled = true;
         const data = {
-            name: document.getElementById("profile-name").value.trim(),
-            phone: document.getElementById("profile-phone").value.trim() || null
+            name: nameInput.value,
+            phone: phoneInput.value || null
         };
         try {
             if (avatarInput.files && avatarInput.files[0]) {
@@ -88,6 +106,10 @@
         } finally {
             button.disabled = false;
         }
+    });
+
+    [nameInput, phoneInput].forEach(function (input) {
+        input.addEventListener("input", function () { input.setCustomValidity(""); });
     });
 
     window.addEventListener("beforeunload", function () {
