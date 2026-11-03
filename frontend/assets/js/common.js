@@ -9,7 +9,7 @@
         invoices: "pages/invoices/index.html",
         categories: "pages/categories/index.html",
         products: "pages/products/index.html",
-        customers: "pages/Customers/index.html",
+        customers: "pages/customers/index.html",
         users: "pages/users/index.html",
         reports: "pages/reports/index.html",
         settings: "pages/settings/index.html",

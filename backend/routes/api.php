@@ -21,7 +21,7 @@ $handler = static function (string $class, string $method): callable {
 
 $router->add('GET', '/api/auth/csrf-token', $handler(AuthController::class, 'csrfToken'), false);
 $router->add('POST', '/api/auth/login', $handler(AuthController::class, 'login'), false);
-$router->add('POST', '/api/auth/invitations/validate', $handler(AuthController::class, 'validateInvitation'), false);
+$router->add('POST', '/api/auth/invitations/complete', $handler(AuthController::class, 'completeInvitation'), false);
 $router->add('POST', '/api/auth/logout', $handler(AuthController::class, 'logout'));
 $router->add('GET', '/api/auth/me', $handler(AuthController::class, 'me'));
 $router->add('POST', '/api/auth/first-login', $handler(AuthController::class, 'firstLogin'));

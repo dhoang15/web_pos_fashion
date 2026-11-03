@@ -25,45 +25,67 @@ final class AuthController extends Controller
         if (!$user || $user['status'] !== 'active' || !password_verify($password, $user['password'])) {
             throw new ApiException('Tên đăng nhập hoặc mật khẩu không chính xác.', 401, 'INVALID_CREDENTIALS');
         }
-
-        if (!empty($user['is_first_login']) && $user['role'] !== 'admin') {
-            $token = trim((string)($input['invitation_token'] ?? ''));
-            $storedToken = (string)($user['login_token'] ?? '');
-            $tokenTime = $user['token_time'] ? strtotime((string)$user['token_time']) : false;
-            if ($token === '') {
-                throw new ApiException('Tài khoản cần đăng nhập từ liên kết email còn hiệu lực 1 phút.', 403, 'INVITE_LINK_REQUIRED');
-            }
-            if ($storedToken === '' || $tokenTime === false || time() - $tokenTime < 0 || time() - $tokenTime > 60 ||
-                (!hash_equals($storedToken, hash('sha256', $token)) && !hash_equals($storedToken, $token))) {
-                throw new ApiException('Liên kết đăng nhập không hợp lệ hoặc đã hết hạn.', 403, 'INVITATION_EXPIRED');
-            }
+        if ((int)$user['is_first_login'] === 1 && $user['role'] !== 'admin') {
+            throw new ApiException('Nhân viên mới cần tạo mật khẩu từ liên kết mời trong email trước khi đăng nhập.', 403, 'INVITATION_REQUIRED');
         }
 
         session_regenerate_id(true);
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['user_id'] = (int)$user['id'];
         $_SESSION['role'] = $user['role'];
+        if ((int)$user['is_first_login'] === 1) {
+            $_SESSION['is_first_login'] = true;
+        } else {
+            unset($_SESSION['is_first_login']);
+        }
         $this->ok(['user' => $this->publicUser($user)]);
     }
 
-    public function validateInvitation(Request $request): void
+    public function completeInvitation(Request $request): void
     {
-        $token = trim((string)($request->input()['token'] ?? ''));
-        if ($token === '' || strlen($token) > 256) {
-            $this->ok(['valid' => false]);
-            return;
+        $input = $request->input();
+        $token = trim((string)($input['token'] ?? ''));
+        $password = (string)($input['password'] ?? '');
+        if (!preg_match('/^[a-f0-9]{64}$/i', $token)) {
+            throw new ApiException('Liên kết mời không hợp lệ hoặc đã hết hạn.', 422, 'INVITATION_EXPIRED');
         }
-        $users = $this->rows(
-            "SELECT login_token, token_time FROM users WHERE is_first_login = 1 AND status = 'active' AND login_token IS NOT NULL"
-        );
-        foreach ($users as $user) {
-            $created = $user['token_time'] ? strtotime((string)$user['token_time']) : false;
-            if ($created !== false && time() - $created >= 0 && time() - $created <= 60 &&
-                (hash_equals((string)$user['login_token'], hash('sha256', $token)) || hash_equals((string)$user['login_token'], $token))) {
-                $this->ok(['valid' => true]);
-                return;
+        $this->validateNewPassword($password, (string)($input['password_confirmation'] ?? ''));
+
+        $this->model->beginTransaction();
+        try {
+            $user = $this->row(
+                "SELECT id, username, email, role, first_name, last_name, phone, avatar, status, is_first_login " .
+                "FROM users WHERE login_token = :token AND is_first_login = 1 AND status = 'active' " .
+                'AND token_time > DATE_SUB(NOW(), INTERVAL 1 MINUTE) AND token_time <= NOW() LIMIT 1 FOR UPDATE',
+                ['token' => hash('sha256', $token)]
+            );
+            if (!$user) {
+                throw new ApiException('Liên kết mời không hợp lệ hoặc đã hết hạn. Hãy yêu cầu quản trị viên gửi lại.', 403, 'INVITATION_EXPIRED');
             }
+            $this->execute(
+                "UPDATE users SET password = :password, is_first_login = 0, login_token = NULL, token_time = NULL " .
+                "WHERE id = :id AND is_first_login = 1 AND login_token = :token",
+                [
+                    'password' => password_hash($password, PASSWORD_DEFAULT),
+                    'id' => $user['id'],
+                    'token' => hash('sha256', $token),
+                ]
+            );
+            $this->model->commit();
+        } catch (\Throwable $error) {
+            if ($this->model->inTransaction()) {
+                $this->model->rollBack();
+            }
+            throw $error;
         }
-        $this->ok(['valid' => false]);
+
+        session_regenerate_id(true);
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['user_id'] = (int)$user['id'];
+        $_SESSION['role'] = $user['role'];
+        unset($_SESSION['is_first_login']);
+        $user['is_first_login'] = 0;
+        $this->ok(['user' => $this->publicUser($user)]);
     }
 
     public function logout(Request $request): void
@@ -91,9 +113,7 @@ final class AuthController extends Controller
     {
         $input = $request->input();
         $password = (string)($input['password'] ?? '');
-        if (strlen($password) < 8 || $password !== (string)($input['password_confirmation'] ?? '')) {
-            throw new ApiException('Mật khẩu mới cần ít nhất 8 ký tự và phải khớp xác nhận.', 422, 'VALIDATION_ERROR', ['password' => ['Mật khẩu không hợp lệ.']]);
-        }
+        $this->validateNewPassword($password, (string)($input['password_confirmation'] ?? ''));
         $user = $this->row('SELECT id, is_first_login FROM users WHERE id = :id', ['id' => $this->currentUserId()]);
         if (!$user || !(int)$user['is_first_login']) {
             throw new ApiException('Không cần đổi mật khẩu lần đầu cho tài khoản này.', 409, 'FIRST_LOGIN_NOT_REQUIRED');
@@ -102,6 +122,7 @@ final class AuthController extends Controller
             'UPDATE users SET password = :password, is_first_login = 0, login_token = NULL, token_time = NULL WHERE id = :id',
             ['password' => password_hash($password, PASSWORD_DEFAULT), 'id' => $user['id']]
         );
+        unset($_SESSION['is_first_login']);
         $this->ok(['message' => 'Đã cập nhật mật khẩu.']);
     }
 
@@ -113,14 +134,19 @@ final class AuthController extends Controller
             throw new ApiException('Mật khẩu hiện tại không chính xác.', 422, 'INVALID_CURRENT_PASSWORD');
         }
         $password = (string)($input['password'] ?? '');
-        if (strlen($password) < 8 || $password !== (string)($input['password_confirmation'] ?? '')) {
-            throw new ApiException('Mật khẩu mới cần ít nhất 8 ký tự và phải khớp xác nhận.', 422, 'VALIDATION_ERROR', ['password' => ['Mật khẩu không hợp lệ.']]);
-        }
+        $this->validateNewPassword($password, (string)($input['password_confirmation'] ?? ''));
         $this->execute('UPDATE users SET password = :password, is_first_login = 0 WHERE id = :id', [
             'password' => password_hash($password, PASSWORD_DEFAULT),
             'id' => $user['id'],
         ]);
         $this->ok(['message' => 'Đã đổi mật khẩu.']);
+    }
+
+    private function validateNewPassword(string $password, string $confirmation): void
+    {
+        if (mb_strlen($password) < 12 || strlen($password) > 72 || $password !== $confirmation) {
+            throw new ApiException('Mật khẩu cần ít nhất 12 ký tự (tối đa 72 byte) và phải khớp xác nhận.', 422, 'VALIDATION_ERROR', ['password' => ['Mật khẩu không hợp lệ.']]);
+        }
     }
 
     public function updateProfile(Request $request): void
