@@ -1,77 +1,114 @@
 # B'TRIPLE POS
 
-Giao diện quản lý cửa hàng thời trang gồm trang tổng quan, POS, sản phẩm, khách
-hàng, nhân viên, hóa đơn, báo cáo và cài đặt.
+Ứng dụng quản lý cửa hàng thời trang gồm POS, sản phẩm, danh mục, khách hàng,
+hóa đơn, báo cáo, nhân viên, hồ sơ và cài đặt.
 
 ## Yêu cầu
 
-- PHP CLI để chạy máy chủ web tích hợp (không cần cài Composer cho mã hiện có).
+- PHP 8.1+ với `pdo_mysql`, `fileinfo` và `mbstring`.
+- MySQL 8+.
 - Trình duyệt hiện đại và kết nối Internet để tải Bootstrap từ CDN.
-- MySQL 8 nếu cần tạo cơ sở dữ liệu từ `database/database.sql`.
 
-Không cần cài Node.js/npm: repository hiện không có `package.json` hoặc frontend
-build step.
+Frontend không cần Node.js/npm. Backend dùng PHP thuần, không cần cài Composer.
 
-## Chạy giao diện
+## Thiết lập cơ sở dữ liệu
 
-Chạy lệnh từ thư mục gốc repository trên Windows, macOS hoặc Linux:
+Từ thư mục gốc repository, tạo database và nạp schema cùng dữ liệu ban đầu:
 
-```sh
-php -S 127.0.0.1:8000 -t frontend
+```powershell
+cmd /c "mysql -u root -p < backend\database\schema.sql"
+cmd /c "mysql -u root -p fashion_pos_db < backend\database\seed.sql"
 ```
 
-Mở <http://127.0.0.1:8000/>. Không mở trực tiếp file HTML bằng `file://`, vì
-trình duyệt cần HTTP để tải các thành phần giao diện dùng chung.
+Tạo file cấu hình rồi điền thông tin database:
 
-## Tạo cơ sở dữ liệu
-
-Khởi động MySQL 8, sau đó chạy lệnh từ thư mục gốc repository.
-
-macOS/Linux:
-
-```sh
-mysql -u root -p < database/database.sql
+```powershell
+Copy-Item backend\.env.example backend\.env
+notepad backend\.env
 ```
 
-Windows Command Prompt:
+Không đưa mật khẩu thật vào Git. Tài khoản trong seed chỉ là dữ liệu mẫu, bị vô
+hiệu hóa và không có mật khẩu đăng nhập dùng được. Sau khi cấu hình database,
+tạo quản trị viên đầu tiên bằng mật khẩu riêng:
 
-```bat
-mysql -u root -p < database\database.sql
+```powershell
+.\backend\bin\create-admin.ps1 -Username owner -Email owner@example.com -FirstName Ten -LastName QuanTri
 ```
 
-Script tạo database `fashion_pos_db`. Tài khoản và mật khẩu MySQL phải được cấu
-hình riêng trên từng máy; không đưa thông tin đăng nhập cá nhân vào Git.
+Script hỏi mật khẩu mà không hiển thị ký tự khi nhập. Chọn mật khẩu riêng tối
+thiểu 12 ký tự. Chỉ nạp `seed.sql` một lần trên database mới vì seed thêm dữ
+liệu mẫu. Nếu database đã nạp seed cũ, trước tiên chạy
+`php backend\bin\disable-default-accounts.php`, rồi tạo quản trị viên mới bằng
+lệnh trên.
 
-Database mới có tài khoản ban đầu `admin/admin` (email `admin@gmail.com`). Hãy
-đổi mật khẩu admin ngay sau lần đăng nhập đầu tiên. Script không tạo sản phẩm,
-khách hàng hoặc đơn hàng mẫu.
+Để dùng **MySQL bên ngoài**, đặt `DB_HOST` thành endpoint/DNS do nhà cung cấp
+cấp (không dùng `localhost` hoặc `0.0.0.0`), `DB_PORT`, `DB_DATABASE`,
+`DB_USERNAME` và `DB_PASSWORD`. Nếu nhà cung cấp yêu cầu TLS, tải CA certificate
+theo hướng dẫn của họ và đặt đường dẫn tuyệt đối vào `DB_SSL_CA`. `DB_HOST` phải
+khớp hostname trên certificate.
 
-Nếu đã tạo database từ phiên bản schema cũ, chạy một lần:
+Trên MySQL server, bật truy cập từ máy chạy Backend, chỉ allowlist IP egress của
+máy đó ở firewall/security group và tạo database user giới hạn theo IP Backend.
+Không mở cổng 3306 cho mọi địa chỉ (`0.0.0.0/0`). Ví dụ SQL sau chạy trên MySQL
+server sau khi thay giá trị trong ngoặc:
 
-```sh
-mysql -u root -p fashion_pos_db < database/migrations/001_add_order_snapshots_and_default_admin.sql
+```sql
+CREATE USER 'btriple_app'@'<BACKEND_IP>' IDENTIFIED BY '<STRONG_PASSWORD>' REQUIRE SSL;
+GRANT SELECT, INSERT, UPDATE, DELETE ON fashion_pos_db.* TO 'btriple_app'@'<BACKEND_IP>';
 ```
 
-Migration bổ sung snapshot khách hàng trên đơn nháp, snapshot sản phẩm trên hóa
-đơn cũ và các chỉ mục phục vụ bộ lọc frontend. Không chạy migration này sau khi
-đã tạo database mới bằng `database/database.sql`.
+Tạo database và chạy `schema.sql`, `seed.sql` bằng tài khoản quản trị database
+trước; tài khoản ứng dụng không cần quyền `CREATE`/`DROP`. Sau khi cấu hình `.env`,
+kiểm tra kết nối và schema (không in thông tin đăng nhập):
 
-## Trạng thái backend
+```powershell
+php backend\bin\check-db.php
+```
 
-Frontend hiện gọi API tại `/api/` (xem `frontend/assets/js/api.js`). Repository
-chưa chứa API backend hoặc các route tương ứng. Vì vậy đăng nhập và các thao tác
-cần dữ liệu chưa chạy được đầy đủ chỉ bằng máy chủ PHP tích hợp; cần triển khai
-backend PHP không dùng framework theo `frontend/API_CONTRACT.md` và kết nối MySQL
-qua cấu hình riêng. File cấu hình database hiện có chưa triển khai kết nối hay
-API.
+Với MySQL từ xa, chạy `schema.sql` và `seed.sql` qua client có hostname/port
+của nhà cung cấp, ví dụ:
 
-## Kiểm thử giao diện
+```powershell
+mysql --host=<MYSQL_HOST> --port=<MYSQL_PORT> --user=<DB_ADMIN> -p < backend\database\schema.sql
+mysql --host=<MYSQL_HOST> --port=<MYSQL_PORT> --user=<DB_ADMIN> -p fashion_pos_db < backend\database\seed.sql
+```
 
-Frontend không còn tài khoản, dữ liệu hoặc API giả lập. Cần chạy backend tại
-cùng origin với frontend và cung cấp các route `/api/` trước khi đăng nhập hoặc
-thực hiện các thao tác cần dữ liệu. Khi backend chưa chạy, frontend sẽ báo lỗi
-kết nối thay vì hiển thị hoặc xác nhận dữ liệu mẫu.
+Thay các giá trị trong ngoặc bằng thông tin nhà cung cấp. Lệnh sẽ hỏi mật khẩu,
+không ghi mật khẩu trực tiếp vào lệnh hoặc Git.
 
-Các endpoint, luồng đăng nhập qua link mời, trường dữ liệu, định dạng phản hồi,
-quy tắc upload và ánh xạ database được ghi trong
-[`frontend/API_CONTRACT.md`](frontend/API_CONTRACT.md).
+## Chạy ứng dụng cục bộ
+
+Từ thư mục gốc:
+
+```powershell
+php -S 127.0.0.1:8000 -t frontend backend/dev-router.php
+```
+
+Mở <http://127.0.0.1:8000/>. Router phát tĩnh Frontend, chuyển `/api/*` vào
+Backend và phục vụ ảnh tải lên tại `/uploads/`, cùng origin để cookie phiên và
+CSRF hoạt động đúng. Không mở HTML trực tiếp bằng `file://`.
+
+Để gửi lời mời nhân viên, cấu hình `APP_URL`, `MAIL_FROM` và dịch vụ mail của
+PHP trên máy chủ. Nếu chưa cấu hình email, API sẽ báo lỗi rõ ràng và không lưu
+tài khoản mời dở dang.
+
+## API và bảo mật
+
+Các endpoint Frontend được khai báo tại `backend/routes/api.php`. API dùng
+session cookie `HttpOnly`/`SameSite=Lax` và bật `Secure` mặc định, cấp CSRF token qua
+`GET /api/auth/csrf-token`, và yêu cầu header `X-CSRF-TOKEN` cho mọi request ghi.
+Đặt `SESSION_SECURE=0` chỉ khi chạy HTTP local; luôn giữ `SESSION_SECURE=1`
+khi chạy HTTPS. Phân quyền được kiểm tra phía Backend;
+nhân viên chỉ xem đơn của mình, giá nhập/lợi nhuận chỉ trả cho admin. Tạo đơn
+thanh toán cập nhật tồn kho trong transaction.
+
+Luồng ứng dụng theo MVC: `routes/api.php` → `src/Controllers/` →
+`src/Models/Model.php` → PDO/MySQL; JSON response trong `src/Core/Response.php`
+đóng vai trò View cho API, còn các trang HTML/JS trong `frontend/` là giao diện.
+
+## Cấu trúc dữ liệu
+
+- `backend/database/schema.sql`: cấu trúc MySQL.
+- `backend/database/seed.sql`: dữ liệu demo hiện có.
+- `backend/public/uploads/`: ảnh avatar và mã QR; chỉ cho phép nội dung ảnh và cần quyền ghi cho PHP.
+- `backend/public/`: front controller và rewrite rule cho Apache.

@@ -13,6 +13,35 @@
     const configuredBaseUrl = window.POS_API_BASE_URL || "/api/";
     const normalizedBaseUrl = String(configuredBaseUrl).replace(/\/?$/, "/");
     const baseUrl = new URL(normalizedBaseUrl, window.location.href);
+    let csrfToken = "";
+    let csrfRequest = null;
+
+    async function getCsrfToken() {
+        if (csrfToken) return csrfToken;
+        if (!csrfRequest) {
+            csrfRequest = fetch(new URL("auth/csrf-token", baseUrl), {
+                method: "GET",
+                headers: { Accept: "application/json" },
+                credentials: "same-origin"
+            }).then(async function (response) {
+                let payload;
+                try {
+                    payload = await response.json();
+                } catch (error) {
+                    throw new ApiError("Không thể khởi tạo mã bảo mật CSRF.", response.status, error);
+                }
+                const data = payload && payload.data;
+                if (!response.ok || !data || typeof data.csrf_token !== "string" || !data.csrf_token) {
+                    throw new ApiError(getErrorMessage(payload) || "Không thể khởi tạo mã bảo mật CSRF.", response.status, payload);
+                }
+                csrfToken = data.csrf_token;
+                return csrfToken;
+            }).finally(function () {
+                csrfRequest = null;
+            });
+        }
+        return csrfRequest;
+    }
 
     function getErrorMessage(payload) {
         if (!payload || typeof payload !== "object") return null;
@@ -35,6 +64,7 @@
     async function request(path, options) {
         const settings = options || {};
         const normalizedPath = String(path).replace(/^\/+/, "");
+        const csrfRetry = settings._csrfRetry === true;
         const allowedDuringFirstLogin = /^auth\/(?:login|logout|me|first-login)(?:[/?]|$)/.test(normalizedPath);
         if (sessionStorage.getItem("pos-first-login") === "1" && !allowedDuringFirstLogin) {
             throw new ApiError("Bạn cần đổi mật khẩu lần đầu trước khi sử dụng ứng dụng.", 403, {
@@ -45,10 +75,13 @@
         const headers = new Headers(settings.headers || {});
         headers.set("Accept", "application/json");
         const csrfMeta = document.querySelector("meta[name='csrf-token']");
-        if (csrfMeta && csrfMeta.content) headers.set("X-CSRF-TOKEN", csrfMeta.content);
+        const method = String(settings.method || "GET").toUpperCase();
+        if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+            headers.set("X-CSRF-TOKEN", csrfMeta && csrfMeta.content ? csrfMeta.content : await getCsrfToken());
+        }
 
         const requestOptions = {
-            method: settings.method || "GET",
+            method: method,
             headers: headers,
             credentials: "same-origin",
             signal: settings.signal
@@ -89,12 +122,19 @@
         }
 
         if (!response.ok) {
+            if (!csrfRetry && response.status === 403 && payload && payload.error && payload.error.code === "CSRF_TOKEN_MISMATCH") {
+                csrfToken = "";
+                await getCsrfToken();
+                return request(path, Object.assign({}, settings, { _csrfRetry: true }));
+            }
+            if (response.status === 401 || normalizedPath === "auth/logout") csrfToken = "";
             if (response.status === 401 && !/^auth\/(login|logout|invitations\/validate|first-login)/.test(normalizedPath)) {
                 window.dispatchEvent(new CustomEvent("pos:unauthorized", { detail: { path: path } }));
             }
             throw new ApiError(getErrorMessage(payload) || (response.status === 404 ? missingApiMessage : "Yêu cầu không thành công. Vui lòng thử lại."), response.status, payload);
         }
 
+        if (normalizedPath === "auth/logout") csrfToken = "";
         return payload;
     }
 
