@@ -6,8 +6,8 @@
 đơn, khách hàng, nhân viên, báo cáo và cấu hình cửa hàng.
 
 > **Trạng thái:** Frontend Vanilla JavaScript và Backend PHP/PDO đã được tích hợp
-> qua JSON API cùng origin. Dự án hiện không dùng React, Vite, Vue, npm, Composer
-> hay Docker; không có lệnh build frontend riêng.
+> qua JSON API cùng origin. Dự án không dùng React, Vite, Vue, npm hoặc Composer;
+> có Docker Compose cho môi trường phát triển.
 
 ## 3. Mục lục
 
@@ -59,6 +59,7 @@
 | Database | MySQL 8+ / MariaDB tương thích, PDO MySQL |
 | Email | SMTP qua `backend/src/Core/SmtpMailer.php` |
 | Web server phát triển | PHP built-in server và `backend/dev-router.php` |
+| Container | Docker Compose, PHP CLI container và MySQL 8.4 |
 | Package/build | Không dùng npm, Yarn, Composer hoặc build frontend |
 
 ## 6. Yêu cầu môi trường
@@ -156,6 +157,56 @@ backup database cần giữ lại. Sau đó, trong phpMyAdmin, chỉ xóa databa
 Thao tác xóa database sẽ mất toàn bộ dữ liệu đơn hàng, khách hàng, tài khoản và
 cài đặt trong database đó; xác nhận đã chọn đúng database trước khi thực hiện.
 
+### 7.6 Chạy toàn bộ stack bằng Docker
+
+Cần cài Docker Desktop (Windows/macOS) hoặc Docker Engine cùng Docker Compose
+Plugin (Linux), sau đó mở Docker daemon.
+
+Từ PowerShell tại thư mục gốc repository:
+
+```powershell
+Copy-Item docker.env.example .env
+docker compose up --build -d
+docker compose ps
+```
+
+Mở **<http://127.0.0.1:8000/>**. Compose khởi tạo container PHP và MySQL; khi
+database volume được tạo lần đầu, MySQL tự chạy `schema.sql` rồi `seed.sql`.
+Ứng dụng chỉ khởi động sau khi MySQL health check thành công.
+
+Các giá trị mật khẩu mặc định trong `docker.env.example` chỉ dành cho thử nghiệm
+trên máy local. Trước khi dùng ngoài localhost, thay cả hai mật khẩu
+`MYSQL_PASSWORD` và `MYSQL_ROOT_PASSWORD` trong file `.env`. Không commit file
+`.env`. SMTP là tùy chọn; thêm credential SMTP vào file `.env` nếu cần gửi lời
+mời nhân viên.
+
+Xem log:
+
+```powershell
+docker compose logs -f app
+docker compose logs -f db
+```
+
+Dừng stack và giữ nguyên dữ liệu:
+
+```powershell
+docker compose down
+```
+
+`mysql_data` lưu database và `uploads` lưu ảnh upload trong Docker named volumes;
+`docker compose down` không xóa chúng. Để khởi tạo schema/seed lại, cần chủ động
+xóa volume database (việc này xóa toàn bộ dữ liệu local trong volume):
+
+```powershell
+docker compose down
+docker volume ls
+docker volume rm <TEN_VOLUME_MYSQL_CUA_DU_AN>
+docker compose up --build -d
+```
+
+Xác định đúng tên volume trước khi xóa; không xóa volume nếu cần giữ dữ liệu.
+MySQL không tự chạy lại file init khi volume đã được khởi tạo.
+
 ## 8. Biến môi trường
 
 Backend đọc `backend/.env` qua `backend/config/env.php`. Không commit file này,
@@ -213,6 +264,10 @@ Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
 | Kiểm tra cú pháp JavaScript | `node --check frontend\assets\js\api.js` (Node chỉ cần cho bước kiểm tra này) |
 | Import schema | `mysql -u root -p < backend\database\schema.sql` |
 | Import dữ liệu mẫu | `mysql -u root -p fashion_pos_db < backend\database\seed.sql` |
+| Build và chạy Docker | `docker compose up --build -d` |
+| Trạng thái container | `docker compose ps` |
+| Theo dõi log | `docker compose logs -f app` |
+| Dừng Docker (giữ dữ liệu) | `docker compose down` |
 | npm / Yarn | Không áp dụng; repository không có `package.json` hoặc frontend bundler |
 | Dừng server | `Ctrl+C` trong Terminal đang chạy server |
 
@@ -426,17 +481,24 @@ code hoặc Git.
 
 ## 16. Docker và build production
 
-- Repository hiện không có `Dockerfile`, Docker Compose, Vite/Webpack hay cấu
-  hình build frontend.
-- Frontend được phục vụ trực tiếp từ HTML/CSS/JS; không có bước bundle/minify.
-- Local development dùng `php -S ... -t frontend backend/dev-router.php`.
-- Không nên dùng PHP built-in server cho production. Triển khai cần cấu hình
-  Apache/Nginx với document root/rewrite phù hợp để API chạy qua front controller,
-  file `.env` không public, upload được giới hạn kiểu file và HTTPS bật.
+- `Dockerfile` tạo PHP CLI image có `pdo_mysql` và `mbstring`, sau đó chạy
+  `backend/dev-router.php` để phục vụ Frontend, API và uploads cùng origin.
+- `compose.yaml` chạy hai service: `app` (PHP) và `db` (MySQL 8.4). MySQL chỉ
+  được expose trong Docker network; app publish trên loopback host port `8000`.
+- `docker.env.example` là mẫu biến môi trường Compose; copy thành `.env` ở thư
+  mục gốc trước khi chạy. `.dockerignore` loại Git, env/secrets và upload runtime
+  khỏi image build context.
+- Compose tự import `schema.sql` và `seed.sql` **chỉ khi MySQL data volume mới
+  được tạo**. Các lần chạy sau giữ dữ liệu trong named volume.
+- Frontend vẫn được phục vụ trực tiếp từ HTML/CSS/JS; không có bước Vite/Webpack
+  hoặc npm build.
+- PHP built-in server trong image chỉ phù hợp chạy local/demo, không phải
+  production-grade web server. Triển khai production nên đặt sau Apache/Nginx
+  hoặc reverse proxy TLS, không public MySQL, bảo vệ file `.env`, giới hạn upload.
 - Production cần đặt `SESSION_SECURE=1`, bảo vệ quyền truy cập thư mục upload,
   dùng MySQL user riêng có quyền tối thiểu và quản lý SMTP credential an toàn.
-- Nếu tự thêm Docker/CI/build, cần bổ sung manifest, quy trình cấu hình secret,
-  health check và hướng dẫn deploy đã được kiểm chứng.
+- Mật khẩu mẫu trong `docker.env.example` chỉ dùng localhost; phải thay trước
+  khi publish hoặc chia sẻ môi trường.
 
 ## 17. Kiểm thử
 

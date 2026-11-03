@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+docker.env
+docker.env.*
+backend/.env
+backend/.env.*
+**/node_modules
+**/vendor
+**/dist
+**/build
+backend/public/uploads/*
+!backend/public/uploads/.htaccess
+*.log

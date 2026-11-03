@@ -123,7 +123,3 @@ INSERT INTO `shift_assignments` (`shift_id`, `user_id`, `role`, `status`, `notes
 (1, 3, 'regular', 'confirmed', 'Đứng quầy thanh toán POS', 1, '2026-10-13 08:30:00'),
 (2, 4, 'regular', 'assigned', 'Hỗ trợ khách hàng thử đồ', 1, '2026-10-13 08:30:00'),
 (3, 2, 'supervisor', 'assigned', 'Chốt sổ tiền mặt cuối ngày', 1, '2026-10-13 08:30:00');
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
