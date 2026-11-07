@@ -29,6 +29,20 @@
                 <div class="col-6 col-xl-3"><article class="management-stat-card"><span class="management-stat-icon is-muted"><i class="bi bi-person-dash" aria-hidden="true"></i></span><span class="management-stat-label">Ngừng hoạt động</span><strong id="inactive-users">—</strong></article></div>
             </section>
 
+            <section class="surface-card management-panel p-3 p-lg-4 mb-4" aria-labelledby="test-email-heading">
+                <form id="test-email-form" class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <span class="management-eyebrow">SMTP CHECK</span>
+                        <h2 class="h6 fw-bold mb-1" id="test-email-heading">Kiểm tra gửi email</h2>
+                        <p class="text-muted small mb-0">Gửi một email thử tới hộp thư MAIL_FROM đã cấu hình trong Docker.</p>
+                        <p id="test-email-status" class="status-message small mt-2 mb-0" aria-live="polite"></p>
+                    </div>
+                    <button class="btn btn-outline-primary" type="submit" id="send-test-email">
+                        <i class="bi bi-envelope-check me-2" aria-hidden="true"></i>Gửi email thử
+                    </button>
+                </form>
+            </section>
+
             <section class="surface-card management-panel p-3 p-lg-4">
                 <div class="management-toolbar mb-3">
                     <div><span class="management-eyebrow">STAFF ACCOUNTS</span><h2 class="h5 fw-bold mb-0">Danh sách nhân viên</h2></div>

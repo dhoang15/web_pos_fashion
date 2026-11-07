@@ -10,6 +10,9 @@
 
     const form = document.getElementById("user-form");
     const formStatus = document.getElementById("user-form-status");
+    const testEmailForm = document.getElementById("test-email-form");
+    const testEmailStatus = document.getElementById("test-email-status");
+    const testEmailButton = document.getElementById("send-test-email");
     const modal = window.PosCommon.createModal(document.getElementById("user-modal"));
     const detailModal = window.PosCommon.createModal(document.getElementById("employee-detail-modal"));
     const status = document.getElementById("users-status");
@@ -389,6 +392,23 @@
         modal.show();
     });
     search.addEventListener("input", render);
+    testEmailForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        testEmailButton.disabled = true;
+        testEmailStatus.textContent = "Đang kết nối SMTP và gửi email thử...";
+        testEmailStatus.classList.remove("is-error");
+        try {
+            const response = await window.PosApi.post("users/test-email", {});
+            testEmailStatus.textContent = response.data.message + " (" + response.data.recipient + ")";
+            window.PosCommon.notify(testEmailStatus.textContent, "success");
+        } catch (error) {
+            testEmailStatus.textContent = "Không gửi được email thử: " + error.message;
+            testEmailStatus.classList.add("is-error");
+            window.PosCommon.notify(testEmailStatus.textContent, "danger");
+        } finally {
+            testEmailButton.disabled = false;
+        }
+    });
     salesFilter.addEventListener("submit", function (event) {
         event.preventDefault();
         loadEmployeeSales();
@@ -473,6 +493,11 @@
             formStatus.textContent = "Không thể tạo nhân viên: " + error.message;
             formStatus.classList.add("is-error");
             window.PosCommon.notify(error.message, "danger");
+            const details = error.details && error.details.error;
+            if (details && details.code === "INVITATION_EMAIL_FAILED") {
+                modal.hide();
+                await loadUsers();
+            }
         } finally {
             button.disabled = false;
         }

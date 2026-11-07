@@ -54,6 +54,11 @@
                             <tbody id="customer-orders-table"></tbody>
                         </table>
                     </div>
+                    <nav id="customer-history-pagination" class="d-flex justify-content-between align-items-center gap-3" aria-label="Phân trang lịch sử đơn hàng" hidden>
+                        <button id="customer-history-previous" class="btn btn-sm btn-outline-secondary" type="button">Trước</button>
+                        <span id="customer-history-page" class="small text-muted" aria-live="polite"></span>
+                        <button id="customer-history-next" class="btn btn-sm btn-outline-secondary" type="button">Sau</button>
+                    </nav>
                     <section id="customer-order-detail" class="customer-order-detail" aria-live="polite" hidden></section>
                 </div>
             </div>

@@ -942,7 +942,7 @@
         section.append(title, table);
     }
 
-    async function loadCustomerHistory() {
+    async function loadCustomerHistory(page) {
         if (cartState.customerType !== "existing" || cartState.customerId == null) return;
         const requestSequence = ++customerHistoryRequestSequence;
         customerOrderRequestSequence += 1;
@@ -955,16 +955,20 @@
         table.replaceChildren();
         detail.replaceChildren();
         detail.hidden = true;
+        const pagination = document.getElementById("pos-customer-history-pagination");
+        pagination.hidden = true;
         document.getElementById("pos-customer-history-title").textContent = "Lịch sử mua hàng — " + (customer.full_name || "Khách hàng");
         document.getElementById("pos-customer-history-summary").textContent = [customer.phone, customer.address].filter(Boolean).join(" · ");
         customerHistoryModal.show();
 
         try {
-            const payload = await window.PosApi.get("customers/" + encodeURIComponent(customer.id) + "/orders");
+            const payload = await window.PosApi.get(
+                "customers/" + encodeURIComponent(customer.id) + "/orders?page=" + encodeURIComponent(page || 1) + "&per_page=20"
+            );
             if (requestSequence !== customerHistoryRequestSequence) return;
-            const orders = customerHistoryOrders(payload).slice().sort(function (left, right) {
-                return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
-            });
+            const orders = customerHistoryOrders(payload);
+            const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
+            const pageInfo = data && data.pagination;
             table.replaceChildren();
             orders.forEach(function (order) {
                 const row = document.createElement("tr");
@@ -1002,7 +1006,17 @@
                 row.append(cell);
                 table.append(row);
             }
-            status.textContent = orders.length + " đơn hàng";
+            if (pageInfo) {
+                const totalPages = Math.max(1, Number(pageInfo.total_pages) || 1);
+                const currentPage = Number(pageInfo.page) || 1;
+                status.textContent = Number(pageInfo.total || 0) + " đơn hàng";
+                document.getElementById("pos-customer-history-page").textContent = "Trang " + currentPage + " / " + totalPages;
+                document.getElementById("pos-customer-history-previous").disabled = currentPage <= 1;
+                document.getElementById("pos-customer-history-next").disabled = currentPage >= totalPages;
+                pagination.hidden = totalPages <= 1;
+            } else {
+                status.textContent = orders.length + " đơn hàng";
+            }
         } catch (error) {
             if (requestSequence !== customerHistoryRequestSequence) return;
             status.textContent = "Không tải được lịch sử: " + error.message;
@@ -1097,7 +1111,16 @@
         invalidatePaymentConfirmation();
         renderCart();
     });
-    document.getElementById("customer-history").addEventListener("click", loadCustomerHistory);
+    document.getElementById("customer-history").addEventListener("click", function () {
+        loadCustomerHistory(1);
+    });
+    document.getElementById("pos-customer-history-pagination").addEventListener("click", function (event) {
+        const button = event.target.closest("#pos-customer-history-previous, #pos-customer-history-next");
+        if (!button || button.disabled) return;
+        const label = document.getElementById("pos-customer-history-page").textContent;
+        const currentPage = Number((label.match(/\d+/) || [1])[0]);
+        loadCustomerHistory(currentPage + (button.id === "pos-customer-history-next" ? 1 : -1));
+    });
     document.getElementById("pos-customer-orders").addEventListener("click", function (event) {
         const button = event.target.closest("[data-customer-order-id]");
         if (button) loadCustomerOrderDetails(button.dataset.customerOrderId, button);

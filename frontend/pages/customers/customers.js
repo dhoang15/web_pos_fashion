@@ -11,9 +11,12 @@
     const historyStatus = document.getElementById("customer-history-status");
     const historyTable = document.getElementById("customer-orders-table");
     const orderDetail = document.getElementById("customer-order-detail");
+    const historyPagination = document.getElementById("customer-history-pagination");
+    const historyPageLabel = document.getElementById("customer-history-page");
     const customersById = new Map();
     let customers = [];
     let historyRequestSequence = 0;
+    let historyCustomer = null;
 
     function customerName(customer) {
         return customer.full_name || customer.name ||
@@ -143,26 +146,30 @@
         orderDetail.append(heading, detailTable);
     }
 
-    async function openHistory(customer) {
+    async function openHistory(customer, page) {
         const requestSequence = ++historyRequestSequence;
+        historyCustomer = customer;
         document.getElementById("customer-history-title").textContent = "Lịch sử mua hàng — " + customerName(customer);
         document.getElementById("customer-history-summary").textContent =
             [customer.phone, customer.address].filter(Boolean).join(" · ") || "Chưa có thông tin liên hệ";
         historyStatus.textContent = "Đang tải lịch sử giao dịch...";
         historyStatus.classList.remove("is-error");
         historyTable.replaceChildren();
+        historyPagination.hidden = true;
         orderDetail.replaceChildren();
         orderDetail.hidden = true;
         historyModal.show();
 
         try {
-            const payload = await window.PosApi.get("customers/" + encodeURIComponent(customer.id) + "/orders");
+            const payload = await window.PosApi.get(
+                "customers/" + encodeURIComponent(customer.id) + "/orders?page=" + encodeURIComponent(page || 1) + "&per_page=20"
+            );
             if (requestSequence !== historyRequestSequence) return;
             const orders = ordersFrom(payload);
+            const data = payload && payload.data && typeof payload.data === "object" ? payload.data : payload;
+            const pagination = data && data.pagination;
             historyTable.replaceChildren();
-            orders.slice().sort(function (left, right) {
-                return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
-            }).forEach(function (order) {
+            orders.forEach(function (order) {
                 const row = document.createElement("tr");
                 addCell(row, order.order_number || "ORD-" + order.id);
                 addCell(row, dateText(order.created_at, true));
@@ -190,7 +197,17 @@
                 row.append(cell);
                 historyTable.append(row);
             }
-            historyStatus.textContent = orders.length + " đơn hàng";
+            if (pagination) {
+                const totalPages = Math.max(1, Number(pagination.total_pages) || 1);
+                const currentPage = Number(pagination.page) || 1;
+                historyStatus.textContent = Number(pagination.total || 0) + " đơn hàng";
+                historyPageLabel.textContent = "Trang " + currentPage + " / " + totalPages;
+                document.getElementById("customer-history-previous").disabled = currentPage <= 1;
+                document.getElementById("customer-history-next").disabled = currentPage >= totalPages;
+                historyPagination.hidden = totalPages <= 1;
+            } else {
+                historyStatus.textContent = orders.length + " đơn hàng";
+            }
         } catch (error) {
             if (requestSequence !== historyRequestSequence) return;
             historyStatus.textContent = "Không tải được lịch sử: " + error.message;
@@ -240,6 +257,12 @@
     historyTable.addEventListener("click", function (event) {
         const button = event.target.closest("[data-order-id]");
         if (button) openOrderDetail(button.dataset.orderId, button);
+    });
+    historyPagination.addEventListener("click", function (event) {
+        const button = event.target.closest("#customer-history-previous, #customer-history-next");
+        if (!button || !historyCustomer || button.disabled) return;
+        const currentPage = Number((historyPageLabel.textContent.match(/\d+/) || [1])[0]);
+        openHistory(historyCustomer, currentPage + (button.id === "customer-history-next" ? 1 : -1));
     });
 
     loadCustomers();

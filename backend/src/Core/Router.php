@@ -32,11 +32,10 @@ final class Router
                 $params[$name] = rawurldecode($matches[$index]);
             }
             $request->setRouteParams($params);
-            if ($auth) {
-                AuthMiddleware::requireUser();
-            }
+            $user = $auth ? AuthMiddleware::requireUser() : null;
             if ($roles) {
-                RoleMiddleware::requireAny($roles);
+                $user = $user ?? AuthMiddleware::requireUser();
+                RoleMiddleware::requireAny($roles, $user);
             }
             $handler($request);
             return;

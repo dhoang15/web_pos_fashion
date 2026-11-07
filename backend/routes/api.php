@@ -52,6 +52,7 @@ $router->add('PUT', '/api/orders/{id}', $handler(OrderController::class, 'update
 $router->add('GET', '/api/reports/sales', $handler(ReportController::class, 'sales'));
 $router->add('GET', '/api/users', $handler(UserController::class, 'index'), true, ['admin']);
 $router->add('POST', '/api/users', $handler(UserController::class, 'create'), true, ['admin']);
+$router->add('POST', '/api/users/test-email', $handler(UserController::class, 'sendTestEmail'), true, ['admin']);
 $router->add('PUT', '/api/users/{id}/status', $handler(UserController::class, 'updateStatus'), true, ['admin']);
 $router->add('POST', '/api/users/{id}/resend-invitation', $handler(UserController::class, 'resendInvitation'), true, ['admin']);
 

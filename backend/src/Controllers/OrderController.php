@@ -47,14 +47,34 @@ final class OrderController extends Controller
         if (!$customer) {
             throw new ApiException('Không tìm thấy khách hàng.', 404, 'CUSTOMER_NOT_FOUND');
         }
+
+        $query = $request->query();
+        $page = filter_var($query['page'] ?? 1, FILTER_VALIDATE_INT);
+        $perPage = filter_var($query['per_page'] ?? 20, FILTER_VALIDATE_INT);
+        if ($page === false || $page < 1 || $perPage === false || $perPage < 1) {
+            throw new ApiException('Thông tin phân trang không hợp lệ.', 422, 'VALIDATION_ERROR');
+        }
+        $perPage = min($perPage, 100);
+        $total = (int)($this->row(
+            'SELECT COUNT(*) AS total FROM orders WHERE customer_id = :customer_id',
+            ['customer_id' => $customerId]
+        )['total'] ?? 0);
+        $totalPages = (int)ceil($total / $perPage);
+        $page = min($page, max(1, $totalPages));
+        $offset = ($page - 1) * $perPage;
         $orders = $this->rows(
-            $this->baseSelect() . ' WHERE o.customer_id = :customer_id ORDER BY o.created_at DESC',
+            $this->baseSelect() . ' WHERE o.customer_id = :customer_id ORDER BY o.created_at DESC, o.id DESC LIMIT ' . $perPage . ' OFFSET ' . $offset,
             ['customer_id' => $customerId]
         );
-        foreach ($orders as &$order) {
-            $order = $this->withItems($order);
-        }
-        $this->ok(['orders' => $orders]);
+        $this->ok([
+            'orders' => $this->withItemsForOrders($orders),
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => $totalPages,
+            ],
+        ]);
     }
 
     public function create(Request $request): void
@@ -259,29 +279,57 @@ final class OrderController extends Controller
 
     private function withItems(array $order): array
     {
+        return $this->withItemsForOrders([$order])[0];
+    }
+
+    private function withItemsForOrders(array $orders): array
+    {
+        if (!$orders) {
+            return [];
+        }
+
+        $placeholders = [];
+        $params = [];
+        foreach (array_values($orders) as $index => $order) {
+            $key = 'order_id_' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = (int)$order['id'];
+        }
         $items = $this->rows(
-            'SELECT oi.*, p.name AS current_product_name, p.image, p.price AS current_price FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :id ORDER BY oi.id',
-            ['id' => $order['id']]
+            'SELECT oi.*, p.name AS current_product_name, p.image, p.price AS current_price ' .
+            'FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id ' .
+            'WHERE oi.order_id IN (' . implode(', ', $placeholders) . ') ORDER BY oi.order_id, oi.id',
+            $params
         );
+
+        $itemsByOrder = [];
         if ((string)($_SESSION['role'] ?? '') !== 'admin') {
             foreach ($items as &$item) {
                 unset($item['import_price']);
             }
         }
-        $order['items'] = $items;
-        $order['customer'] = [
-            'id' => $order['customer_id'],
-            'full_name' => $order['customer_name'] ?: $order['customer_snapshot_name'],
-            'phone' => $order['customer_phone'] ?: $order['customer_snapshot_phone'],
-            'address' => $order['customer_address'] ?: $order['customer_snapshot_address'],
-        ];
-        $order['user'] = [
-            'id' => $order['user_id'],
-            'first_name' => $order['cashier_first_name'],
-            'last_name' => $order['cashier_last_name'],
-            'name' => trim($order['cashier_first_name'] . ' ' . $order['cashier_last_name']),
-        ];
-        return $order;
+        unset($item);
+        foreach ($items as $item) {
+            $itemsByOrder[(int)$item['order_id']][] = $item;
+        }
+
+        foreach ($orders as &$order) {
+            $order['items'] = $itemsByOrder[(int)$order['id']] ?? [];
+            $order['customer'] = [
+                'id' => $order['customer_id'],
+                'full_name' => $order['customer_name'] ?: $order['customer_snapshot_name'],
+                'phone' => $order['customer_phone'] ?: $order['customer_snapshot_phone'],
+                'address' => $order['customer_address'] ?: $order['customer_snapshot_address'],
+            ];
+            $order['user'] = [
+                'id' => $order['user_id'],
+                'first_name' => $order['cashier_first_name'],
+                'last_name' => $order['cashier_last_name'],
+                'name' => trim($order['cashier_first_name'] . ' ' . $order['cashier_last_name']),
+            ];
+        }
+        unset($order);
+        return $orders;
     }
 
     private function assertCanView(array $order): void

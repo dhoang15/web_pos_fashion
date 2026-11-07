@@ -11,6 +11,7 @@ backend/.env.*
 **/vendor
 **/dist
 **/build
+*.pdf
 backend/public/uploads/*
 !backend/public/uploads/.htaccess
 *.log

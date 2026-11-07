@@ -96,8 +96,9 @@ Có thể dùng phpMyAdmin:
 1. Mở `http://localhost/phpmyadmin`.
 2. Chọn **Import** và nạp `backend/database/schema.sql`. File này tạo database
    `fashion_pos_db` và các bảng.
-3. Chọn database `fashion_pos_db`, nạp `backend/database/seed.sql` để thêm dữ
-   liệu mẫu.
+3. Chọn database `fashion_pos_db`, nạp `backend/database/seed.sql` để tạo tài
+   khoản quản trị demo `admin/admin`. Seed không thêm sản phẩm, khách hàng, đơn
+   hàng hoặc cấu hình cửa hàng mẫu.
 4. Chỉ import `seed.sql` một lần trên database mới; seed không phải script reset.
 
 Hoặc dùng MySQL CLI từ thư mục gốc:
@@ -235,20 +236,37 @@ không ghi credential thật trong issue, chat hoặc log.
 ¹ Các biến database có giá trị mặc định cho local, nhưng phải khớp với MySQL
 đang chạy.
 
-Ví dụ Gmail SMTP (điền giá trị thật trực tiếp trong file local, không đưa vào Git):
+Với Docker, sửa file `.env` ở **thư mục gốc**, cùng cấp `compose.yaml`
+(`backend/.env` không được Compose dùng để cấp SMTP cho container). Gmail cần
+bật xác minh 2 bước rồi tạo **App Password**; không dùng mật khẩu đăng nhập
+Google. Điền App Password vào `SMTP_PASSWORD` (có thể nhập liền 16 ký tự):
 
 ```dotenv
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_ENCRYPTION=tls
-SMTP_USERNAME=your-address@gmail.com
-SMTP_PASSWORD=your-google-app-password
-MAIL_FROM=your-address@gmail.com
+SMTP_USERNAME=you@gmail.com
+SMTP_PASSWORD=your-16-character-app-password
+MAIL_FROM=you@gmail.com
 MAIL_FROM_NAME=B'TRIPLE POS
 ```
 
-Với Gmail, bật xác minh 2 bước và dùng App Password; không dùng mật khẩu Google
-thông thường.
+`SMTP_USERNAME` và `MAIL_FROM` phải là hộp thư đã cấp App Password. Sau khi lưu
+`.env`, tạo lại riêng container ứng dụng để nạp cấu hình mới (không cần xóa
+volume hoặc khởi tạo lại database):
+
+```powershell
+docker compose config --quiet
+docker compose up -d --force-recreate app
+```
+
+Sau đó đăng nhập QTV, mở **Nhân viên**, tạo nhân viên mới với địa chỉ Gmail
+thật mà bạn có thể nhận thư. Ứng dụng chỉ chấp nhận email nhân viên dạng
+`@gmail.com`; nếu gửi thành công, mở thư mời và dùng liên kết trong vòng một
+phút để đặt mật khẩu. Không gửi App Password qua chat, không commit `.env`.
+`APP_URL=http://127.0.0.1:8000` chỉ dùng được khi người nhận mở liên kết trên
+cùng máy; nếu nhân viên dùng thiết bị khác, cần URL HTTPS công khai mà thiết bị
+đó truy cập được.
 
 ## 9. Các lệnh
 
@@ -263,7 +281,7 @@ Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
 | Kiểm tra cú pháp một file PHP | `php -l backend\src\Controllers\AuthController.php` |
 | Kiểm tra cú pháp JavaScript | `node --check frontend\assets\js\api.js` (Node chỉ cần cho bước kiểm tra này) |
 | Import schema | `mysql -u root -p < backend\database\schema.sql` |
-| Import dữ liệu mẫu | `mysql -u root -p fashion_pos_db < backend\database\seed.sql` |
+| Tạo tài khoản admin demo | `mysql -u root -p fashion_pos_db < backend\database\seed.sql` |
 | Build và chạy Docker | `docker compose up --build -d` |
 | Trạng thái container | `docker compose ps` |
 | Theo dõi log | `docker compose logs -f app` |
@@ -414,9 +432,10 @@ lỗi trả `{ "error": { "code": "...", "message": "...", "details": {} } }`.
 | `GET/POST /categories`, `PUT/DELETE /categories/{id}` | `CategoryController` | Đọc cần session; ghi chỉ admin |
 | `GET /customers`, `GET /customers/lookup` | `CustomerController` | Session; khách mới phát sinh theo đơn POS |
 | `GET/POST /orders`, `GET/PUT /orders/{id}` | `OrderController` | Session; giới hạn truy cập đơn theo role/user |
-| `GET /customers/{id}/orders` | `OrderController` | Session |
+| `GET /customers/{id}/orders?page=1&per_page=20` | `OrderController` | Session; phân trang lịch sử (tối đa 100 đơn/trang), trả `orders` và metadata `pagination` |
 | `GET /reports/sales` | `ReportController` | Session; phạm vi dữ liệu theo role |
 | `GET/POST /users`, `PUT /users/{id}/status` | `UserController` | Chỉ admin |
+| `POST /users/test-email` | `UserController` | Chỉ admin; gửi email thử tới `MAIL_FROM`, cần CSRF và SMTP |
 | `POST /users/{id}/resend-invitation` | `UserController` | Chỉ admin; SMTP cần cấu hình |
 | `GET/PUT /store_settings` | `SettingController` | Đọc cần session; ghi chỉ admin |
 | `GET/POST /payment_qrcodes`, `PUT /payment_qrcodes/{id}` | `SettingController` | Đọc cần session; ghi chỉ admin |
@@ -424,17 +443,36 @@ lỗi trả `{ "error": { "code": "...", "message": "...", "details": {} } }`.
 
 Mọi request thay đổi dữ liệu cần header `X-CSRF-TOKEN`. Frontend lấy token tự
 động từ `GET /api/auth/csrf-token`. Ứng dụng hiện cùng origin nên không bật CORS.
+Lịch sử đơn hàng khách hàng nhận `page` (mặc định `1`) và `per_page` (mặc định
+`20`, tối đa `100`); response chứa `pagination.page`, `pagination.per_page`,
+`pagination.total` và `pagination.total_pages`.
 
 ## 15. Tài khoản và quyền Admin
 
 - Role hiện có: `admin`, `staff`, `cashier`.
-- Tài khoản trong `seed.sql` là dữ liệu mẫu không đăng nhập được; không có
-  credential mặc định an toàn để dùng.
-- Sau khi import seed, tạo hash bằng PHP rồi dùng MySQL để kích hoạt/cập nhật
-  hàng admin seed (nếu còn) hoặc thêm hàng admin riêng.
+- Theo tài liệu yêu cầu demo, seed cung cấp tài khoản `admin` với mật khẩu
+  `admin`. Chỉ dùng credential này cho môi trường demo/local; hãy đổi sang mật
+  khẩu mạnh trước khi triển khai hoặc dùng dữ liệu thật.
+- Seed chỉ tạo tài khoản admin; sản phẩm, khách hàng, cửa hàng và mã QR được
+  thêm/cấu hình từ ứng dụng. Báo cáo sẽ có dữ liệu sau khi phát sinh đơn hàng.
+- Seed không tạo sẵn nhân viên. Đăng nhập bằng admin, cấu hình SMTP rồi tạo nhân
+  viên từ trang quản lý để kiểm tra lời mời email và token dùng một lần theo rubric.
+- Seed kích hoạt sẵn tài khoản này cho database khởi tạo mới. Với database đã
+  tồn tại, seed không tự chạy lại; để áp dụng credential demo, chạy SQL sau
+  trong đúng database:
 
-Tạo password hash trong PowerShell. Nhập mật khẩu ở dấu nhắc ẩn; mật khẩu không
-nằm trực tiếp trong lệnh:
+```sql
+UPDATE users
+SET password = '$2y$10$6UDgpBGj.Zuou.vgnfYWMuBeqqTVVs8dyOAAScP8cD1yrkUB6kUHC',
+    status = 'active',
+    is_first_login = 0,
+    login_token = NULL,
+    token_time = NULL
+WHERE username = 'admin' AND role = 'admin';
+```
+
+Nếu muốn đổi mật khẩu demo, tạo hash bằng PHP trong PowerShell. Nhập mật khẩu ở
+dấu nhắc ẩn; mật khẩu không nằm trực tiếp trong lệnh:
 
 ```powershell
 $securePassword = Read-Host "Mat khau admin moi" -AsSecureString
@@ -481,6 +519,8 @@ code hoặc Git.
 
 ## 16. Docker và build production
 
+- Hướng dẫn Docker chuyên sâu, giải thích Dockerfile/Compose, network, volume,
+  lệnh thường dùng và xử lý sự cố: [DOCKER_GUIDE.md](./DOCKER_GUIDE.md).
 - `Dockerfile` tạo PHP CLI image có `pdo_mysql` và `mbstring`, sau đó chạy
   `backend/dev-router.php` để phục vụ Frontend, API và uploads cùng origin.
 - `compose.yaml` chạy hai service: `app` (PHP) và `db` (MySQL 8.4). MySQL chỉ

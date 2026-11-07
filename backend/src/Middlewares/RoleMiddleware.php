@@ -7,9 +7,8 @@ use App\Core\ApiException;
 
 final class RoleMiddleware
 {
-    public static function requireAny(array $roles): void
+    public static function requireAny(array $roles, array $user): void
     {
-        $user = AuthMiddleware::requireUser();
         if (!in_array($user['role'], $roles, true)) {
             throw new ApiException('Bạn không có quyền thực hiện thao tác này.', 403, 'FORBIDDEN');
         }

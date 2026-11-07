@@ -36,6 +36,7 @@ final class UserController extends Controller
         }
         $username = strstr($email, '@', true);
         $token = bin2hex(random_bytes(32));
+        $userId = 0;
         $this->model->beginTransaction();
         try {
             $this->execute(
@@ -51,7 +52,7 @@ final class UserController extends Controller
                     'token' => hash('sha256', $token),
                 ]
             );
-            $this->sendInvitation($email, $username, $token);
+            $userId = (int)$this->model->lastInsertId();
             $this->model->commit();
         } catch (\Throwable $error) {
             if ($this->model->inTransaction()) {
@@ -62,7 +63,24 @@ final class UserController extends Controller
             }
             throw $error;
         }
+
+        $this->sendInvitationOrFail($userId, $email, $username, $token);
         $this->ok(['message' => 'Đã tạo tài khoản và gửi email mời đăng nhập.'], 201);
+    }
+
+    public function sendTestEmail(Request $request): void
+    {
+        $recipient = trim((string)(getenv('MAIL_FROM') ?: ''));
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            throw new ApiException('MAIL_FROM phải là địa chỉ email hợp lệ trước khi gửi email thử.', 503, 'SMTP_NOT_CONFIGURED');
+        }
+        SmtpMailer::send(
+            $recipient,
+            "Kiểm tra email B'TRIPLE POS",
+            "Email kiểm tra gửi lúc " . date('Y-m-d H:i:s') . " (giờ Việt Nam).\n\n" .
+                "Nếu bạn nhận được thư này, cấu hình SMTP của B'TRIPLE POS đã gửi email thành công."
+        );
+        $this->ok(['message' => 'Đã gửi email thử tới hộp thư MAIL_FROM.', 'recipient' => $recipient]);
     }
 
     public function updateStatus(Request $request): void
@@ -105,7 +123,6 @@ final class UserController extends Controller
                 'UPDATE users SET password = :password, login_token = :token, token_time = NOW(), status = "active" WHERE id = :id',
                 ['password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), 'token' => hash('sha256', $token), 'id' => $user['id']]
             );
-            $this->sendInvitation($user['email'], $user['username'], $token);
             $this->model->commit();
         } catch (\Throwable $error) {
             if ($this->model->inTransaction()) {
@@ -113,7 +130,23 @@ final class UserController extends Controller
             }
             throw $error;
         }
+        $this->sendInvitationOrFail((int)$user['id'], (string)$user['email'], (string)$user['username'], $token);
         $this->ok(['message' => 'Đã gửi lại email mời đăng nhập.']);
+    }
+
+    private function sendInvitationOrFail(int $userId, string $email, string $username, string $token): void
+    {
+        try {
+            $this->sendInvitation($email, $username, $token);
+        } catch (ApiException $error) {
+            throw new ApiException(
+                'Tài khoản đã được lưu nhưng email mời chưa gửi được: ' . $error->getMessage() .
+                    ' Hãy xử lý lỗi cấu hình ở trên rồi dùng nút gửi lại liên kết.',
+                $error->status,
+                'INVITATION_EMAIL_FAILED',
+                ['user_id' => $userId, 'cause' => $error->errorCode]
+            );
+        }
     }
 
     private function sendInvitation(string $email, string $username, string $token): void

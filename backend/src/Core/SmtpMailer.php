@@ -15,7 +15,7 @@ final class SmtpMailer
         $from = trim((string)(getenv('MAIL_FROM') ?: ''));
         $fromName = trim((string)(getenv('MAIL_FROM_NAME') ?: "B'TRIPLE POS"));
 
-        if ($host === '' || !$port || $port > 65535 || !in_array($encryption, ['tls', 'ssl'], true) ||
+        if ($host === '' || $port === false || $port < 1 || $port > 65535 || !in_array($encryption, ['tls', 'ssl'], true) ||
             $username === '' || $password === '' || !filter_var($from, FILTER_VALIDATE_EMAIL) ||
             !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             throw new ApiException('Cấu hình SMTP chưa đầy đủ hoặc không hợp lệ. Kiểm tra SMTP_HOST, SMTP_PORT, SMTP_ENCRYPTION, SMTP_USERNAME, SMTP_PASSWORD và MAIL_FROM.', 503, 'SMTP_NOT_CONFIGURED');
@@ -59,9 +59,9 @@ final class SmtpMailer
                 self::command($socket, 'EHLO btriple-pos.local', [250]);
             }
 
-            self::command($socket, 'AUTH LOGIN', [334]);
-            self::command($socket, base64_encode($username), [334]);
-            self::command($socket, base64_encode($password), [235]);
+            self::command($socket, 'AUTH LOGIN', [334], 'SMTP_AUTH_FAILED');
+            self::command($socket, base64_encode($username), [334], 'SMTP_AUTH_FAILED');
+            self::command($socket, base64_encode($password), [235], 'SMTP_AUTH_FAILED');
             self::command($socket, 'MAIL FROM:<' . $from . '>', [250]);
             self::command($socket, 'RCPT TO:<' . $recipient . '>', [250, 251]);
             self::command($socket, 'DATA', [354]);
@@ -92,10 +92,15 @@ final class SmtpMailer
         }
     }
 
-    private static function command($socket, string $command, array $expectedCodes): void
+    private static function command(
+        $socket,
+        string $command,
+        array $expectedCodes,
+        string $errorCode = 'SMTP_DELIVERY_FAILED'
+    ): void
     {
         self::write($socket, $command . "\r\n");
-        self::expect($socket, $expectedCodes);
+        self::expect($socket, $expectedCodes, $errorCode);
     }
 
     private static function write($socket, string $data): void
@@ -111,7 +116,7 @@ final class SmtpMailer
         }
     }
 
-    private static function expect($socket, array $expectedCodes): void
+    private static function expect($socket, array $expectedCodes, string $errorCode = 'SMTP_DELIVERY_FAILED'): void
     {
         $code = null;
         for ($lineCount = 0; $lineCount < 50; $lineCount++) {
@@ -130,6 +135,12 @@ final class SmtpMailer
         }
 
         if ($code === null || !in_array($code, $expectedCodes, true)) {
+            if ($errorCode === 'SMTP_AUTH_FAILED') {
+                throw new ApiException('Máy chủ SMTP từ chối xác thực. Kiểm tra SMTP_USERNAME và App Password.', 503, $errorCode, ['smtp_status' => $code]);
+            }
+            if ($errorCode === 'SMTP_DELIVERY_FAILED') {
+                throw new ApiException('Máy chủ SMTP từ chối thao tác gửi email. Kiểm tra địa chỉ người gửi và quyền gửi thư.', 503, $errorCode, ['smtp_status' => $code]);
+            }
             throw new \RuntimeException('Unexpected SMTP response code ' . (string)$code . '.');
         }
     }
