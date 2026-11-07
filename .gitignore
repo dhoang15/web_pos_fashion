@@ -53,7 +53,7 @@ Temporary Items
 .env
 .env.*
 !.env.example
-docker.env
+.docker.env.*
 
 # Dependencies and generated output
 node_modules/
