@@ -2,7 +2,6 @@
 .gitignore
 .env
 .env.*
-!.env.example
 docker.env
 docker.env.*
 backend/.env

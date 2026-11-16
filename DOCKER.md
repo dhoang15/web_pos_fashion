@@ -126,6 +126,12 @@ Compose truyền thông tin kết nối cho PHP bằng environment variables.
 
 Compose đọc `.env` ở thư mục gốc để thay `${VARIABLE}` trong `compose.yaml`.
 `docker.env.example` chỉ là file mẫu, Compose không tự đọc file đó.
+`MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` và `MYSQL_ROOT_PASSWORD` phải
+có giá trị; Compose báo lỗi nếu thiếu. `SESSION_SECURE` và `APP_URL` có giá trị
+phù hợp để chạy local. Có thể để các biến SMTP trống nếu chưa dùng email; khi
+đó ứng dụng vẫn chạy nhưng chức năng gửi thư mời không hoạt động.
+`STAFF_TEMP_PASSWORD` mặc định là MSSV trưởng nhóm `52400269`; nếu mã này thay
+đổi, cập nhật biến trong root `.env` trước khi tạo hoặc gửi lại lời mời nhân viên.
 
 Trên PowerShell, tạo `.env` chỉ khi chưa có file để tránh ghi đè cấu hình local:
 
@@ -175,8 +181,8 @@ http://127.0.0.1:8000/
 
 `docker compose up --build -d` sẽ build/cập nhật image khi cần và chạy các
 container ở chế độ nền. Lần đầu, MySQL tạo database, bảng và tài khoản admin
-demo nếu named volume `mysql_data` còn rỗng. Seed không tạo sản phẩm, khách
-hàng, đơn hàng hay cấu hình mẫu. Kiểm tra log nếu `app` chưa sẵn sàng:
+demo, 4 danh mục và 8 sản phẩm mẫu nếu named volume `mysql_data` còn rỗng. Seed
+không tạo khách hàng hoặc hóa đơn giả. Kiểm tra log nếu `app` chưa sẵn sàng:
 
 ```powershell
 docker compose logs --tail 100 db
@@ -475,9 +481,10 @@ docker compose up --build -d
 docker compose logs db
 ```
 
-Seed hiện chỉ tạo admin demo `admin/admin`. Không đưa dữ liệu nhân viên, khách
-hàng, đơn hàng, sản phẩm hay QR giả vào seed khởi tạo. Dữ liệu cửa hàng thật có
-thể thêm trong ứng dụng sau khi đăng nhập.
+Seed tạo admin demo `admin/admin`, 4 danh mục và 8 sản phẩm thời trang mẫu để
+có thể thử POS ngay sau khi clone. Seed không tạo nhân viên, khách hàng, đơn
+hàng hay QR giả. Dữ liệu cửa hàng thật có thể thay đổi trong ứng dụng sau khi
+đăng nhập.
 
 #### Thêm seed riêng khi khởi tạo volume mới
 
@@ -488,22 +495,21 @@ service `db` của `compose.yaml`:
 - ./backend/database/custom-seed.sql:/docker-entrypoint-initdb.d/03-custom-seed.sql:ro
 ```
 
-Khi đó script được chạy sau schema và admin seed, nhưng chỉ khi `mysql_data` mới
+Khi đó script được chạy sau schema và seed mặc định, nhưng chỉ khi `mysql_data` mới
 được tạo.
 
 #### Áp dụng seed vào database Docker đang chạy
 
-Không import lại `seed.sql` vào database đã có admin vì nó có thể báo trùng
-khóa. Tạo một file SQL riêng chỉ chứa dữ liệu mới, rồi chạy từ PowerShell:
+`seed.sql` có thể chạy lại an toàn để bổ sung admin demo, danh mục hoặc sản phẩm
+mẫu còn thiếu. Danh mục được bỏ qua nếu tên đã tồn tại; sản phẩm được bỏ qua
+nếu barcode đã có. Từ PowerShell tại thư mục dự án, chạy:
 
 ```powershell
-docker compose cp .\backend\database\custom-seed.sql db:/tmp/custom-seed.sql
-docker compose exec -T db sh -c 'mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /tmp/custom-seed.sql; result=$?; rm -f /tmp/custom-seed.sql; exit "$result"'
+Get-Content .\backend\database\seed.sql -Raw | docker compose exec -T db sh -c 'mysql --default-character-set=utf8mb4 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
-Đảm bảo các khóa chính, SKU, barcode và số điện thoại không trùng dữ liệu đang
-có. Tạo backup trước khi áp dụng SQL thay đổi/xóa dữ liệu; không cần xóa volume
-để thêm seed.
+Lệnh này không xóa hoặc ghi đè đơn hàng/dữ liệu khác; không cần xóa volume để
+thêm dữ liệu demo.
 
 ### Upload ảnh bị lỗi
 
@@ -530,7 +536,6 @@ SMTP_ENCRYPTION=tls
 SMTP_USERNAME=you@gmail.com
 SMTP_PASSWORD=your-16-character-app-password
 MAIL_FROM=you@gmail.com
-MAIL_FROM_NAME=B'TRIPLE POS
 ```
 
 Sau khi lưu `.env`, kiểm tra Compose và tạo lại riêng app để nạp biến mới:
@@ -542,11 +547,12 @@ docker compose ps
 docker compose logs --tail 100 app
 ```
 
-Đăng nhập QTV, mở **Nhân viên** và bấm **Gửi email thử**. Thư thử được gửi
-đến `MAIL_FROM`; thao tác này chỉ gửi khi bạn chủ động bấm nút. Sau khi xác
-nhận nhận được thư, tạo nhân viên với địa chỉ Gmail thật. Ứng dụng chỉ nhận
-email nhân viên `@gmail.com`. Mở email mời và dùng link trong vòng một phút để
-đặt mật khẩu. Nếu gửi lời mời gặp lỗi, tài khoản vẫn được lưu và có thể dùng
+Sau khi cấu hình SMTP, đăng nhập QTV và tạo nhân viên bằng địa chỉ Gmail của
+người nhận thật để gửi email mời. Ứng dụng chỉ nhận email nhân viên `@gmail.com`.
+Người nhận mở email mời và dùng link trong vòng một phút để
+đăng nhập bằng tên người dùng và mật khẩu tạm là MSSV trưởng nhóm, rồi đổi mật
+khẩu lần đầu. Mật khẩu tạm đọc từ `STAFF_TEMP_PASSWORD` trong root `.env`; mẫu
+Docker hiện dùng `52400269`. Nếu gửi lời mời gặp lỗi, tài khoản vẫn được lưu và có thể dùng
 nút **Gửi lại link 1 phút** sau khi sửa cấu hình. `APP_URL=http://127.0.0.1:8000`
 chỉ dùng khi người nhận mở link trên chính máy đó; gửi cho người dùng thiết bị
 khác thì cần URL HTTPS công khai mà họ truy cập được.

@@ -18,7 +18,7 @@
         <div id="sidebar-container"></div>
         <main class="app-main flex-grow-1">
             <section class="page-heading d-flex flex-wrap align-items-end justify-content-between gap-3">
-                <div><span class="management-eyebrow">TEAM ACCESS</span><h1>Nhân viên</h1><p>Quản lý quyền truy cập và trạng thái tài khoản cửa hàng.</p></div>
+                <div><span class="management-eyebrow">QUẢN LÝ TÀI KHOẢN</span><h1>Nhân viên</h1><p>Quản lý quyền truy cập và trạng thái tài khoản cửa hàng.</p></div>
                 <button class="btn btn-management-primary px-4" type="button" id="add-user"><i class="bi bi-person-plus me-2" aria-hidden="true"></i>Thêm nhân viên</button>
             </section>
 
@@ -29,23 +29,9 @@
                 <div class="col-6 col-xl-3"><article class="management-stat-card"><span class="management-stat-icon is-muted"><i class="bi bi-person-dash" aria-hidden="true"></i></span><span class="management-stat-label">Ngừng hoạt động</span><strong id="inactive-users">—</strong></article></div>
             </section>
 
-            <section class="surface-card management-panel p-3 p-lg-4 mb-4" aria-labelledby="test-email-heading">
-                <form id="test-email-form" class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <div>
-                        <span class="management-eyebrow">SMTP CHECK</span>
-                        <h2 class="h6 fw-bold mb-1" id="test-email-heading">Kiểm tra gửi email</h2>
-                        <p class="text-muted small mb-0">Gửi một email thử tới hộp thư MAIL_FROM đã cấu hình trong Docker.</p>
-                        <p id="test-email-status" class="status-message small mt-2 mb-0" aria-live="polite"></p>
-                    </div>
-                    <button class="btn btn-outline-primary" type="submit" id="send-test-email">
-                        <i class="bi bi-envelope-check me-2" aria-hidden="true"></i>Gửi email thử
-                    </button>
-                </form>
-            </section>
-
             <section class="surface-card management-panel p-3 p-lg-4">
                 <div class="management-toolbar mb-3">
-                    <div><span class="management-eyebrow">STAFF ACCOUNTS</span><h2 class="h5 fw-bold mb-0">Danh sách nhân viên</h2></div>
+                    <div><span class="management-eyebrow">DANH SÁCH</span><h2 class="h5 fw-bold mb-0">Danh sách nhân viên</h2></div>
                     <label class="input-group management-search" for="search-users">
                         <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                         <input id="search-users" class="form-control" type="search" placeholder="Tìm họ tên hoặc Gmail..." aria-label="Tìm nhân viên theo tên hoặc Gmail">
@@ -65,11 +51,11 @@
     <div class="modal fade" id="user-modal" tabindex="-1" aria-labelledby="user-modal-title" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4">
             <form id="user-form">
-                <div class="modal-header"><div><span class="management-eyebrow">NEW TEAM MEMBER</span><h2 class="modal-title fs-5 fw-bold" id="user-modal-title">Thêm nhân viên</h2></div><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+                <div class="modal-header"><div><span class="management-eyebrow">TÀI KHOẢN MỚI</span><h2 class="modal-title fs-5 fw-bold" id="user-modal-title">Thêm nhân viên</h2></div><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
                 <div class="modal-body">
                     <p class="text-muted small">Nhân viên sẽ nhận email kích hoạt có hiệu lực trong 1 phút.</p>
                     <div class="mb-3"><label class="form-label fw-semibold" for="user-name">Họ tên</label><input class="form-control" id="user-name" name="name" autocomplete="name" maxlength="100" required></div>
-                    <div class="mb-3"><label class="form-label fw-semibold" for="user-phone">Số điện thoại</label><input class="form-control" id="user-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" pattern="(?:\+84|0)[0-9]{9}" placeholder="0912345678" title="Nhập số điện thoại Việt Nam gồm 10 số, hoặc bắt đầu bằng +84." required></div>
+                    <div class="mb-3"><label class="form-label fw-semibold" for="user-phone">Số điện thoại (không bắt buộc)</label><input class="form-control" id="user-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" pattern="(?:\+84|0)[0-9]{9}" placeholder="0912345678" title="Nhập số điện thoại Việt Nam gồm 10 số, hoặc bắt đầu bằng +84."></div>
                     <div><label class="form-label fw-semibold" for="user-email">Gmail</label><input class="form-control" id="user-email" name="email" type="email" maxlength="100" pattern=".+@[gG][mM][aA][iI][lL]\.[cC][oO][mM]" placeholder="ten@gmail.com" required></div>
                     <p id="user-form-status" class="status-message small mt-3 mb-0" aria-live="polite"></p>
                 </div>
@@ -83,7 +69,7 @@
             <div class="modal-content border-0 rounded-4">
                 <div class="modal-header">
                     <div>
-                        <span class="management-eyebrow">EMPLOYEE PROFILE</span>
+                        <span class="management-eyebrow">HỒ SƠ NHÂN VIÊN</span>
                         <h2 class="modal-title fs-5 fw-bold" id="employee-detail-title">Chi tiết nhân viên</h2>
                     </div>
                     <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -110,7 +96,7 @@
                     <section aria-labelledby="employee-sales-heading">
                         <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
                             <div>
-                                <span class="management-eyebrow">SALES ACTIVITY</span>
+                                <span class="management-eyebrow">HOẠT ĐỘNG BÁN HÀNG</span>
                                 <h3 class="h5 fw-bold mb-0" id="employee-sales-heading">Doanh số nhân viên</h3>
                             </div>
                             <form id="employee-sales-filter" class="d-flex flex-wrap align-items-end gap-2">

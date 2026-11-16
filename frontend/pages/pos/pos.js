@@ -16,21 +16,11 @@
     const receivedInput = document.getElementById("amount-received");
     const discountInput = document.getElementById("discount-amount");
     const taxRateLabel = document.getElementById("tax-rate-label");
-    const qrModal = createModal(document.getElementById("qr-modal"));
-    const invoiceModal = createModal(document.getElementById("invoice-modal"));
+    const qrModal = window.PosCommon.createModal(document.getElementById("qr-modal"));
+    const invoiceModal = window.PosCommon.createModal(document.getElementById("invoice-modal"));
     const customerHistoryModalElement = document.getElementById("pos-customer-history-modal");
-    const customerHistoryModal = createModal(customerHistoryModalElement);
+    const customerHistoryModal = window.PosCommon.createModal(customerHistoryModalElement);
     if (!window.bootstrap || !window.bootstrap.Modal) {
-        document.querySelectorAll(".modal [data-bs-dismiss='modal']").forEach(function (button) {
-            button.addEventListener("click", function () {
-                const modalElement = button.closest(".modal");
-                if (modalElement === customerHistoryModalElement) invalidateCustomerHistory();
-                modalElement.classList.remove("show");
-                modalElement.style.display = "none";
-                modalElement.setAttribute("aria-hidden", "true");
-                document.body.classList.remove("modal-open");
-            });
-        });
         document.querySelectorAll(".modal .btn-close").forEach(function (button) {
             button.textContent = "×";
         });
@@ -71,26 +61,6 @@
             disabledBeforeSubmit.clear();
             getTotals();
         }
-    }
-
-    function createModal(element) {
-        if (window.bootstrap && window.bootstrap.Modal) {
-            return new window.bootstrap.Modal(element);
-        }
-        return {
-            show: function () {
-                element.classList.add("show");
-                element.style.display = "block";
-                element.removeAttribute("aria-hidden");
-                document.body.classList.add("modal-open");
-            },
-            hide: function () {
-                element.classList.remove("show");
-                element.style.display = "none";
-                element.setAttribute("aria-hidden", "true");
-                document.body.classList.remove("modal-open");
-            }
-        };
     }
 
     function valueFromResponse(response, key) {

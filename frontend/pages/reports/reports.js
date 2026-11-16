@@ -245,7 +245,7 @@
             const completedOrders = orders.filter(function (order) {
                 return !order.status || order.status === "completed";
             });
-            const receivedTotal = summary.total_received ?? summary.total_revenue ?? summary.revenue ??
+            const receivedTotal = summary.total_revenue ?? summary.revenue ?? summary.total_received ??
                 completedOrders.reduce(function (sum, order) {
                     return sum + (Number(order.total_amount) || 0);
                 }, 0);

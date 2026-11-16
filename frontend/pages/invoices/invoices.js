@@ -194,7 +194,7 @@
                 return order.status === "completed";
             });
             const reportedOrderCount = summary.order_count ?? summary.total_orders ?? summary.total_count;
-            const reportedRevenue = summary.total_received ?? summary.total_revenue ?? summary.revenue;
+            const reportedRevenue = summary.total_revenue ?? summary.revenue ?? summary.total_received;
             const orderCount = Number(reportedOrderCount ?? completedOrders.length);
             const received = reportedRevenue == null
                 ? completedOrders.reduce(function (sum, order) {

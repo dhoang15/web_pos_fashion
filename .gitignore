@@ -62,6 +62,10 @@ dist/
 build/
 *.log
 
+# Submission-only materials may contain personal information and should be
+# delivered separately from the source repository.
+/readme.txt
+
 # Operating systems
 .DS_Store
 ._*

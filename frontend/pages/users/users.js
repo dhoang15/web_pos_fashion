@@ -10,9 +10,6 @@
 
     const form = document.getElementById("user-form");
     const formStatus = document.getElementById("user-form-status");
-    const testEmailForm = document.getElementById("test-email-form");
-    const testEmailStatus = document.getElementById("test-email-status");
-    const testEmailButton = document.getElementById("send-test-email");
     const modal = window.PosCommon.createModal(document.getElementById("user-modal"));
     const detailModal = window.PosCommon.createModal(document.getElementById("employee-detail-modal"));
     const status = document.getElementById("users-status");
@@ -357,7 +354,7 @@
             const orders = reportOrders(response).filter(function (order) {
                 return !order.status || order.status === "completed";
             });
-            const reportedRevenue = summary.total_received ?? summary.total_revenue ?? summary.revenue;
+            const reportedRevenue = summary.total_revenue ?? summary.revenue ?? summary.total_received;
             const totalReceived = reportedRevenue == null
                 ? orders.reduce(function (total, order) {
                     return total + (Number(order.total_amount ?? order.total) || 0);
@@ -392,23 +389,6 @@
         modal.show();
     });
     search.addEventListener("input", render);
-    testEmailForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        testEmailButton.disabled = true;
-        testEmailStatus.textContent = "Đang kết nối SMTP và gửi email thử...";
-        testEmailStatus.classList.remove("is-error");
-        try {
-            const response = await window.PosApi.post("users/test-email", {});
-            testEmailStatus.textContent = response.data.message + " (" + response.data.recipient + ")";
-            window.PosCommon.notify(testEmailStatus.textContent, "success");
-        } catch (error) {
-            testEmailStatus.textContent = "Không gửi được email thử: " + error.message;
-            testEmailStatus.classList.add("is-error");
-            window.PosCommon.notify(testEmailStatus.textContent, "danger");
-        } finally {
-            testEmailButton.disabled = false;
-        }
-    });
     salesFilter.addEventListener("submit", function (event) {
         event.preventDefault();
         loadEmployeeSales();

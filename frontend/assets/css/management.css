@@ -1,14 +1,14 @@
 :root {
-    --management-ink: #1e293b;
-    --management-muted: #718096;
-    --management-border: #e7eaf0;
-    --management-accent: #4f46e5;
-    --management-accent-dark: #3730a3;
-    --management-accent-soft: #eef2ff;
+    --management-ink: var(--color-ink);
+    --management-muted: var(--color-muted);
+    --management-border: var(--color-border);
+    --management-accent: var(--color-brand);
+    --management-accent-dark: var(--color-brand-dark);
+    --management-accent-soft: var(--color-brand-soft);
 }
 
 .management-page {
-    background: #f8f9fa;
+    background: var(--color-canvas);
     color: var(--management-ink);
 }
 
@@ -155,7 +155,7 @@
 
 .management-table {
     min-width: 1050px;
-    --bs-table-hover-bg: #f8f9ff;
+    --bs-table-hover-bg: var(--color-brand-soft);
 }
 
 .management-table thead th {
@@ -230,8 +230,8 @@
 
 .management-page .form-control:focus,
 .management-page .form-select:focus {
-    border-color: #a5b4fc;
-    box-shadow: 0 0 0 0.2rem rgb(79 70 229 / 12%);
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 0.2rem rgb(107 79 63 / 12%);
 }
 
 .category-editor {

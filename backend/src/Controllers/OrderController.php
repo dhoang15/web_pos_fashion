@@ -162,7 +162,11 @@ final class OrderController extends Controller
                 ];
             }
 
-            $customerId = $this->resolveCustomer($input['customer_id'] ?? null, $customerInput);
+            $customerId = $this->resolveCustomer(
+                $input['customer_id'] ?? null,
+                $customerInput,
+                $status === 'completed'
+            );
             $customer = $customerId ? $this->row('SELECT * FROM customers WHERE id = :id', ['id' => $customerId]) : null;
             $discount = round($subtotal * (float)$discountPercent / 100, 2);
             $settings = $this->rows("SELECT setting_key, setting_value FROM store_settings WHERE setting_key = 'tax_rate'");
@@ -232,8 +236,19 @@ final class OrderController extends Controller
         $this->ok(['order' => $order], $existing ? 200 : 201);
     }
 
-    private function resolveCustomer($customerId, array $customerInput): ?int
+    private function resolveCustomer($customerId, array $customerInput, bool $createIfMissing): ?int
     {
+        $name = trim((string)($customerInput['full_name'] ?? ''));
+        $address = trim((string)($customerInput['address'] ?? ''));
+        if (mb_strlen($name) > 100 || mb_strlen($address) > 255) {
+            throw new ApiException(
+                'Thông tin khách hàng vượt quá độ dài cho phép.',
+                422,
+                'VALIDATION_ERROR',
+                ['customer' => ['Họ tên tối đa 100 ký tự và địa chỉ tối đa 255 ký tự.']]
+            );
+        }
+
         if ($customerId !== null && $customerId !== '') {
             $customer = $this->row('SELECT id FROM customers WHERE id = :id', ['id' => (int)$customerId]);
             if (!$customer) {
@@ -243,21 +258,35 @@ final class OrderController extends Controller
         }
         $phone = preg_replace('/[\s.-]/', '', trim((string)($customerInput['phone'] ?? '')));
         if ($phone === '') {
+            if ($createIfMissing) {
+                throw new ApiException('Số điện thoại khách hàng là bắt buộc khi hoàn tất thanh toán.', 422, 'VALIDATION_ERROR', ['phone' => ['Số điện thoại là bắt buộc.']]);
+            }
             return null;
         }
-        $name = trim((string)($customerInput['full_name'] ?? ''));
-        $address = trim((string)($customerInput['address'] ?? ''));
+        if (!preg_match('/^\+?[0-9]{8,15}$/', $phone)) {
+            throw new ApiException('Số điện thoại khách hàng phải có từ 8 đến 15 chữ số.', 422, 'VALIDATION_ERROR', ['phone' => ['Số điện thoại không hợp lệ.']]);
+        }
+
         $existing = $this->row('SELECT id FROM customers WHERE phone = :phone', ['phone' => $phone]);
         if ($existing) {
-            $this->execute('UPDATE customers SET full_name = :name, address = :address WHERE id = :id', [
-                'name' => $name !== '' ? $name : 'Khách hàng',
-                'address' => $address ?: null,
-                'id' => $existing['id'],
-            ]);
             return (int)$existing['id'];
         }
+
+        if (!$createIfMissing) {
+            return null;
+        }
+
+        if ($name === '' || $address === '') {
+            throw new ApiException(
+                'Khách hàng mới cần có họ tên và địa chỉ hợp lệ.',
+                422,
+                'VALIDATION_ERROR',
+                ['customer' => ['Nhập họ tên (tối đa 100 ký tự) và địa chỉ (tối đa 255 ký tự).']]
+            );
+        }
+
         $this->execute('INSERT INTO customers (phone, full_name, address) VALUES (:phone, :name, :address)', [
-            'phone' => $phone, 'name' => $name !== '' ? $name : 'Khách hàng', 'address' => $address ?: null,
+            'phone' => $phone, 'name' => $name, 'address' => $address,
         ]);
         return (int)$this->model->lastInsertId();
     }

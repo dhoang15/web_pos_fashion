@@ -26,7 +26,7 @@ final class AuthController extends Controller
             throw new ApiException('Tên đăng nhập hoặc mật khẩu không chính xác.', 401, 'INVALID_CREDENTIALS');
         }
         if ((int)$user['is_first_login'] === 1 && $user['role'] !== 'admin') {
-            throw new ApiException('Nhân viên mới cần tạo mật khẩu từ liên kết mời trong email trước khi đăng nhập.', 403, 'INVITATION_REQUIRED');
+            throw new ApiException('Nhân viên mới phải mở liên kết mời trong email và đăng nhập bằng mật khẩu tạm.', 403, 'INVITATION_REQUIRED');
         }
 
         session_regenerate_id(true);
@@ -41,35 +41,31 @@ final class AuthController extends Controller
         $this->ok(['user' => $this->publicUser($user)]);
     }
 
-    public function completeInvitation(Request $request): void
+    public function invitationLogin(Request $request): void
     {
         $input = $request->input();
         $token = trim((string)($input['token'] ?? ''));
+        $username = $this->required($input, 'username', 50);
         $password = (string)($input['password'] ?? '');
         if (!preg_match('/^[a-f0-9]{64}$/i', $token)) {
             throw new ApiException('Liên kết mời không hợp lệ hoặc đã hết hạn.', 422, 'INVITATION_EXPIRED');
         }
-        $this->validateNewPassword($password, (string)($input['password_confirmation'] ?? ''));
 
         $this->model->beginTransaction();
         try {
             $user = $this->row(
-                "SELECT id, username, email, role, first_name, last_name, phone, avatar, status, is_first_login " .
-                "FROM users WHERE login_token = :token AND is_first_login = 1 AND status = 'active' " .
+                "SELECT * FROM users WHERE (username = :username OR email = :email) " .
+                "AND login_token = :token AND is_first_login = 1 AND status = 'active' " .
                 'AND token_time > DATE_SUB(NOW(), INTERVAL 1 MINUTE) AND token_time <= NOW() LIMIT 1 FOR UPDATE',
-                ['token' => hash('sha256', $token)]
+                ['username' => $username, 'email' => $username, 'token' => hash('sha256', $token)]
             );
-            if (!$user) {
-                throw new ApiException('Liên kết mời không hợp lệ hoặc đã hết hạn. Hãy yêu cầu quản trị viên gửi lại.', 403, 'INVITATION_EXPIRED');
+            if (!$user || !password_verify($password, $user['password'])) {
+                throw new ApiException('Thông tin đăng nhập không đúng hoặc liên kết mời đã hết hạn. Hãy kiểm tra email hoặc yêu cầu quản trị viên gửi lại.', 403, 'INVITATION_EXPIRED');
             }
             $this->execute(
-                "UPDATE users SET password = :password, is_first_login = 0, login_token = NULL, token_time = NULL " .
+                'UPDATE users SET login_token = NULL, token_time = NULL ' .
                 "WHERE id = :id AND is_first_login = 1 AND login_token = :token",
-                [
-                    'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'id' => $user['id'],
-                    'token' => hash('sha256', $token),
-                ]
+                ['id' => $user['id'], 'token' => hash('sha256', $token)]
             );
             $this->model->commit();
         } catch (\Throwable $error) {
@@ -83,8 +79,7 @@ final class AuthController extends Controller
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['user_id'] = (int)$user['id'];
         $_SESSION['role'] = $user['role'];
-        unset($_SESSION['is_first_login']);
-        $user['is_first_login'] = 0;
+        $_SESSION['is_first_login'] = true;
         $this->ok(['user' => $this->publicUser($user)]);
     }
 

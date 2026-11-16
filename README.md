@@ -9,9 +9,55 @@
 > qua JSON API cùng origin. Dự án không dùng React, Vite, Vue, npm hoặc Composer;
 > có Docker Compose cho môi trường phát triển.
 
+## Setup & Run nhanh (Docker)
+
+### Yêu cầu
+
+- Docker Desktop trên Windows/macOS, hoặc Docker Engine và Docker Compose Plugin
+  trên Linux.
+- Không cần cài Node.js, npm, Composer hoặc PHP riêng khi chạy bằng Docker.
+
+### Cài đặt và khởi chạy
+
+Mở PowerShell tại thư mục gốc dự án:
+
+```powershell
+if (-not (Test-Path .env)) {
+    Copy-Item docker.env.example .env
+}
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
+```
+
+Mở **<http://127.0.0.1:8000/>** sau khi service `app` và `db` chạy khỏe.
+Đăng nhập môi trường demo bằng `admin` / `admin`; hãy đổi mật khẩu này trước
+khi dùng dữ liệu thật hoặc chia sẻ môi trường. Không commit file `.env`.
+
+### Database
+
+- [`backend/database/schema.sql`](./backend/database/schema.sql) tạo database
+  `fashion_pos_db` và các bảng.
+- [`backend/database/seed.sql`](./backend/database/seed.sql) khởi tạo tài khoản
+  quản trị demo `admin/admin`, 4 danh mục và 8 sản phẩm quần áo mẫu cho POS.
+  Seed không tạo khách hàng hoặc hóa đơn giả.
+- Docker tự chạy hai file SQL trên theo thứ tự khi khởi tạo volume MySQL mới.
+  Volume đã có dữ liệu thì script không chạy lại; không xóa volume chỉ để nạp
+  lại seed.
+
+Muốn dừng ứng dụng mà vẫn giữ dữ liệu:
+
+```powershell
+docker compose down
+```
+
+Để xem hướng dẫn cài đặt không dùng Docker, cấu hình môi trường và xử lý sự cố,
+xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md](./DOCKER.md).
+
 ## 3. Mục lục
 
 - [1. Tiêu đề dự án](#btriple-pos)
+- [Setup & Run nhanh (Docker)](#setup-run-nhanh-docker)
 - [2. Mô tả ngắn và trạng thái dự án](#2-mô-tả-ngắn-và-trạng-thái-dự-án)
 - [3. Mục lục](#3-mục-lục)
 - [4. Tính năng](#4-tính-năng)
@@ -42,7 +88,8 @@
 - Quản lý khách hàng và lịch sử đơn hàng.
 - Danh sách hóa đơn, chi tiết đơn, báo cáo doanh thu.
 - Quản lý nhân viên, trạng thái tài khoản và lời mời qua email.
-- Liên kết mời dùng một lần; nhân viên tự tạo mật khẩu.
+- Nhân viên mới phải mở link mời còn hạn một phút, đăng nhập bằng MSSV trưởng
+  nhóm làm mật khẩu tạm rồi đổi mật khẩu trước khi vào các chức năng khác.
 - Cập nhật hồ sơ, avatar, mật khẩu và thiết lập cửa hàng.
 - CSRF token cho request ghi; cookie session `HttpOnly`, `SameSite=Lax` và
   `Secure` mặc định.
@@ -97,9 +144,10 @@ Có thể dùng phpMyAdmin:
 2. Chọn **Import** và nạp `backend/database/schema.sql`. File này tạo database
    `fashion_pos_db` và các bảng.
 3. Chọn database `fashion_pos_db`, nạp `backend/database/seed.sql` để tạo tài
-   khoản quản trị demo `admin/admin`. Seed không thêm sản phẩm, khách hàng, đơn
-   hàng hoặc cấu hình cửa hàng mẫu.
-4. Chỉ import `seed.sql` một lần trên database mới; seed không phải script reset.
+   khoản quản trị demo `admin/admin`, danh mục và sản phẩm mẫu. Seed không tạo
+   khách hàng hoặc hóa đơn giả.
+4. Seed không phải script reset; có thể chạy lại để thêm các dòng dữ liệu mẫu
+   đang thiếu mà không xóa hoặc ghi đè đơn hàng.
 
 Hoặc dùng MySQL CLI từ thư mục gốc:
 
@@ -166,7 +214,9 @@ Plugin (Linux), sau đó mở Docker daemon.
 Từ PowerShell tại thư mục gốc repository:
 
 ```powershell
-Copy-Item docker.env.example .env
+if (-not (Test-Path .env)) {
+    Copy-Item docker.env.example .env
+}
 docker compose up --build -d
 docker compose ps
 ```
@@ -175,8 +225,9 @@ Mở **<http://127.0.0.1:8000/>**. Compose khởi tạo container PHP và MySQL;
 database volume được tạo lần đầu, MySQL tự chạy `schema.sql` rồi `seed.sql`.
 Ứng dụng chỉ khởi động sau khi MySQL health check thành công.
 
-Các giá trị mật khẩu mặc định trong `docker.env.example` chỉ dành cho thử nghiệm
-trên máy local. Trước khi dùng ngoài localhost, thay cả hai mật khẩu
+Các biến database trong `.env` là bắt buộc; Compose dừng và báo tên biến nếu
+thiếu. Giá trị mẫu trong `docker.env.example` chỉ dành cho thử nghiệm local.
+Trước khi dùng ngoài localhost, thay cả hai mật khẩu
 `MYSQL_PASSWORD` và `MYSQL_ROOT_PASSWORD` trong file `.env`. Không commit file
 `.env`. SMTP là tùy chọn; thêm credential SMTP vào file `.env` nếu cần gửi lời
 mời nhân viên.
@@ -225,16 +276,17 @@ không ghi credential thật trong issue, chat hoặc log.
 | `SESSION_NAME` | Không | Tên session cookie; mặc định `btriple_pos` |
 | `SESSION_SECURE` | Không | Cookie chỉ gửi qua HTTPS; mặc định bật. Tắt (`0`) chỉ cho HTTP local |
 | `APP_URL` | Khi gửi thư | URL gốc được dùng để tạo link mời |
+| `STAFF_TEMP_PASSWORD` | Khi mời nhân viên | MSSV trưởng nhóm dùng làm mật khẩu tạm; Docker mẫu hiện đặt `52400269` |
 | `SMTP_HOST` | Khi gửi thư | SMTP server, ví dụ `smtp.gmail.com` |
 | `SMTP_PORT` | Khi gửi thư | Cổng SMTP, thường `587` cho STARTTLS |
 | `SMTP_ENCRYPTION` | Khi gửi thư | `tls` (STARTTLS) hoặc `ssl` |
 | `SMTP_USERNAME` | Khi gửi thư | Tài khoản SMTP |
 | `SMTP_PASSWORD` | Khi gửi thư | SMTP password/App Password |
 | `MAIL_FROM` | Khi gửi thư | Địa chỉ email gửi |
-| `MAIL_FROM_NAME` | Không | Tên hiển thị người gửi; mặc định `B'TRIPLE POS` |
 
-¹ Các biến database có giá trị mặc định cho local, nhưng phải khớp với MySQL
-đang chạy.
+Các biến `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` và
+`MYSQL_ROOT_PASSWORD` trong root `.env` là bắt buộc cho Docker Compose. Không
+đặt SMTP thì tính năng mời nhân viên qua email không hoạt động.
 
 Với Docker, sửa file `.env` ở **thư mục gốc**, cùng cấp `compose.yaml`
 (`backend/.env` không được Compose dùng để cấp SMTP cho container). Gmail cần
@@ -248,7 +300,6 @@ SMTP_ENCRYPTION=tls
 SMTP_USERNAME=you@gmail.com
 SMTP_PASSWORD=your-16-character-app-password
 MAIL_FROM=you@gmail.com
-MAIL_FROM_NAME=B'TRIPLE POS
 ```
 
 `SMTP_USERNAME` và `MAIL_FROM` phải là hộp thư đã cấp App Password. Sau khi lưu
@@ -262,8 +313,9 @@ docker compose up -d --force-recreate app
 
 Sau đó đăng nhập QTV, mở **Nhân viên**, tạo nhân viên mới với địa chỉ Gmail
 thật mà bạn có thể nhận thư. Ứng dụng chỉ chấp nhận email nhân viên dạng
-`@gmail.com`; nếu gửi thành công, mở thư mời và dùng liên kết trong vòng một
-phút để đặt mật khẩu. Không gửi App Password qua chat, không commit `.env`.
+`@gmail.com`; nếu gửi thành công, mở liên kết trong vòng một phút, đăng nhập
+bằng tên đăng nhập và mật khẩu tạm là MSSV trưởng nhóm, sau đó tạo mật khẩu mới.
+Không gửi App Password qua chat, không commit `.env`.
 `APP_URL=http://127.0.0.1:8000` chỉ dùng được khi người nhận mở liên kết trên
 cùng máy; nếu nhân viên dùng thiết bị khác, cần URL HTTPS công khai mà thiết bị
 đó truy cập được.
@@ -347,7 +399,7 @@ Vue Router hoặc client-side SPA router.
 |---|---|---|
 | Dashboard | `/` hoặc `/index.html` | Admin, staff, cashier |
 | Đăng nhập | `/pages/auth/login.html` | Công khai |
-| Đặt mật khẩu lần đầu | `/pages/auth/first-login.html` | Token mời hoặc admin vừa đăng nhập lần đầu |
+| Đặt mật khẩu lần đầu | `/pages/auth/first-login.html` | Nhân viên vừa dùng link mời đăng nhập hoặc admin cần đổi mật khẩu |
 | POS | `/pages/pos/index.html` | Admin, staff, cashier |
 | Hóa đơn | `/pages/invoices/index.html` | Admin, staff, cashier |
 | Sản phẩm | `/pages/products/index.html` | Admin, staff, cashier |
@@ -424,7 +476,7 @@ lỗi trả `{ "error": { "code": "...", "message": "...", "details": {} } }`.
 | `POST /auth/login` | `AuthController` | Công khai; vẫn cần CSRF |
 | `POST /auth/logout` | `AuthController` | Session |
 | `GET /auth/me` | `AuthController` | Session |
-| `POST /auth/invitations/complete` | `AuthController` | Không cần login; CSRF và token mời hợp lệ |
+| `POST /auth/invitations/login` | `AuthController` | Không cần login; CSRF, token 1 phút và MSSV tạm hợp lệ |
 | `POST /auth/first-login` | `AuthController` | Session first-login |
 | `POST /auth/change-password` | `AuthController` | Session |
 | `GET /products`, `POST /products` | `ProductController` | Đọc cần session; tạo chỉ admin |
@@ -435,7 +487,6 @@ lỗi trả `{ "error": { "code": "...", "message": "...", "details": {} } }`.
 | `GET /customers/{id}/orders?page=1&per_page=20` | `OrderController` | Session; phân trang lịch sử (tối đa 100 đơn/trang), trả `orders` và metadata `pagination` |
 | `GET /reports/sales` | `ReportController` | Session; phạm vi dữ liệu theo role |
 | `GET/POST /users`, `PUT /users/{id}/status` | `UserController` | Chỉ admin |
-| `POST /users/test-email` | `UserController` | Chỉ admin; gửi email thử tới `MAIL_FROM`, cần CSRF và SMTP |
 | `POST /users/{id}/resend-invitation` | `UserController` | Chỉ admin; SMTP cần cấu hình |
 | `GET/PUT /store_settings` | `SettingController` | Đọc cần session; ghi chỉ admin |
 | `GET/POST /payment_qrcodes`, `PUT /payment_qrcodes/{id}` | `SettingController` | Đọc cần session; ghi chỉ admin |
@@ -453,10 +504,13 @@ Lịch sử đơn hàng khách hàng nhận `page` (mặc định `1`) và `per_
 - Theo tài liệu yêu cầu demo, seed cung cấp tài khoản `admin` với mật khẩu
   `admin`. Chỉ dùng credential này cho môi trường demo/local; hãy đổi sang mật
   khẩu mạnh trước khi triển khai hoặc dùng dữ liệu thật.
-- Seed chỉ tạo tài khoản admin; sản phẩm, khách hàng, cửa hàng và mã QR được
-  thêm/cấu hình từ ứng dụng. Báo cáo sẽ có dữ liệu sau khi phát sinh đơn hàng.
+- Seed tạo tài khoản admin cùng danh mục/sản phẩm quần áo mẫu để demo POS. Khách
+  hàng sẽ được tạo khi thanh toán; báo cáo có dữ liệu sau khi phát sinh đơn hàng.
 - Seed không tạo sẵn nhân viên. Đăng nhập bằng admin, cấu hình SMTP rồi tạo nhân
   viên từ trang quản lý để kiểm tra lời mời email và token dùng một lần theo rubric.
+- Mật khẩu tạm của nhân viên lấy từ `STAFF_TEMP_PASSWORD`; mẫu Docker được đặt
+  bằng MSSV trưởng nhóm `52400269`. Thay giá trị này trong `.env` nếu thông tin
+  nhóm thay đổi. Nhân viên buộc đổi sang mật khẩu riêng sau lần đăng nhập đầu.
 - Seed kích hoạt sẵn tài khoản này cho database khởi tạo mới. Với database đã
   tồn tại, seed không tự chạy lại; để áp dụng credential demo, chạy SQL sau
   trong đúng database:
@@ -520,7 +574,7 @@ code hoặc Git.
 ## 16. Docker và build production
 
 - Hướng dẫn Docker chuyên sâu, giải thích Dockerfile/Compose, network, volume,
-  lệnh thường dùng và xử lý sự cố: [DOCKER_GUIDE.md](./DOCKER_GUIDE.md).
+  lệnh thường dùng và xử lý sự cố: [DOCKER.md](./DOCKER.md).
 - `Dockerfile` tạo PHP CLI image có `pdo_mysql` và `mbstring`, sau đó chạy
   `backend/dev-router.php` để phục vụ Frontend, API và uploads cùng origin.
 - `compose.yaml` chạy hai service: `app` (PHP) và `db` (MySQL 8.4). MySQL chỉ
@@ -552,7 +606,7 @@ riêng. Có thể kiểm tra thủ công:
    Backend từ chối khi gọi route admin.
 5. Kiểm tra request ghi thiếu CSRF header bị trả `403`.
 6. Cấu hình SMTP staging/test trước khi gửi lời mời thật; kiểm tra token hết hạn,
-   dùng một lần và đặt mật khẩu mới.
+   dùng một lần, mật khẩu tạm và buộc đổi mật khẩu lần đầu.
 
 Kiểm tra cú pháp PHP/JavaScript (nếu đã cài Node cho bước JS):
 

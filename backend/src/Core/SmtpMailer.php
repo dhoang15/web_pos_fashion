@@ -13,7 +13,7 @@ final class SmtpMailer
         $username = (string)(getenv('SMTP_USERNAME') ?: '');
         $password = (string)(getenv('SMTP_PASSWORD') ?: '');
         $from = trim((string)(getenv('MAIL_FROM') ?: ''));
-        $fromName = trim((string)(getenv('MAIL_FROM_NAME') ?: "B'TRIPLE POS"));
+        $fromName = "B'TRIPLE POS";
 
         if ($host === '' || $port === false || $port < 1 || $port > 65535 || !in_array($encryption, ['tls', 'ssl'], true) ||
             $username === '' || $password === '' || !filter_var($from, FILTER_VALIDATE_EMAIL) ||

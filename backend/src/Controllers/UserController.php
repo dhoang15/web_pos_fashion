@@ -34,6 +34,7 @@ final class UserController extends Controller
         if ($phone !== '' && !preg_match('/^(?:\+84|0)[0-9]{9}$/', $phone)) {
             throw new ApiException('Số điện thoại không hợp lệ.', 422, 'VALIDATION_ERROR', ['phone' => ['Số điện thoại không hợp lệ.']]);
         }
+        $temporaryPassword = $this->temporaryPassword();
         $username = strstr($email, '@', true);
         $token = bin2hex(random_bytes(32));
         $userId = 0;
@@ -45,7 +46,7 @@ final class UserController extends Controller
                 [
                     'username' => $username,
                     'email' => $email,
-                    'password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
+                    'password' => password_hash($temporaryPassword, PASSWORD_DEFAULT),
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'phone' => $phone ?: null,
@@ -64,23 +65,8 @@ final class UserController extends Controller
             throw $error;
         }
 
-        $this->sendInvitationOrFail($userId, $email, $username, $token);
+        $this->sendInvitationOrFail($userId, $email, $username, $token, $temporaryPassword);
         $this->ok(['message' => 'Đã tạo tài khoản và gửi email mời đăng nhập.'], 201);
-    }
-
-    public function sendTestEmail(Request $request): void
-    {
-        $recipient = trim((string)(getenv('MAIL_FROM') ?: ''));
-        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('MAIL_FROM phải là địa chỉ email hợp lệ trước khi gửi email thử.', 503, 'SMTP_NOT_CONFIGURED');
-        }
-        SmtpMailer::send(
-            $recipient,
-            "Kiểm tra email B'TRIPLE POS",
-            "Email kiểm tra gửi lúc " . date('Y-m-d H:i:s') . " (giờ Việt Nam).\n\n" .
-                "Nếu bạn nhận được thư này, cấu hình SMTP của B'TRIPLE POS đã gửi email thành công."
-        );
-        $this->ok(['message' => 'Đã gửi email thử tới hộp thư MAIL_FROM.', 'recipient' => $recipient]);
     }
 
     public function updateStatus(Request $request): void
@@ -116,12 +102,13 @@ final class UserController extends Controller
         if ($user['role'] === 'admin' || !(int)$user['is_first_login']) {
             throw new ApiException('Tài khoản này không cần liên kết kích hoạt.', 409, 'INVITATION_NOT_REQUIRED');
         }
+        $temporaryPassword = $this->temporaryPassword();
         $token = bin2hex(random_bytes(32));
         $this->model->beginTransaction();
         try {
             $this->execute(
                 'UPDATE users SET password = :password, login_token = :token, token_time = NOW(), status = "active" WHERE id = :id',
-                ['password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), 'token' => hash('sha256', $token), 'id' => $user['id']]
+                ['password' => password_hash($temporaryPassword, PASSWORD_DEFAULT), 'token' => hash('sha256', $token), 'id' => $user['id']]
             );
             $this->model->commit();
         } catch (\Throwable $error) {
@@ -130,14 +117,14 @@ final class UserController extends Controller
             }
             throw $error;
         }
-        $this->sendInvitationOrFail((int)$user['id'], (string)$user['email'], (string)$user['username'], $token);
+        $this->sendInvitationOrFail((int)$user['id'], (string)$user['email'], (string)$user['username'], $token, $temporaryPassword);
         $this->ok(['message' => 'Đã gửi lại email mời đăng nhập.']);
     }
 
-    private function sendInvitationOrFail(int $userId, string $email, string $username, string $token): void
+    private function sendInvitationOrFail(int $userId, string $email, string $username, string $token, string $temporaryPassword): void
     {
         try {
-            $this->sendInvitation($email, $username, $token);
+            $this->sendInvitation($email, $username, $token, $temporaryPassword);
         } catch (ApiException $error) {
             throw new ApiException(
                 'Tài khoản đã được lưu nhưng email mời chưa gửi được: ' . $error->getMessage() .
@@ -149,7 +136,7 @@ final class UserController extends Controller
         }
     }
 
-    private function sendInvitation(string $email, string $username, string $token): void
+    private function sendInvitation(string $email, string $username, string $token, string $temporaryPassword): void
     {
         $origin = getenv('APP_URL') ?: '';
         $originParts = $origin === '' ? false : parse_url($origin);
@@ -163,12 +150,23 @@ final class UserController extends Controller
             isset($originParts['query']) || isset($originParts['fragment'])) {
             throw new ApiException('Cấu hình APP_URL không hợp lệ.', 503, 'APP_URL_NOT_CONFIGURED');
         }
-        $link = rtrim($origin, '/') . '/pages/auth/first-login.html#invite=' . rawurlencode($token);
+        $link = rtrim($origin, '/') . '/pages/auth/login.html#invite=' . rawurlencode($token);
         $body = "Xin chào {$username},\n\n";
         $body .= "Quản trị viên đã tạo tài khoản B'TRIPLE POS cho bạn.\n";
-        $body .= "Mở liên kết dưới đây trong vòng 1 phút để tạo mật khẩu của riêng bạn:\n\n";
+        $body .= "Mật khẩu tạm thời (MSSV trưởng nhóm): {$temporaryPassword}\n";
+        $body .= "Hãy đổi mật khẩu ngay sau lần đăng nhập đầu tiên.\n";
+        $body .= "Mở liên kết dưới đây trong vòng 1 phút và nhập tên đăng nhập cùng mật khẩu tạm thời:\n\n";
         $body .= $link . "\n\n";
         $body .= "Liên kết chỉ dùng một lần. Nếu đã hết hạn, hãy yêu cầu quản trị viên gửi lại lời mời.\n";
         SmtpMailer::send($email, "Lời mời tham gia B'TRIPLE POS", $body);
+    }
+
+    private function temporaryPassword(): string
+    {
+        $password = trim((string)(getenv('STAFF_TEMP_PASSWORD') ?: ''));
+        if ($password === '' || strlen($password) > 72) {
+            throw new ApiException('Cấu hình STAFF_TEMP_PASSWORD chưa có hoặc vượt quá 72 byte.', 503, 'TEMPORARY_PASSWORD_NOT_CONFIGURED');
+        }
+        return $password;
     }
 }

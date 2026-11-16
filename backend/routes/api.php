@@ -21,7 +21,7 @@ $handler = static function (string $class, string $method): callable {
 
 $router->add('GET', '/api/auth/csrf-token', $handler(AuthController::class, 'csrfToken'), false);
 $router->add('POST', '/api/auth/login', $handler(AuthController::class, 'login'), false);
-$router->add('POST', '/api/auth/invitations/complete', $handler(AuthController::class, 'completeInvitation'), false);
+$router->add('POST', '/api/auth/invitations/login', $handler(AuthController::class, 'invitationLogin'), false);
 $router->add('POST', '/api/auth/logout', $handler(AuthController::class, 'logout'));
 $router->add('GET', '/api/auth/me', $handler(AuthController::class, 'me'));
 $router->add('POST', '/api/auth/first-login', $handler(AuthController::class, 'firstLogin'));
@@ -52,7 +52,6 @@ $router->add('PUT', '/api/orders/{id}', $handler(OrderController::class, 'update
 $router->add('GET', '/api/reports/sales', $handler(ReportController::class, 'sales'));
 $router->add('GET', '/api/users', $handler(UserController::class, 'index'), true, ['admin']);
 $router->add('POST', '/api/users', $handler(UserController::class, 'create'), true, ['admin']);
-$router->add('POST', '/api/users/test-email', $handler(UserController::class, 'sendTestEmail'), true, ['admin']);
 $router->add('PUT', '/api/users/{id}/status', $handler(UserController::class, 'updateStatus'), true, ['admin']);
 $router->add('POST', '/api/users/{id}/resend-invitation', $handler(UserController::class, 'resendInvitation'), true, ['admin']);
 

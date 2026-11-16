@@ -8,6 +8,12 @@
     const toggle = document.getElementById("toggle-password");
     const errorBox = document.getElementById("login-error");
     const submit = document.getElementById("login-submit");
+    const invitationToken = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("invite");
+
+    if (invitationToken) {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        errorBox.textContent = "Liên kết mời đã được mở. Nhập tên đăng nhập và mật khẩu tạm trong email.";
+    }
 
     function clearFirstLoginState() {
         ["pos-first-login", "pos-first-login-role"].forEach(function (key) {
@@ -35,7 +41,11 @@
                 username: form.elements.username.value.trim(),
                 password: form.elements.password.value
             };
-            const result = await window.PosApi.post("auth/login", credentials);
+            if (invitationToken) credentials.token = invitationToken;
+            const result = await window.PosApi.post(
+                invitationToken ? "auth/invitations/login" : "auth/login",
+                credentials
+            );
             const responseData = result && result.data && typeof result.data === "object"
                 ? result.data
                 : result;
@@ -53,7 +63,7 @@
             sessionStorage.setItem("pos-user-name", userName);
             if (user.id != null) sessionStorage.setItem("pos-user-id", String(user.id));
 
-            if (firstLogin && role === "admin") {
+            if (firstLogin) {
                 sessionStorage.setItem("pos-first-login", "1");
                 sessionStorage.setItem("pos-first-login-role", role);
                 window.location.href = "first-login.html";
@@ -65,7 +75,7 @@
             const details = error.details && error.details.error;
             const errorCode = details && details.code;
             errorBox.textContent = errorCode === "INVITATION_REQUIRED"
-                ? "Tài khoản nhân viên mới cần mở liên kết mời trong email để tạo mật khẩu trước khi đăng nhập."
+                ? "Tài khoản mới phải mở liên kết mời trong email và dùng mật khẩu tạm để đăng nhập lần đầu."
                 : error.message;
             submit.disabled = false;
             submit.textContent = "Đăng nhập";

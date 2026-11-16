@@ -59,8 +59,11 @@ final class ReportController extends Controller
         $summary['revenue'] = $summary['total_revenue'];
         if ($isAdmin) {
             $profit = $this->row(
-                'SELECT COALESCE(SUM(oi.total_price - oi.import_price * oi.quantity), 0) AS total_profit ' .
-                'FROM orders o JOIN order_items oi ON oi.order_id = o.id WHERE ' . $condition,
+                'SELECT COALESCE(SUM(o.subtotal - o.discount_amount - COALESCE(item_cost.total_cost, 0)), 0) AS total_profit ' .
+                'FROM orders o LEFT JOIN (' .
+                    'SELECT order_id, SUM(import_price * quantity) AS total_cost ' .
+                    'FROM order_items GROUP BY order_id' .
+                ') item_cost ON item_cost.order_id = o.id WHERE ' . $condition,
                 $params
             );
             $summary['total_profit'] = $profit['total_profit'] ?? 0;

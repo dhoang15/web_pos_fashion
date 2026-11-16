@@ -7,26 +7,15 @@
 
 /*!40101 SET NAMES utf8mb4 */;
 
--- --------------------------------------------------------
 -- 0. TẠO VÀ SỬ DỤNG DATABASE
--- --------------------------------------------------------
+
 CREATE DATABASE IF NOT EXISTS `fashion_pos_db` 
   DEFAULT CHARACTER SET utf8mb4 
   COLLATE utf8mb4_unicode_ci;
 USE `fashion_pos_db`;
 
--- --------------------------------------------------------
--- Tạo bảng nếu chưa có; không xóa hoặc ghi đè dữ liệu hiện có.
--- --------------------------------------------------------
-
--- --------------------------------------------------------
 -- 1. BẢNG USERS (Quản lý tài khoản Admin & Nhân viên bán hàng)
--- Đáp ứng Tiêu chí 1-14:
--- - Username = phần trước @gmail.com
--- - Link đăng nhập 1 phút: login_token + token_time
--- - Bắt buộc đổi mật khẩu lần đầu: is_first_login
--- - Trạng thái: active, inactive, locked
--- --------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `users` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(50) NOT NULL,
@@ -49,10 +38,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `idx_users_role_status` (`role`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 2. BẢNG CATEGORIES (Danh mục sản phẩm)
--- Đáp ứng yêu cầu đề bài: tên, mô tả, ngày tạo, người tạo
--- --------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `categories` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
@@ -64,12 +51,8 @@ CREATE TABLE IF NOT EXISTS `categories` (
   CONSTRAINT `fk_categories_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 3. BẢNG PRODUCTS (Sản phẩm kinh doanh)
--- Đáp ứng Tiêu chí 15-19:
--- - Mã vạch (barcode), tên, giá nhập (import_price), giá bán (price)
--- - Thuộc danh mục (category_id), tồn kho, size, màu, chất liệu, ảnh
--- --------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `products` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
@@ -98,12 +81,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   CONSTRAINT `fk_products_last_updated_by` FOREIGN KEY (`last_updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 4. BẢNG CUSTOMERS (Khách hàng thành viên)
--- Đáp ứng Tiêu chí 20-23:
--- - Tự động tạo khi nhập SĐT lần đầu lúc thanh toán POS
--- - Không tạo thủ công
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `customers` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `phone` VARCHAR(20) NOT NULL,
@@ -114,12 +92,7 @@ CREATE TABLE IF NOT EXISTS `customers` (
   UNIQUE KEY `uk_customers_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 5. BẢNG ORDERS (Hóa đơn bán lẻ POS)
--- Đáp ứng Tiêu chí 24-28, 29-32:
--- - Số hóa đơn, nhân viên bán, khách hàng, tiền thanh toán, tiền thừa
--- - Lưu snapshot thông tin khách để đơn hàng không bị mất dữ liệu
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `order_number` VARCHAR(50) NOT NULL,
@@ -149,11 +122,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
   CONSTRAINT `fk_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 6. BẢNG ORDER_ITEMS (Chi tiết từng món trong hóa đơn)
--- Đáp ứng Tiêu chí 19: ON DELETE RESTRICT với products để không cho xóa sản phẩm đã từng bán
--- Lưu snapshot import_price lúc bán để Admin tính chính xác lợi nhuận
--- --------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `order_items` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `order_id` INT NOT NULL,
@@ -172,10 +142,8 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 7. BẢNG STORE_SETTINGS (Cấu hình thông tin cửa hàng & in hóa đơn)
 -- Frontend settings.js & pos.js đồng bộ với bảng này
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `store_settings` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `setting_key` VARCHAR(100) NOT NULL,
@@ -187,10 +155,8 @@ CREATE TABLE IF NOT EXISTS `store_settings` (
   UNIQUE KEY `uk_store_settings_key` (`setting_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 8. BẢNG PAYMENT_QRCODES (Mã QR thanh toán chuyển khoản tại quầy)
 -- Frontend pos.js mở modal QR từ bảng này
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `payment_qrcodes` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `payment_method` VARCHAR(50) NOT NULL DEFAULT 'qr_code',
@@ -203,9 +169,7 @@ CREATE TABLE IF NOT EXISTS `payment_qrcodes` (
   KEY `idx_payment_qrcodes_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 9. BẢNG INVENTORY_REPORTS (Nhật ký biến động xuất nhập tồn kho)
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `inventory_reports` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `date` DATE NOT NULL,
@@ -226,9 +190,7 @@ CREATE TABLE IF NOT EXISTS `inventory_reports` (
   CONSTRAINT `fk_inventory_reports_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 10. BẢNG MESSAGES (Hộp thư nội bộ & Thông báo hệ thống)
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `messages` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `sender_id` INT NOT NULL,
@@ -248,9 +210,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
   CONSTRAINT `fk_messages_parent` FOREIGN KEY (`parent_message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- --------------------------------------------------------
 -- 11. BẢNG SHIFTS & SHIFT_ASSIGNMENTS (Quản lý ca trực nhân viên)
--- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `shifts` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `shift_name` VARCHAR(100) NOT NULL,
