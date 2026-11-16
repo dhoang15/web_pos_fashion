@@ -1,14 +1,11 @@
-HUONG DAN CAI DAT VA SU DUNG B'TRIPLE POS
-=========================================
-
-THONG TIN NHOM (dien truoc khi nop)
+THONG TIN NHOM
 - Ma nhom/de tai: WE07
 - Giang vien: Vu Dinh Hong
 - Truong nhom: 52400269 | Vo Nguyen Duy Hoang | 0798216387
-  Phan viec: Backend, database, so do luong va cac phan viec khac.
-- Thanh vien: 52400274 | Le Tran Huy Khang | [CAN CAP NHAT SĐT/PHAN VIEC]
-- Thanh vien: 52400326 | Dang Son Tung | [CAN CAP NHAT SĐT/PHAN VIEC]
-- Link video demo cong khai: [CAN CAP NHAT SAU KHI QUAY VIDEO]
+  Phan viec: Backend, database,docker devops,quan ly chung toan bo he thong,video demo
+- Thanh vien: 52400274 | Le Tran Huy Khang| frontend Admin UI,quan ly nhan vien, san pham ban hang,khach hang,lam bao cao
+- Thanh vien: 52400326 | Dang Son Tung | frontend Staff Pos UI,Gio hang, Man hinh dang nhap, doi mat khau,phoi hop lam bao cao ve so do erd
+- Link video demo cong khai:
 
 CHAY UNG DUNG BANG DOCKER
 1. Cai Docker Desktop (Windows/macOS) hoac Docker Engine + Compose (Linux).
@@ -28,8 +25,8 @@ Tai khoan demo: admin
 Mat khau demo: admin
 Doi mat khau demo truoc khi su dung du lieu that hoac chia se moi truong.
 Mat khau tam nhan vien: MSSV truong nhom, mac dinh 52400269 trong docker.env.example.
-Nhan vien phai mo link email con han mot phut, dang nhap bang username va mat
-khau tam, sau do doi mat khau truoc khi truy cap chuc nang khac.
+Nhan vien phai mo link email con han mot phut, dang nhap bang username luu y username la phan dung truoc gmail.com va mat
+khau tam la mssv truong nhom, sau do doi mat khau truoc khi truy cap chuc nang khac.
 
 Khong commit file .env. Cau hinh SMTP trong .env can duoc dien neu muon gui
 email moi nhan vien. APP_URL mac dinh la dia chi local; nguoi nhan email tren
@@ -39,9 +36,3 @@ Dung ung dung ma giu lai database va anh da tai len:
    docker compose down
 
 Xem huong dan chi tiet, cau hinh SMTP va xu ly su co trong README.md va DOCKER.md.
-
-TRANG THAI HO SO NOP BAI
-- Can bo sung SDT va phan viec cua Khang, Tung.
-- Can bo sung link video demo cho phep giang vien truy cap.
-- Can nop file Excel tu danh gia theo dung mau va ten Nhom_X.xlsx.
-- Can nop bao cao PDF/DOCX theo mau cua khoa.
