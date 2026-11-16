@@ -67,7 +67,7 @@ app (PHP 8.2 CLI, container)
 | [`.dockerignore`](./.dockerignore) | Loại `.env`, log, upload runtime, PDF tài liệu/đánh giá và artefact khỏi build context để tránh đóng gói dữ liệu/credential không cần cho runtime. |
 | [`docker.env.example`](./docker.env.example) | Mẫu biến môi trường cho Compose. Sao chép thành `.env` tại thư mục gốc để chạy local. |
 | [`backend/database/schema.sql`](./backend/database/schema.sql) | Được MySQL image thực thi khi khởi tạo datadir mới. |
-| [`backend/database/seed.sql`](./backend/database/seed.sql) | Tạo tài khoản admin demo; chạy sau schema khi khởi tạo datadir mới. |
+| [`backend/database/seed.sql`](./backend/database/seed.sql) | Tạo admin demo, 4 danh mục và 8 sản phẩm mẫu; chạy sau schema khi khởi tạo datadir mới. |
 | `mysql_data` | Named volume chứa dữ liệu database lâu dài. |
 | `uploads` | Named volume chứa ảnh được upload trong ứng dụng. |
 

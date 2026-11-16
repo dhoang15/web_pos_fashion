@@ -627,7 +627,8 @@ kiểm thử trên MySQL.
 - CORS không được bật; thiết kế yêu cầu cùng origin cho session cookie và CSRF.
 - SMTP cần người triển khai tự cấu hình; chưa thể đảm bảo email gửi thành công
   nếu credential hoặc chính sách nhà cung cấp chưa thiết lập.
-- Dữ liệu seed chỉ phục vụ demo; admin phải được khởi tạo riêng.
+- Dữ liệu seed chỉ phục vụ demo/local: tạo admin `admin/admin`, 4 danh mục và
+  8 sản phẩm mẫu; không dùng dữ liệu này cho cửa hàng thật.
 - PHP built-in server chỉ phục vụ phát triển, không thay thế web server production.
 - Frontend `sessionStorage` chỉ phục vụ UI; mọi kiểm soát bảo mật phải tiếp tục ở
   Backend.
