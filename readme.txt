@@ -6,7 +6,7 @@ THONG TIN NHOM
 - Thanh vien: 52400274 | Le Tran Huy Khang| frontend Admin UI,quan ly nhan vien, san pham ban hang,khach hang,lam bao cao.
 - Thanh vien: 52400326 | Dang Son Tung | frontend Staff Pos UI,Gio hang, Man hinh dang nhap, doi mat khau,phoi hop lam bao cao ve so do erd,video demo.
 - Link video demo cong khai: https://youtu.be/SWdoFA68-Yw
-- Link google drive video demo:https://drive.google.com/drive/folders/1NtUCzZsOeoBFQT-Xf30KQor6rQ4G7iYh?usp=sharing
+- Link google drive video demo:https://drive.google.com/file/d/1b26gVe4c4xwLF9VEmmm_Rjqno4RRYOcX/view?usp=share_link
 
 CHAY UNG DUNG BANG DOCKER
 1. Cai Docker Desktop (Windows/macOS) hoac Docker Engine + Compose (Linux).
