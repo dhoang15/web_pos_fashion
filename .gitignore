@@ -76,3 +76,9 @@ Desktop.ini
 !.vscode/extensions.json
 .idea/
 .history/
+
+# Local report-generation artifacts and office lock files
+/tmp/
+~$*.docx
+.~lock.*#
+
