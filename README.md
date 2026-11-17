@@ -59,27 +59,27 @@ xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md]
 - [1. Mô tả ngắn và trạng thái dự án](#1-mô-tả-ngắn-và-trạng-thái-dự-án)
 - [2. Mục lục](#2-mục-lục)
 - [3. Tính năng chính](#3-tính-năng-chính)
-- [4. Công nghệ](#5-công-nghệ)
-- [5. Yêu cầu môi trường](#6-yêu-cầu-môi-trường)
-- [6. Cài đặt và chạy local](#7-cài-đặt-và-chạy-local)
-- [7. Biến môi trường](#8-biến-môi-trường)
-- [8. Các lệnh](#9-các-lệnh)
-- [9. Cấu trúc mã nguồn](#10-cấu-trúc-mã-nguồn)
-- [10. Điều hướng và route](#11-điều-hướng-và-route)
-- [11. Kiến trúc ứng dụng](#12-kiến-trúc-ứng-dụng)
-- [12. Dữ liệu và localStorage](#13-dữ-liệu-và-localstorage)
-- [13. API backend](#14-api-backend)
-- [14. Tài khoản và quyền Admin](#15-tài-khoản-và-quyền-admin)
-- [15. Docker và build production](#16-docker-và-build-production)
-- [16. Kiểm thử](#17-kiểm-thử)
-- [17. Giới hạn hiện tại](#18-giới-hạn-hiện-tại)
-- [18. Hướng phát triển đề xuất](#19-hướng-phát-triển-đề-xuất)
-- [20. Quy trình đóng góp](#20-quy-trình-đóng-góp)
+- [4. Công nghệ](#4-công-nghệ)
+- [5. Yêu cầu môi trường](#5-yêu-cầu-môi-trường)
+- [6. Cài đặt và chạy local](#6-cài-đặt-và-chạy-local)
+- [7. Biến môi trường](#7-biến-môi-trường)
+- [8. Các lệnh](#8-các-lệnh)
+- [9. Cấu trúc mã nguồn](#9-cấu-trúc-mã-nguồn)
+- [10. Điều hướng và route](#10-điều-hướng-và-route)
+- [11. Kiến trúc ứng dụng](#11-kiến-trúc-ứng-dụng)
+- [12. Dữ liệu và localStorage](#12-dữ-liệu-và-localstorage)
+- [13. API backend](#13-api-backend)
+- [14. Tài khoản và quyền Admin](#14-tài-khoản-và-quyền-admin)
+- [15. Docker và build production](#15-docker-và-build-production)
+- [16. Kiểm thử](#16-kiểm-thử)
+- [17. Giới hạn hiện tại](#17-giới-hạn-hiện-tại)
+- [18. Hướng phát triển đề xuất](#18-hướng-phát-triển-đề-xuất)
+- [20. Quy trình đóng góp](#19-quy-trình-đóng-góp)
 
 ## 3. Tính năng
 
 - Đăng nhập và đăng xuất bằng PHP session.
-- Vai trò `admin`, `staff`, `cashier`; backend kiểm tra quyền truy cập.
+- Vai trò `admin`, `staff`; backend kiểm tra quyền truy cập.
 - POS: tra cứu sản phẩm, barcode, khách hàng, phương thức thanh toán, tạo và
   xem đơn.
 - Quản lý sản phẩm, tồn kho, danh mục và mã QR thanh toán.
@@ -97,7 +97,7 @@ xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md]
 
 | Nhóm | Công nghệ |
 |---|---|
-| Frontend | HTML5, CSS3, Vanilla JavaScript (không framework/bundler) |
+| Frontend | HTML5, CSS3, Vanilla JavaScript |
 | UI | Bootstrap 5.3.3, Bootstrap Icons 1.11.3 qua CDN |
 | HTTP | Fetch API, JSON, session cookie cùng origin |
 | Backend | PHP 8.1+ thuần, tổ chức MVC |
@@ -105,7 +105,7 @@ xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md]
 | Email | SMTP qua `backend/src/Core/SmtpMailer.php` |
 | Web server phát triển | PHP built-in server và `backend/dev-router.php` |
 | Container | Docker Compose, PHP CLI container và MySQL 8.4 |
-| Package/build | Không dùng npm, Yarn, Composer hoặc build frontend |
+| Package/build |
 
 ## 5. Yêu cầu môi trường
 
@@ -320,8 +320,6 @@ cùng máy; nếu nhân viên dùng thiết bị khác, cần URL HTTPS công kh
 
 ## 8. Các lệnh
 
-Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
-
 | Tác vụ | Lệnh |
 |---|---|
 | Khởi động local | `php -S 127.0.0.1:8000 -t frontend backend/dev-router.php` |
@@ -336,11 +334,7 @@ Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
 | Trạng thái container | `docker compose ps` |
 | Theo dõi log | `docker compose logs -f app` |
 | Dừng Docker (giữ dữ liệu) | `docker compose down` |
-| npm / Yarn | Không áp dụng; repository không có `package.json` hoặc frontend bundler |
 | Dừng server | `Ctrl+C` trong Terminal đang chạy server |
-
-Không có `npm run build`, `npm test` hay `yarn build` trong repository hiện tại.
-
 ## 9. Cấu trúc mã nguồn
 
 ```text
@@ -390,8 +384,7 @@ web_pos_fashion/
 
 ## 10. Điều hướng và route
 
-Đây là các trang HTML tĩnh điều hướng bằng URL; dự án không dùng React Router,
-Vue Router hoặc client-side SPA router.
+Đây là các trang HTML tĩnh điều hướng bằng URL;
 
 | Trang | URL local | Quyền giao diện |
 |---|---|---|
@@ -420,8 +413,7 @@ Vue Router hoặc client-side SPA router.
   theo vai trò và cung cấp helper như `unwrapList()`, `notify()`.
 - `frontend/assets/js/api.js` cung cấp `PosApi.get/post/put/delete/upload`, quản
   lý JSON, session cookie cùng origin, CSRF và lỗi HTTP.
-- Không có React/Vue App shell, Context, Hooks, state library hoặc bundler. Shell
-  dùng các component HTML và IIFE/global helper để giữ JavaScript thuần.
+- Shell dùng các component HTML và IIFE/global helper để giữ JavaScript thuần.
 
 ### Backend
 
@@ -498,7 +490,7 @@ Lịch sử đơn hàng khách hàng nhận `page` (mặc định `1`) và `per_
 
 ## 14. Tài khoản và quyền Admin
 
-- Role hiện có: `admin`, `staff`, `cashier`.
+- Role hiện có: `admin`, `staff`.
 - Theo tài liệu yêu cầu demo, seed cung cấp tài khoản `admin` với mật khẩu
   `admin`. Chỉ dùng credential này cho môi trường demo/local; hãy đổi sang mật
   khẩu mạnh trước khi triển khai hoặc dùng dữ liệu thật.
