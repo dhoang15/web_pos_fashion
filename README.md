@@ -1,12 +1,12 @@
 # B'TRIPLE POS
 
-## 2. Mô tả ngắn và trạng thái dự án
+## 1. Mô tả ngắn và trạng thái dự án
 
 Ứng dụng quản lý bán hàng thời trang với màn hình POS, quản lý sản phẩm, hóa
 đơn, khách hàng, nhân viên, báo cáo và cấu hình cửa hàng.
 
 > **Trạng thái:** Frontend Vanilla JavaScript và Backend PHP/PDO đã được tích hợp
-> qua JSON API cùng origin. Dự án không dùng React, Vite, Vue, npm hoặc Composer;
+> qua JSON API cùng origin.;
 > có Docker Compose cho môi trường phát triển.
 
 ## Setup & Run nhanh (Docker)
@@ -15,7 +15,7 @@
 
 - Docker Desktop trên Windows/macOS, hoặc Docker Engine và Docker Compose Plugin
   trên Linux.
-- Không cần cài Node.js, npm, Composer hoặc PHP riêng khi chạy bằng Docker.
+- Không cần cài PHP riêng khi chạy bằng Docker.
 
 ### Cài đặt và khởi chạy
 
@@ -54,31 +54,29 @@ docker compose down
 Để xem hướng dẫn cài đặt không dùng Docker, cấu hình môi trường và xử lý sự cố,
 xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md](./DOCKER.md).
 
-## 3. Mục lục
+## 2. Mục lục
 
-- [1. Tiêu đề dự án](#btriple-pos)
-- [Setup & Run nhanh (Docker)](#setup-run-nhanh-docker)
-- [2. Mô tả ngắn và trạng thái dự án](#2-mô-tả-ngắn-và-trạng-thái-dự-án)
-- [3. Mục lục](#3-mục-lục)
-- [4. Tính năng](#4-tính-năng)
-- [5. Công nghệ](#5-công-nghệ)
-- [6. Yêu cầu môi trường](#6-yêu-cầu-môi-trường)
-- [7. Cài đặt và chạy local](#7-cài-đặt-và-chạy-local)
-- [8. Biến môi trường](#8-biến-môi-trường)
-- [9. Các lệnh](#9-các-lệnh)
-- [10. Cấu trúc mã nguồn](#10-cấu-trúc-mã-nguồn)
-- [11. Điều hướng và route](#11-điều-hướng-và-route)
-- [12. Kiến trúc ứng dụng](#12-kiến-trúc-ứng-dụng)
-- [13. Dữ liệu và localStorage](#13-dữ-liệu-và-localstorage)
-- [14. API backend](#14-api-backend)
-- [15. Tài khoản và quyền Admin](#15-tài-khoản-và-quyền-admin)
-- [16. Docker và build production](#16-docker-và-build-production)
-- [17. Kiểm thử](#17-kiểm-thử)
-- [18. Giới hạn hiện tại](#18-giới-hạn-hiện-tại)
-- [19. Hướng phát triển đề xuất](#19-hướng-phát-triển-đề-xuất)
+- [1. Mô tả ngắn và trạng thái dự án](#1-mô-tả-ngắn-và-trạng-thái-dự-án)
+- [2. Mục lục](#2-mục-lục)
+- [3. Tính năng chính](#3-tính-năng-chính)
+- [4. Công nghệ](#5-công-nghệ)
+- [5. Yêu cầu môi trường](#6-yêu-cầu-môi-trường)
+- [6. Cài đặt và chạy local](#7-cài-đặt-và-chạy-local)
+- [7. Biến môi trường](#8-biến-môi-trường)
+- [8. Các lệnh](#9-các-lệnh)
+- [9. Cấu trúc mã nguồn](#10-cấu-trúc-mã-nguồn)
+- [10. Điều hướng và route](#11-điều-hướng-và-route)
+- [11. Kiến trúc ứng dụng](#12-kiến-trúc-ứng-dụng)
+- [12. Dữ liệu và localStorage](#13-dữ-liệu-và-localstorage)
+- [13. API backend](#14-api-backend)
+- [14. Tài khoản và quyền Admin](#15-tài-khoản-và-quyền-admin)
+- [15. Docker và build production](#16-docker-và-build-production)
+- [16. Kiểm thử](#17-kiểm-thử)
+- [17. Giới hạn hiện tại](#18-giới-hạn-hiện-tại)
+- [18. Hướng phát triển đề xuất](#19-hướng-phát-triển-đề-xuất)
 - [20. Quy trình đóng góp](#20-quy-trình-đóng-góp)
 
-## 4. Tính năng
+## 3. Tính năng
 
 - Đăng nhập và đăng xuất bằng PHP session.
 - Vai trò `admin`, `staff`, `cashier`; backend kiểm tra quyền truy cập.
@@ -95,7 +93,7 @@ xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md]
   `Secure` mặc định.
 - Kết nối MySQL local hoặc máy chủ từ xa qua PDO.
 
-## 5. Công nghệ
+## 4. Công nghệ
 
 | Nhóm | Công nghệ |
 |---|---|
@@ -109,7 +107,7 @@ xem [các bước chạy local](#7-cài-đặt-và-chạy-local) và [DOCKER.md]
 | Container | Docker Compose, PHP CLI container và MySQL 8.4 |
 | Package/build | Không dùng npm, Yarn, Composer hoặc build frontend |
 
-## 6. Yêu cầu môi trường
+## 5. Yêu cầu môi trường
 
 - PHP 8.1 trở lên; bật các extension `pdo_mysql`, `fileinfo`, `mbstring`,
   `openssl`.
@@ -126,9 +124,9 @@ php -v
 php -m
 ```
 
-## 7. Cài đặt và chạy local
+## 6. Cài đặt và chạy local
 
-### 7.1 Chuẩn bị project và PHP/MySQL
+### 6.1 Chuẩn bị project và PHP/MySQL
 
 1. Clone hoặc giải nén dự án vào thư mục tùy chọn. Nếu dùng XAMPP/Laragon:
    - XAMPP: `C:\xampp\htdocs\web_pos_fashion`
@@ -136,7 +134,7 @@ php -m
 2. Khởi động MySQL trong XAMPP/Laragon.
 3. Mở Terminal tại thư mục gốc của repository.
 
-### 7.2 Tạo và nạp database
+### 6.2 Tạo và nạp database
 
 Có thể dùng phpMyAdmin:
 
@@ -158,7 +156,7 @@ mysql -u root -p fashion_pos_db < backend\database\seed.sql
 
 Nếu MySQL local không đặt mật khẩu, bỏ `-p`; nếu đặt, CLI sẽ yêu cầu mật khẩu.
 
-### 7.3 Cấu hình database
+### 6.3 Cấu hình database
 
 Tạo file `backend/.env` (file này bị Git ignore) và cấu hình tối thiểu:
 
@@ -177,7 +175,7 @@ APP_URL=http://127.0.0.1:8000
 Thay `DB_USERNAME`/`DB_PASSWORD` theo MySQL local của bạn. Không dùng
 `SESSION_SECURE=0` ngoài môi trường HTTP local.
 
-### 7.4 Chạy ứng dụng
+### 6.4 Chạy ứng dụng
 
 Từ thư mục gốc:
 
@@ -198,7 +196,7 @@ Mở **<http://127.0.0.1:8000/>**. Giữ Terminal đang chạy server; nhấn `C
 > URL `/web_pos_fashion/` nếu chưa thiết lập VirtualHost/rewrite; router phát
 > triển trên xử lý cả Frontend, `/api/*` và `/uploads/` theo cùng origin.
 
-### 7.5 Reset dữ liệu local
+### 6.5 Reset dữ liệu local
 
 Không có lệnh reset dữ liệu tự động. Muốn làm lại từ đầu, trước tiên export
 backup database cần giữ lại. Sau đó, trong phpMyAdmin, chỉ xóa database local
@@ -206,7 +204,7 @@ backup database cần giữ lại. Sau đó, trong phpMyAdmin, chỉ xóa databa
 Thao tác xóa database sẽ mất toàn bộ dữ liệu đơn hàng, khách hàng, tài khoản và
 cài đặt trong database đó; xác nhận đã chọn đúng database trước khi thực hiện.
 
-### 7.6 Chạy toàn bộ stack bằng Docker
+### 6.6 Chạy toàn bộ stack bằng Docker
 
 Cần cài Docker Desktop (Windows/macOS) hoặc Docker Engine cùng Docker Compose
 Plugin (Linux), sau đó mở Docker daemon.
@@ -259,7 +257,7 @@ docker compose up --build -d
 Xác định đúng tên volume trước khi xóa; không xóa volume nếu cần giữ dữ liệu.
 MySQL không tự chạy lại file init khi volume đã được khởi tạo.
 
-## 8. Biến môi trường
+## 7. Biến môi trường
 
 Backend đọc `backend/.env` qua `backend/config/env.php`. Không commit file này,
 không ghi credential thật trong issue, chat hoặc log.
@@ -320,7 +318,7 @@ Không gửi App Password qua chat, không commit `.env`.
 cùng máy; nếu nhân viên dùng thiết bị khác, cần URL HTTPS công khai mà thiết bị
 đó truy cập được.
 
-## 9. Các lệnh
+## 8. Các lệnh
 
 Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
 
@@ -343,7 +341,7 @@ Không có lệnh npm/Yarn vì Frontend không dùng Node package manager.
 
 Không có `npm run build`, `npm test` hay `yarn build` trong repository hiện tại.
 
-## 10. Cấu trúc mã nguồn
+## 9. Cấu trúc mã nguồn
 
 ```text
 web_pos_fashion/
@@ -390,7 +388,7 @@ web_pos_fashion/
 └── README.md
 ```
 
-## 11. Điều hướng và route
+## 10. Điều hướng và route
 
 Đây là các trang HTML tĩnh điều hướng bằng URL; dự án không dùng React Router,
 Vue Router hoặc client-side SPA router.
@@ -413,7 +411,7 @@ Vue Router hoặc client-side SPA router.
 Ẩn/hiện điều hướng ở Frontend phục vụ trải nghiệm người dùng; quyền thật luôn
 được kiểm tra lại trong Backend.
 
-## 12. Kiến trúc ứng dụng
+## 11. Kiến trúc ứng dụng
 
 ### Frontend
 
@@ -444,7 +442,7 @@ Response JSON được tạo qua `backend/src/Core/Response.php`. Request lỗi 
 dùng `ApiException`; lỗi không xử lý được ghi server log và trả response chung,
 không trả stack trace cho trình duyệt.
 
-## 13. Dữ liệu và localStorage
+## 12. Dữ liệu và localStorage
 
 Frontend **không dùng `localStorage`**. Một số thông tin giao diện được giữ trong
 `sessionStorage` để tồn tại khi chuyển trang cùng tab; chúng không phải nguồn
@@ -465,7 +463,7 @@ user/role/status từ session server và MySQL cho mỗi request bảo vệ; ch�
 Dữ liệu bền vững như user, sản phẩm, tồn kho, đơn hàng, khách hàng, cài đặt và
 QR nằm trong MySQL. Ảnh upload được lưu trong `backend/public/uploads/`.
 
-## 14. API backend
+## 13. API backend
 
 Base URL local: `http://127.0.0.1:8000/api`. API thành công trả `{ "data": ... }`;
 lỗi trả `{ "error": { "code": "...", "message": "...", "details": {} } }`.
@@ -498,7 +496,7 @@ Lịch sử đơn hàng khách hàng nhận `page` (mặc định `1`) và `per_
 `20`, tối đa `100`); response chứa `pagination.page`, `pagination.per_page`,
 `pagination.total` và `pagination.total_pages`.
 
-## 15. Tài khoản và quyền Admin
+## 14. Tài khoản và quyền Admin
 
 - Role hiện có: `admin`, `staff`, `cashier`.
 - Theo tài liệu yêu cầu demo, seed cung cấp tài khoản `admin` với mật khẩu
@@ -571,7 +569,7 @@ VALUES
 Username/email phải chưa tồn tại. Không lưu mật khẩu rõ trong database, source
 code hoặc Git.
 
-## 16. Docker và build production
+## 15. Docker và build production
 
 - Hướng dẫn Docker chuyên sâu, giải thích Dockerfile/Compose, network, volume,
   lệnh thường dùng và xử lý sự cố: [DOCKER.md](./DOCKER.md).
@@ -594,7 +592,7 @@ code hoặc Git.
 - Mật khẩu mẫu trong `docker.env.example` chỉ dùng localhost; phải thay trước
   khi publish hoặc chia sẻ môi trường.
 
-## 17. Kiểm thử
+## 16. Kiểm thử
 
 Hiện repository không khai báo PHPUnit, Jest, Vitest, Playwright hay test runner
 riêng. Có thể kiểm tra thủ công:
@@ -618,7 +616,7 @@ node --check frontend\assets\js\api.js
 Các lệnh này kiểm tra cú pháp, không thay thế integration test nghiệp vụ hoặc
 kiểm thử trên MySQL.
 
-## 18. Giới hạn hiện tại
+## 17. Giới hạn hiện tại
 
 - Không có React/Vue, SPA router, frontend build tool, package manager hoặc
   automated test suite.
@@ -633,7 +631,7 @@ kiểm thử trên MySQL.
 - Frontend `sessionStorage` chỉ phục vụ UI; mọi kiểm soát bảo mật phải tiếp tục ở
   Backend.
 
-## 19. Hướng phát triển đề xuất
+## 18. Hướng phát triển đề xuất
 
 1. Thêm test integration cho đăng nhập, CSRF, quyền, đơn hàng/tồn kho và mời user.
 2. Thêm health check và quy trình migration database có backup/rollback.
@@ -644,7 +642,7 @@ kiểm thử trên MySQL.
 6. Nếu quy mô giao diện tăng, cân nhắc framework hoặc build pipeline như một thay
    đổi kiến trúc riêng, không áp dụng npm script giả khi chưa thêm tooling.
 
-## 20. Quy trình đóng góp
+## 19. Quy trình đóng góp
 
 1. Tạo branch theo thay đổi, ví dụ `feature/customer-search` hoặc
    `fix/session-timeout`.
